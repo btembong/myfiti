@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Indigo-only palette ────────────────────────────────────────── */
+    --indigo-950: #1e1b4b;
+    --indigo-900: #312e81;
+    --indigo-700: #4338ca;
+    --indigo-600: #4f46e5;
+    --indigo-500: #6366f1;
+    --indigo-400: #818cf8;
+    --indigo-300: #a5b4fc;
+    --indigo-200: #c7d2fe;
+    --indigo-100: #e0e7ff;
+    --indigo-50:  #eef2ff;
+
+    /* ── Neutral grays ──────────────────────────────────────────────── */
+    --gray-50:  #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-400: #9ca3af;
+    --gray-600: #4b5563;
+    --gray-900: #111827;
+
+    /* ── Semantic tokens ─────────────────────────────────────────────── */
+    --color-bg:           var(--gray-50);
+    --color-surface:      #ffffff;
+    --color-border:       var(--gray-200);
+    --color-text-heading: var(--indigo-950);
+    --color-text-body:    var(--gray-600);
+    --color-text-muted:   var(--indigo-300);
+
+    --color-accent:    var(--indigo-500);
+    --color-accent-fg: #ffffff;
+
+    --radius: 0.75rem;
+  }
+
+  * { border-color: var(--color-border); }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text-body);
+    font-family: var(--font-exo2), 'Exo 2', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 { color: var(--color-text-heading); }
+}
+
+@layer utilities {
+  .text-gradient-indigo {
+    background: linear-gradient(135deg, var(--indigo-950) 0%, var(--indigo-500) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}

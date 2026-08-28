@@ -1,0 +1,303 @@
+import { Router } from 'express'
+import { v4 as uuid } from 'uuid'
+import { globalQuery } from '../db/client.js'
+import { rateLimitApi } from '../middleware/rate-limit.js'
+import { sendMemberWelcomeEmail } from '../lib/email.js'
+
+export const publicRouter = Router()
+
+// Slug format: lowercase alphanumeric + hyphens, 2-63 chars
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/
+
+// UUID format
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const PLAN_LABEL: Record<string, string> = {
+  starter: 'Starter', growth: 'Growth', growth_plus: 'Growth+', enterprise: 'Enterprise',
+}
+
+const PLAN_PRICE_XAF: Record<string, number> = {
+  starter: 0, growth: 9900, growth_plus: 19900, enterprise: 49900,
+}
+
+// ─── GET /api/public/gym/:slug ──────────────────────────────────────────────
+// Public gym lookup — used by the mobile app login screen to resolve branding
+
+publicRouter.get('/gym/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params
+    if (!SLUG_RE.test(slug)) {
+      return res.status(400).json({ error: 'Invalid gym identifier.' })
+    }
+
+    const { rows } = await globalQuery<{
+      id: string; name: string; slug: string
+      logo_url: string | null; primary_color: string
+      currency: string
+    }>(
+      `SELECT id, name, slug, logo_url, primary_color, currency
+       FROM tenants
+       WHERE slug = $1 AND status != 'suspended'
+       LIMIT 1`,
+      [slug],
+    )
+
+    if (!rows[0]) {
+      return res.status(404).json({ error: 'Gym not found.' })
+    }
+
+    return res.json({ gym: rows[0] })
+  } catch (err) {
+    console.error('[public/gym/:slug]', err)
+    return res.status(500).json({ error: 'Failed to lookup gym.' })
+  }
+})
+
+// ─── GET /api/public/gym/:slug/plans ────────────────────────────────────────
+// Public plans listing — for member signup / pricing page
+
+publicRouter.get('/gym/:slug/plans', async (req, res) => {
+  try {
+    const { slug } = req.params
+    if (!SLUG_RE.test(slug)) {
+      return res.status(400).json({ error: 'Invalid gym identifier.' })
+    }
+    const { tenantQuery } = await import('../db/client.js')
+
+    const { rows } = await tenantQuery(
+      slug,
+      `SELECT id, name, description, price, currency, duration_days, cycle, features
+       FROM membership_plans
+       WHERE is_active = TRUE
+       ORDER BY price ASC`,
+    )
+
+    return res.json({ plans: rows })
+  } catch (err) {
+    console.error('[public/gym/:slug/plans]', err)
+    return res.status(500).json({ error: 'Failed to load plans.' })
+  }
+})
+
+// ─── GET /api/public/invoice/:invoiceId ──────────────────────────────────────
+// Public invoice lookup — used by the /billing/pay/[invoiceId] pay page.
+// The UUID acts as the access token (hard to guess, fine for billing use).
+
+publicRouter.get('/invoice/:invoiceId', async (req, res) => {
+  try {
+    const { invoiceId } = req.params
+    if (!UUID_RE.test(invoiceId)) {
+      return res.status(400).json({ error: 'Invalid invoice identifier.' })
+    }
+
+    const { rows } = await globalQuery<{
+      id: string; invoice_number: string; amount_xaf: number; status: string
+      plan: string; period_start: string; period_end: string; due_date: string
+      paid_at: string | null; gym_name: string; owner_name: string
+    }>(
+      `SELECT pi.id, pi.invoice_number, pi.amount_xaf, pi.status, pi.plan,
+              pi.period_start, pi.period_end, pi.due_date, pi.paid_at,
+              t.name AS gym_name, t.owner_name
+       FROM platform_invoices pi
+       JOIN tenants t ON t.id = pi.tenant_id
+       WHERE pi.id = $1 LIMIT 1`,
+      [invoiceId],
+    )
+
+    if (!rows[0]) return res.status(404).json({ error: 'Invoice not found.' })
+
+    const inv = rows[0]
+    return res.json({
+      invoice: {
+        id:             inv.id,
+        invoice_number: inv.invoice_number,
+        amount_xaf:     inv.amount_xaf,
+        status:         inv.status,
+        plan:           PLAN_LABEL[inv.plan] ?? inv.plan,
+        period_start:   inv.period_start,
+        period_end:     inv.period_end,
+        due_date:       inv.due_date,
+        paid_at:        inv.paid_at,
+        gym_name:       inv.gym_name,
+        owner_name:     inv.owner_name,
+      },
+    })
+  } catch (err) {
+    console.error('[public/invoice/:invoiceId]', err)
+    return res.status(500).json({ error: 'Failed to load invoice.' })
+  }
+})
+
+// ─── POST /api/public/invoice/:invoiceId/pay ─────────────────────────────────
+// Initiate a Tranzak payment for a specific platform invoice.
+// No auth required — the invoice UUID is the access token.
+
+publicRouter.post('/invoice/:invoiceId/pay', rateLimitApi, async (req, res) => {
+  try {
+    const { invoiceId } = req.params
+    if (!UUID_RE.test(invoiceId)) {
+      return res.status(400).json({ error: 'Invalid invoice identifier.' })
+    }
+
+    const { rows } = await globalQuery<{
+      id: string; invoice_number: string; amount_xaf: number; status: string
+      tenant_id: string; currency: string
+    }>(
+      `SELECT pi.id, pi.invoice_number, pi.amount_xaf, pi.status,
+              pi.tenant_id, t.currency
+       FROM platform_invoices pi
+       JOIN tenants t ON t.id = pi.tenant_id
+       WHERE pi.id = $1 LIMIT 1`,
+      [invoiceId],
+    )
+
+    const inv = rows[0]
+    if (!inv) return res.status(404).json({ error: 'Invoice not found.' })
+    if (inv.status === 'paid' || inv.status === 'cancelled') {
+      return res.status(400).json({ error: `Invoice is already ${inv.status}.` })
+    }
+
+    const appId  = process.env.TRANZAK_APP_ID
+    const appKey = process.env.TRANZAK_APP_KEY
+    if (!appId || !appKey) {
+      return res.status(503).json({ error: 'Payment provider not configured. Please contact support.' })
+    }
+    const BASE_URL = process.env.TRANZAK_ENV === 'live' ? 'https://dsapi.tranzak.me' : 'https://sandbox.dsapi.tranzak.me'
+
+    // Auth
+    const authRes = await fetch(`${BASE_URL}/auth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appId, appKey }),
+    })
+    if (!authRes.ok) throw new Error('Tranzak auth failed')
+    const authBody = await authRes.json() as { data?: { token: string }; token?: string }
+    const token = authBody.data?.token ?? authBody.token ?? ''
+    if (!token) throw new Error('Tranzak auth: no token in response')
+
+    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const merchantTransactionId = `ten-${inv.tenant_id}`
+
+    // Create payment
+    const paymentRes = await fetch(`${BASE_URL}/xp021/v1/request/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        amount:               inv.amount_xaf,
+        currencyCode:         inv.currency ?? 'XAF',
+        description:          `myfiti invoice ${inv.invoice_number}`,
+        merchantTransactionId,
+        returnUrl:            `${APP_URL}/billing/pay/${invoiceId}?payment=success`,
+        customData:           { tenant_id: inv.tenant_id, invoice_id: inv.id },
+      }),
+    })
+    if (!paymentRes.ok) {
+      const errText = await paymentRes.text()
+      throw new Error(`Tranzak create error: ${errText}`)
+    }
+
+    const paymentData = await paymentRes.json() as { data?: { paymentUrl: string } }
+    const paymentUrl  = paymentData?.data?.paymentUrl ?? ''
+
+    return res.json({ ok: true, payment_url: paymentUrl })
+  } catch (err) {
+    console.error('[public/invoice/:invoiceId/pay]', err)
+    return res.status(500).json({ error: 'Failed to initiate payment.' })
+  }
+})
+
+// ─── POST /api/public/gym/:slug/register ─────────────────────────────────────
+// Public member self-registration — no auth required.
+// Creates the member record + optional pending subscription, sends welcome email.
+
+publicRouter.post('/gym/:slug/register', rateLimitApi, async (req, res) => {
+  try {
+    const { slug } = req.params
+    if (!SLUG_RE.test(slug)) {
+      return res.status(400).json({ error: 'Invalid gym identifier.' })
+    }
+
+    const { name, email, phone, plan_id } = req.body as {
+      name?: string; email?: string; phone?: string; plan_id?: string
+    }
+
+    if (!name?.trim() || !email?.trim()) {
+      return res.status(400).json({ error: 'Name and email are required.' })
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ error: 'Invalid email address.' })
+    }
+
+    // Resolve tenant
+    const { rows: gymRows } = await globalQuery<{ id: string; name: string; status: string }>(
+      `SELECT id, name, status FROM tenants WHERE slug = $1 LIMIT 1`,
+      [slug],
+    )
+    const gym = gymRows[0]
+    if (!gym) return res.status(404).json({ error: 'Gym not found.' })
+    if (gym.status === 'suspended' || gym.status === 'cancelled') {
+      return res.status(403).json({ error: 'This gym is not accepting registrations.' })
+    }
+
+    const { tenantQuery } = await import('../db/client.js')
+
+    // Check for duplicate email
+    const { rows: existing } = await tenantQuery<{ id: string }>(
+      slug,
+      `SELECT id FROM members WHERE email = $1 LIMIT 1`,
+      [email.toLowerCase().trim()],
+    )
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'A member with this email already exists at this gym.' })
+    }
+
+    const id = uuid()
+    const qrCode = `myfiti-${id.slice(0, 8).toUpperCase()}`
+
+    await tenantQuery(
+      slug,
+      `INSERT INTO members (id, name, email, phone, status, qr_code, joined_at, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, 'active', $5, NOW(), NOW(), NOW())`,
+      [id, name.trim(), email.toLowerCase().trim(), phone?.trim() ?? null, qrCode],
+    )
+
+    // Create pending subscription if plan selected
+    let planName: string | null = null
+    let expiresAt: string | null = null
+    if (plan_id && UUID_RE.test(plan_id)) {
+      const { rows: planRows } = await tenantQuery<{ id: string; name: string; duration_days: number }>(
+        slug,
+        `SELECT id, name, duration_days FROM membership_plans WHERE id = $1 AND is_active = TRUE LIMIT 1`,
+        [plan_id],
+      )
+      const plan = planRows[0]
+      if (plan) {
+        const subId = uuid()
+        const starts = new Date()
+        const expires = new Date(starts.getTime() + plan.duration_days * 86400000)
+        expiresAt = expires.toISOString()
+        planName = plan.name
+        await tenantQuery(
+          slug,
+          `INSERT INTO subscriptions (id, member_id, plan_id, status, started_at, expires_at, created_at, updated_at)
+           VALUES ($1, $2, $3, 'pending', NOW(), $4, NOW(), NOW())`,
+          [subId, id, plan.id, expiresAt],
+        )
+      }
+    }
+
+    // Welcome email — best-effort
+    sendMemberWelcomeEmail(
+      { email: email.toLowerCase().trim(), name: name.trim() },
+      gym.name,
+      qrCode,
+      planName,
+      expiresAt,
+    ).catch(err => console.warn('[public/register] welcome email failed:', err))
+
+    return res.status(201).json({ ok: true, memberId: id, qrCode })
+  } catch (err) {
+    console.error('[public/gym/:slug/register]', err)
+    return res.status(500).json({ error: 'Registration failed. Please try again.' })
+  }
+})

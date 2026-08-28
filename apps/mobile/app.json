@@ -1,0 +1,70 @@
+{
+  "expo": {
+    "name": "GymFlow",
+    "slug": "gymflow",
+    "version": "1.0.0",
+    "scheme": "gymflow",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6C47FF"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.gymflow.member",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to scan your membership QR code at check-in."
+      }
+    },
+    "android": {
+      "package": "app.gymflow.member",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6C47FF"
+      },
+      "permissions": ["android.permission.CAMERA"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6C47FF",
+          "defaultChannel": "gymflow-default"
+        }
+      ]
+    ],
+    "intentFilters": [
+      {
+        "action": "VIEW",
+        "data": [
+          {
+            "scheme": "https",
+            "host": "*.gymflow.app",
+            "pathPrefix": "/app"
+          },
+          {
+            "scheme": "https",
+            "host": "*.myfiti.app",
+            "pathPrefix": "/member"
+          },
+          {
+            "scheme": "gymflow"
+          }
+        ],
+        "category": ["BROWSABLE", "DEFAULT"]
+      }
+    ],
+    "associatedDomains": ["applinks:app.myfiti.app"],
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    }
+  }
+}

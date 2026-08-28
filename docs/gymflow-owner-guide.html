@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>myfiti — Gym Owner Guide</title>
+<style>
+  :root {
+    --brand: #6366f1;
+    --brand-light: #ede9fe;
+    --brand-dark: #4338ca;
+    --text: #0f172a;
+    --text-sub: #475569;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --surface: #f8fafc;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --bg: #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  /* ── Cover page ── */
+  .cover {
+    min-height: 100vh;
+    background: linear-gradient(145deg, #0d0d1a 0%, #1e1b4b 55%, #0d1a2a 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 40px;
+    page-break-after: always;
+  }
+  .cover-logo {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 28px;
+    box-shadow: 0 20px 60px rgba(99,102,241,0.4);
+  }
+  .cover-logo span { font-size: 2rem; font-weight: 900; color: #fff; }
+  .cover h1 {
+    font-size: 3.2rem; font-weight: 900;
+    color: #fff; letter-spacing: -0.04em; line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .cover h1 span { color: #a5b4fc; }
+  .cover .subtitle {
+    font-size: 1.15rem; color: rgba(255,255,255,0.55);
+    font-weight: 500; max-width: 540px; margin: 0 auto 48px;
+  }
+  .cover .meta {
+    display: flex; gap: 32px; justify-content: center; flex-wrap: wrap;
+  }
+  .cover .meta-item {
+    text-align: center;
+  }
+  .cover .meta-item .label {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 4px;
+  }
+  .cover .meta-item .value {
+    font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.8);
+  }
+  .cover-divider {
+    width: 60px; height: 3px;
+    background: linear-gradient(90deg, #6366f1, #a5b4fc);
+    border-radius: 99px; margin: 40px auto;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar / TOC ── */
+  .toc {
+    width: 280px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 32px 0;
+  }
+  .toc-header {
+    padding: 0 24px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .toc-header .toc-brand {
+    font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--brand); margin-bottom: 4px;
+  }
+  .toc-header h2 {
+    font-size: 0.95rem; font-weight: 700; color: var(--text);
+  }
+  .toc ul { list-style: none; padding: 0 12px; }
+  .toc li { margin: 1px 0; }
+  .toc a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 12px; border-radius: 8px;
+    text-decoration: none; font-size: 0.82rem; font-weight: 500;
+    color: var(--text-sub); transition: all 0.15s;
+  }
+  .toc a:hover { background: var(--brand-light); color: var(--brand); }
+  .toc a .num {
+    font-size: 0.68rem; font-weight: 800; color: var(--text-muted);
+    min-width: 18px;
+  }
+  .toc .section-group { margin-top: 8px; }
+  .toc .group-label {
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-muted);
+    padding: 10px 24px 4px;
+  }
+
+  /* ── Main content ── */
+  .main {
+    flex: 1;
+    max-width: 860px;
+    padding: 60px 64px;
+    overflow-x: hidden;
+  }
+
+  /* ── Sections ── */
+  .section { margin-bottom: 72px; }
+
+  .section-label {
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--brand); margin-bottom: 10px;
+  }
+  h2.section-title {
+    font-size: 2rem; font-weight: 900; color: var(--text);
+    letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 12px;
+  }
+  .section-intro {
+    font-size: 1rem; color: var(--text-sub); line-height: 1.75;
+    max-width: 680px; margin-bottom: 36px;
+    padding-bottom: 28px; border-bottom: 1px solid var(--border);
+  }
+
+  h3 {
+    font-size: 1.1rem; font-weight: 800; color: var(--text);
+    margin: 32px 0 12px; letter-spacing: -0.01em;
+  }
+  h4 {
+    font-size: 0.9rem; font-weight: 700; color: var(--text);
+    margin: 20px 0 8px;
+  }
+  p { color: var(--text-sub); margin-bottom: 14px; line-height: 1.75; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .card-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px; font-size: 1.1rem;
+  }
+  .card h4 { margin-top: 0; margin-bottom: 6px; }
+  .card p { margin-bottom: 0; font-size: 0.85rem; }
+
+  /* ── Steps ── */
+  .steps { margin: 20px 0; }
+  .step {
+    display: flex; gap: 16px; margin-bottom: 20px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--brand); color: #fff;
+    font-size: 0.78rem; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .step-content h4 { margin-top: 0; margin-bottom: 4px; }
+  .step-content p { margin-bottom: 0; font-size: 0.9rem; }
+
+  /* ── Flow diagram ── */
+  .flow {
+    display: flex; align-items: center;
+    flex-wrap: wrap; gap: 0; margin: 24px 0;
+  }
+  .flow-box {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 0.82rem; font-weight: 600; color: var(--text);
+    white-space: nowrap;
+  }
+  .flow-box.brand {
+    background: var(--brand-light);
+    border-color: #c7d2fe;
+    color: var(--brand);
+  }
+  .flow-box.success {
+    background: #dcfce7;
+    border-color: #bbf7d0;
+    color: var(--success);
+  }
+  .flow-arrow {
+    padding: 0 10px;
+    font-size: 1rem; color: var(--text-muted); font-weight: 900;
+  }
+
+  /* ── Status badges ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 99px;
+    font-size: 0.75rem; font-weight: 700;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge.active { background: #dcfce7; color: var(--success); }
+  .badge.active .badge-dot { background: var(--success); }
+  .badge.warning { background: #fef3c7; color: var(--warning); }
+  .badge.warning .badge-dot { background: var(--warning); }
+  .badge.danger { background: #fee2e2; color: var(--danger); }
+  .badge.danger .badge-dot { background: var(--danger); }
+  .badge.info { background: #ede9fe; color: var(--brand); }
+  .badge.info .badge-dot { background: var(--brand); }
+
+  /* ── Table ── */
+  table {
+    width: 100%; border-collapse: collapse; margin: 20px 0;
+    font-size: 0.88rem;
+  }
+  th {
+    text-align: left; padding: 10px 14px;
+    background: var(--surface); border-bottom: 2px solid var(--border);
+    font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-muted);
+  }
+  td {
+    padding: 11px 14px; border-bottom: 1px solid var(--border);
+    color: var(--text-sub); vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface); }
+
+  /* ── Callouts ── */
+  .callout {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 20px 0;
+    display: flex; gap: 12px; align-items: flex-start;
+    font-size: 0.88rem;
+  }
+  .callout.tip { background: #f0fdf4; border-left: 3px solid var(--success); color: #166534; }
+  .callout.note { background: #eff6ff; border-left: 3px solid #3b82f6; color: #1e40af; }
+  .callout.warn { background: #fffbeb; border-left: 3px solid var(--warning); color: #92400e; }
+  .callout-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout strong { font-weight: 800; }
+
+  /* ── Code pill ── */
+  code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.82em;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: var(--brand);
+  }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+  /* ── Role pills ── */
+  .roles { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+  .role {
+    padding: 4px 12px; border-radius: 99px;
+    font-size: 0.75rem; font-weight: 700;
+    border: 1.5px solid;
+  }
+  .role.owner { background: #ede9fe; border-color: #c4b5fd; color: #7c3aed; }
+  .role.admin { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+  .role.receptionist { background: #dcfce7; border-color: #86efac; color: #15803d; }
+
+  /* ── Print ── */
+  @media print {
+    .toc { display: none; }
+    .main { padding: 40px; max-width: 100%; }
+    .cover { page-break-after: always; }
+    .section { page-break-inside: avoid; }
+  }
+
+  @media (max-width: 900px) {
+    .toc { display: none; }
+    .main { padding: 32px 24px; }
+    .cover h1 { font-size: 2.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ COVER ══ -->
+<div class="cover">
+  <div class="cover-logo"><span>M</span></div>
+  <h1>myfiti <span>Platform</span><br>Owner Guide</h1>
+  <p class="subtitle">
+    A complete reference for gym owners — from onboarding and member management
+    to payments, kiosk operations, and mobile access.
+  </p>
+  <div class="cover-divider"></div>
+  <div class="meta">
+    <div class="meta-item">
+      <div class="label">Platform</div>
+      <div class="value">myfiti.app</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">Audience</div>
+      <div class="value">Gym Owners &amp; Managers</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">Version</div>
+      <div class="value">August 2026</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">Support</div>
+      <div class="value">support@myfiti.app</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ LAYOUT ══ -->
+<div class="layout">
+
+  <!-- ── Table of Contents ── -->
+  <nav class="toc">
+    <div class="toc-header">
+      <div class="toc-brand">myfiti</div>
+      <h2>Table of Contents</h2>
+    </div>
+
+    <div class="section-group">
+      <div class="group-label">Getting Started</div>
+      <ul>
+        <li><a href="#onboarding"><span class="num">01</span> Onboarding &amp; Setup</a></li>
+        <li><a href="#dashboard"><span class="num">02</span> Dashboard Overview</a></li>
+      </ul>
+    </div>
+
+    <div class="section-group">
+      <div class="group-label">Members</div>
+      <ul>
+        <li><a href="#members"><span class="num">03</span> Member Management</a></li>
+        <li><a href="#plans"><span class="num">04</span> Membership Plans</a></li>
+        <li><a href="#subscriptions"><span class="num">05</span> Subscriptions &amp; Lifecycle</a></li>
+      </ul>
+    </div>
+
+    <div class="section-group">
+      <div class="group-label">Payments</div>
+      <ul>
+        <li><a href="#payments"><span class="num">06</span> Payments &amp; Receipts</a></li>
+        <li><a href="#mobile-money"><span class="num">07</span> Mobile Money (Tranzak)</a></li>
+      </ul>
+    </div>
+
+    <div class="section-group">
+      <div class="group-label">Operations</div>
+      <ul>
+        <li><a href="#checkin"><span class="num">08</span> Check-In System</a></li>
+        <li><a href="#kiosk"><span class="num">09</span> Self-Service Kiosk</a></li>
+        <li><a href="#day-passes"><span class="num">10</span> Day Passes</a></li>
+        <li><a href="#classes"><span class="num">11</span> Classes &amp; Bookings</a></li>
+      </ul>
+    </div>
+
+    <div class="section-group">
+      <div class="group-label">Tools</div>
+      <ul>
+        <li><a href="#analytics"><span class="num">12</span> Analytics &amp; Reports</a></li>
+        <li><a href="#notifications"><span class="num">13</span> Notifications</a></li>
+        <li><a href="#mobile-app"><span class="num">14</span> Member Mobile App</a></li>
+        <li><a href="#staff"><span class="num">15</span> Staff &amp; Roles</a></li>
+        <li><a href="#settings"><span class="num">16</span> Settings &amp; Branding</a></li>
+      </ul>
+    </div>
+
+    <div class="section-group">
+      <div class="group-label">Automation</div>
+      <ul>
+        <li><a href="#crons"><span class="num">17</span> Automated Jobs</a></li>
+        <li><a href="#billing"><span class="num">18</span> Platform Billing</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ── Main Content ── -->
+  <main class="main">
+
+    <!-- ══════════ 01. ONBOARDING ══════════ -->
+    <section class="section" id="onboarding">
+      <div class="section-label">01 — Getting Started</div>
+      <h2 class="section-title">Onboarding &amp; Setup</h2>
+      <p class="section-intro">
+        myfiti uses a multi-tenant architecture — each gym gets its own isolated workspace
+        with its own members, data, branding, and settings. Onboarding takes under five minutes
+        and gives you a fully operational gym management system.
+      </p>
+
+      <h3>Registration Flow</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Create your account</h4>
+            <p>Visit <code>app.myfiti.app/register</code>. Enter your name, business email, gym name, and a password. A confirmation email is sent immediately.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Gym profile</h4>
+            <p>After verifying your email, you are taken to the onboarding wizard. Enter your gym's name, country, timezone, and currency (default: XAF for Cameroon).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Branding</h4>
+            <p>Upload a logo and choose your primary brand color. This color appears throughout your member-facing kiosk and mobile app.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Create your first plan</h4>
+            <p>Define at least one membership plan (name, price, duration). You can add more plans at any time from Settings → Plans.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>Your workspace is ready</h4>
+            <p>You land on your dashboard. A unique <code>slug</code> (e.g. <code>korafit</code>) is assigned — this is used to scope all your data and for the member app URL.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <span class="callout-icon">✓</span>
+        <div><strong>14-day free trial.</strong> All features are available from day one. No credit card required to start.</div>
+      </div>
+
+      <h3>What Gets Created</h3>
+      <p>When your gym is registered, the platform automatically provisions:</p>
+      <table>
+        <thead><tr><th>Resource</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Tenant schema</td><td>A dedicated database namespace (<code>tenant_korafit</code>) — your data is completely isolated from other gyms.</td></tr>
+          <tr><td>Gym settings</td><td>Name, slug, currency, timezone, logo, brand color, grace period settings.</td></tr>
+          <tr><td>Staff account</td><td>Your account is created as <strong>Owner</strong> — the highest permission level.</td></tr>
+          <tr><td>Kiosk URL</td><td>A signed kiosk URL is generated for your self-service terminal.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 02. DASHBOARD ══════════ -->
+    <section class="section" id="dashboard">
+      <div class="section-label">02 — Overview</div>
+      <h2 class="section-title">Dashboard Overview</h2>
+      <p class="section-intro">
+        The dashboard is your real-time command center. It loads the moment you log in and gives
+        you an at-a-glance view of your gym's health — no manual refreshing needed.
+      </p>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon" style="background:#ede9fe;">📊</div>
+          <h4>KPI Cards</h4>
+          <p>Total members, active subscriptions, check-ins today, revenue this month — each with a delta vs. last period.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background:#dcfce7;">💰</div>
+          <h4>Revenue Chart</h4>
+          <p>Monthly revenue bar chart for the current year. Hover any bar to see the exact figure.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background:#dbeafe;">👥</div>
+          <h4>Member Growth</h4>
+          <p>New member sign-ups over time. Helps you see which months had strong recruitment.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background:#fef3c7;">📋</div>
+          <h4>Recent Activity</h4>
+          <p>Live feed of check-ins, new members, and payments — updated on each page load.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background:#fee2e2;">⚠️</div>
+          <h4>Alerts</h4>
+          <p>Memberships expiring in 7 days, overdue payments, and members in their grace period.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background:#f0fdf4;">📈</div>
+          <h4>Check-in Sparkline</h4>
+          <p>7-day daily check-in count shown as a mini graph beside the KPI card.</p>
+        </div>
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">ℹ</span>
+        <div>The dashboard is personalized — it greets you by name and shows the data specific to your gym only.</div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 03. MEMBERS ══════════ -->
+    <section class="section" id="members">
+      <div class="section-label">03 — Members</div>
+      <h2 class="section-title">Member Management</h2>
+      <p class="section-intro">
+        The Members module is where you add, view, edit, and manage everyone who trains at your gym.
+        Each member gets a unique QR code that they use to check in.
+      </p>
+
+      <h3>Adding a Member</h3>
+      <p>Click <strong>Add member</strong> from the Members page. A slide-in drawer opens with two steps:</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Member details</h4>
+            <p>Full name (required), email address (required for receipts and notifications), phone number (optional), and internal notes.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Plan &amp; payment (optional)</h4>
+            <p>Assign a membership plan immediately. Choose the payment method: Cash, Card, Bank transfer, or Mobile Money (Tranzak S2S USSD push). You can also skip this and assign a plan later from the member's profile.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Member Profile</h3>
+      <p>Click any member to open their full profile. From here you can:</p>
+      <table>
+        <thead><tr><th>Action</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>View subscription</td><td>Current plan, status badge, days remaining, expiry date.</td></tr>
+          <tr><td>View payment history</td><td>All recorded payments with amounts, dates, and provider.</td></tr>
+          <tr><td>View check-in history</td><td>Every visit with timestamp and method (QR, PIN, manual).</td></tr>
+          <tr><td>Edit details</td><td>Update name, email, phone, or notes.</td></tr>
+          <tr><td>Assign / change plan</td><td>Switch to a different plan; the new expiry is calculated automatically.</td></tr>
+          <tr><td>Record payment</td><td>Record a cash, card, or bank transfer payment inline.</td></tr>
+          <tr><td>Suspend / reactivate</td><td>Immediately block or restore kiosk access.</td></tr>
+          <tr><td>Emergency contact</td><td>Store a next-of-kin name, phone, and relationship.</td></tr>
+          <tr><td>Download QR</td><td>Print or share the member's unique check-in QR code.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Member Statuses</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
+        <span class="badge active"><span class="badge-dot"></span>Active</span>
+        <span class="badge warning"><span class="badge-dot"></span>Expiring Soon</span>
+        <span class="badge warning"><span class="badge-dot"></span>Grace Period</span>
+        <span class="badge danger"><span class="badge-dot"></span>Suspended</span>
+        <span class="badge danger"><span class="badge-dot"></span>Expired</span>
+        <span class="badge info"><span class="badge-dot"></span>Frozen</span>
+      </div>
+      <table>
+        <thead><tr><th>Status</th><th>Meaning</th><th>Kiosk access</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge active"><span class="badge-dot"></span>Active</span></td><td>Subscription is valid and within its period.</td><td>Full access — green screen</td></tr>
+          <tr><td><span class="badge warning"><span class="badge-dot"></span>Expiring Soon</span></td><td>Expires within 7 days. Reminder sent automatically.</td><td>Full access — reminder shown</td></tr>
+          <tr><td><span class="badge warning"><span class="badge-dot"></span>Grace Period</span></td><td>Subscription expired but within the grace window (default 7 days).</td><td>Allowed with warning — amber screen</td></tr>
+          <tr><td><span class="badge danger"><span class="badge-dot"></span>Suspended</span></td><td>Grace period ended. No access until renewed.</td><td>Denied — red screen</td></tr>
+          <tr><td><span class="badge info"><span class="badge-dot"></span>Frozen</span></td><td>Manually paused (holiday, injury). Timer is paused.</td><td>Denied until unfrozen</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Referral System</h3>
+      <p>Each member gets a unique referral code. When a new member signs up using that code, the referring member is tracked and can receive reward days or discounts — configurable from Settings.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 04. PLANS ══════════ -->
+    <section class="section" id="plans">
+      <div class="section-label">04 — Plans</div>
+      <h2 class="section-title">Membership Plans</h2>
+      <p class="section-intro">
+        Plans define how much members pay, how long access lasts, and how the subscription renews.
+        You can have multiple plans active simultaneously (e.g. Monthly, Quarterly, Student).
+      </p>
+
+      <h3>Creating a Plan</h3>
+      <p>Go to <strong>Settings → Plans → New plan</strong>. Fill in:</p>
+      <table>
+        <thead><tr><th>Field</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Name</td><td>e.g. "Monthly Standard", "Student Pass", "VIP Annual"</td></tr>
+          <tr><td>Description</td><td>Optional — shown to members in the mobile app.</td></tr>
+          <tr><td>Price</td><td>Amount in your gym's currency (e.g. 15 000 XAF).</td></tr>
+          <tr><td>Duration</td><td>Number of days the plan covers (e.g. 30, 90, 365).</td></tr>
+          <tr><td>Cycle label</td><td>Display label: monthly, quarterly, yearly, etc.</td></tr>
+          <tr><td>Features</td><td>Optional bullet list shown on the member app plan picker.</td></tr>
+          <tr><td>Active</td><td>Toggle — inactive plans are hidden from new signups.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="callout-icon">✓</span>
+        <div><strong>Tip:</strong> You can deactivate a plan at any time. Existing members on that plan keep their subscription — it just stops appearing for new signups.</div>
+      </div>
+
+      <h3>Public Plan Picker</h3>
+      <p>Active plans are automatically exposed to the member mobile app. When a member taps <strong>View available plans</strong>, they see your current plans with names, prices, and descriptions — no configuration needed.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 05. SUBSCRIPTIONS ══════════ -->
+    <section class="section" id="subscriptions">
+      <div class="section-label">05 — Subscriptions</div>
+      <h2 class="section-title">Subscriptions &amp; Lifecycle</h2>
+      <p class="section-intro">
+        Every member's relationship with a plan is tracked as a subscription. The system
+        automatically manages status transitions, sends reminder emails, and handles
+        grace periods — all without any manual work.
+      </p>
+
+      <h3>Lifecycle — How It Works</h3>
+      <div class="flow" style="flex-direction:column;align-items:flex-start;gap:6px;">
+        <div style="display:flex;align-items:center;gap:0;">
+          <div class="flow-box brand">Active</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box" style="font-size:0.78rem;color:var(--text-muted);">7 days before expiry<br>Email sent automatically</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box" style="background:#fef3c7;border-color:#fde68a;color:var(--warning);">Expiring Soon</div>
+        </div>
+        <div style="padding-left:130px;color:var(--text-muted);font-size:0.8rem;">On expiry date ↓</div>
+        <div style="display:flex;align-items:center;gap:0;padding-left:130px;">
+          <div class="flow-box" style="background:#fef3c7;border-color:#fde68a;color:var(--warning);">Grace Period</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box" style="font-size:0.78rem;color:var(--text-muted);">After grace window<br>(default 7 days)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box" style="background:#fee2e2;border-color:#fecaca;color:var(--danger);">Suspended</div>
+        </div>
+      </div>
+
+      <p style="margin-top:20px;">The subscription cron job runs <strong>every hour</strong> and handles all transitions automatically. You never need to manually expire or suspend memberships.</p>
+
+      <h3>Renewal</h3>
+      <p>When a payment is recorded (any method), the subscription is automatically extended:</p>
+      <ul style="color:var(--text-sub);margin:12px 0 12px 20px;line-height:2;">
+        <li>If <strong>active or expiring</strong>: the new expiry is calculated from the current expiry date (no lost days).</li>
+        <li>If <strong>expired or suspended</strong>: the new expiry is calculated from today.</li>
+      </ul>
+
+      <h3>Grace Period</h3>
+      <p>The grace period gives members extra time to renew without losing access. Default is <strong>7 days</strong>. During grace, the kiosk shows an amber warning screen — the member can still enter, but is reminded to renew. Configurable in Settings → Gym settings.</p>
+
+      <h3>Freeze (Holiday Hold)</h3>
+      <p>If a member is traveling or injured, staff can freeze their subscription from the member profile. The system sets <code>frozen_until</code> and pauses the expiry timer. Kiosk access is blocked during the freeze.</p>
+
+      <h3>Auto-renew Flag</h3>
+      <p>Each subscription has an <code>auto_renew</code> flag, visible to the member in the mobile app. In future, this will be used to trigger automatic Tranzak charges on expiry.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 06. PAYMENTS ══════════ -->
+    <section class="section" id="payments">
+      <div class="section-label">06 — Payments</div>
+      <h2 class="section-title">Payments &amp; Receipts</h2>
+      <p class="section-intro">
+        myfiti tracks every payment — cash, card, bank transfer, and Mobile Money — with
+        automatic receipt generation and email delivery. All payment records are linked
+        to the member and their subscription.
+      </p>
+
+      <h3>Recording a Payment</h3>
+      <p>Payments can be recorded in three places:</p>
+      <div class="card-grid">
+        <div class="card">
+          <h4>From Member Profile</h4>
+          <p>Open any member → click <strong>Record payment</strong>. Choose the plan, amount, and payment method. Subscription extends immediately.</p>
+        </div>
+        <div class="card">
+          <h4>From Add Member Drawer</h4>
+          <p>When adding a new member, choose a plan and payment method in Step 2. The payment is recorded at the same time as the member is created.</p>
+        </div>
+        <div class="card">
+          <h4>From Payments Page</h4>
+          <p>The Payments page lists all payments with filters for date, member, status, and provider. Supports CSV export.</p>
+        </div>
+      </div>
+
+      <h3>Payment Methods</h3>
+      <table>
+        <thead><tr><th>Method</th><th>How it works</th><th>Receipt</th></tr></thead>
+        <tbody>
+          <tr><td>Cash</td><td>Staff confirms cash received. Recorded as completed immediately.</td><td>Email sent instantly</td></tr>
+          <tr><td>Card</td><td>Manual entry — staff records that card payment was received.</td><td>Email sent instantly</td></tr>
+          <tr><td>Bank transfer</td><td>Manual entry with optional reference number.</td><td>Email sent instantly</td></tr>
+          <tr><td>Mobile Money (S2S)</td><td>USSD push sent to member's phone. Confirmed when they enter PIN. Subscription activates automatically.</td><td>Email sent on confirmation</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Receipts</h3>
+      <p>Every completed payment generates a <strong>receipt email</strong> to the member with:</p>
+      <ul style="color:var(--text-sub);margin:12px 0 12px 20px;line-height:2;">
+        <li>Gym name and logo</li>
+        <li>Receipt number (e.g. <code>REC-4A3F2B1C</code>)</li>
+        <li>Plan name, amount, currency, and payment method</li>
+        <li>New expiry date</li>
+        <li>Printable thermal-format layout</li>
+      </ul>
+
+      <p>Staff can also <strong>resend</strong> any receipt from the payment detail view, and send <strong>payment reminders</strong> to members with pending or overdue balances.</p>
+
+      <h3>Refunds</h3>
+      <p>Mark any completed payment as refunded from the Payments page. Optionally cancel the linked subscription at the same time. Refund reason is stored in the notes field.</p>
+
+      <h3>Payments Dashboard</h3>
+      <p>The Payments page shows four revenue summary cards at the top. These figures are <strong>combined</strong> — they include both subscription payments and day pass income, so you always see the true total revenue for your gym.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;">
+        <div class="card" style="flex:1;min-width:140px;padding:14px 16px;">
+          <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Today</div>
+          <div style="font-size:1.4rem;font-weight:900;color:var(--text);">₣ —</div>
+        </div>
+        <div class="card" style="flex:1;min-width:140px;padding:14px 16px;">
+          <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">This Month (MTD)</div>
+          <div style="font-size:1.4rem;font-weight:900;color:var(--text);">₣ —</div>
+        </div>
+        <div class="card" style="flex:1;min-width:140px;padding:14px 16px;">
+          <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Last Month</div>
+          <div style="font-size:1.4rem;font-weight:900;color:var(--text);">₣ —</div>
+        </div>
+        <div class="card" style="flex:1;min-width:140px;padding:14px 16px;">
+          <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">All Time</div>
+          <div style="font-size:1.4rem;font-weight:900;color:var(--text);">₣ —</div>
+        </div>
+      </div>
+
+      <h3>Transaction Tabs</h3>
+      <p>Below the summary cards, the Payments page is split into two tabs:</p>
+      <table>
+        <thead><tr><th>Tab</th><th>What it shows</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Subscriptions</strong></td>
+            <td>All membership payments linked to member profiles — cash, card, bank transfer, or Mobile Money. Filterable by status (succeeded / pending / failed / refunded) and member name. Supports receipt view, reminder email, and refund actions.</td>
+          </tr>
+          <tr>
+            <td><strong>Day Passes</strong></td>
+            <td>Walk-in guest payments from the kiosk. Shows guest name, phone, pass type, payment method, status, check-in time, and amount. Revenue from day passes is included in the summary cards above.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="callout-icon">✓</span>
+        <div><strong>Revenue is unified.</strong> Before this update, day pass income was not visible on the Payments page. All four summary cards now count both subscription payments and day pass revenue — giving you an accurate picture of total gym income.</div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 07. MOBILE MONEY ══════════ -->
+    <section class="section" id="mobile-money">
+      <div class="section-label">07 — Payments</div>
+      <h2 class="section-title">Mobile Money (Tranzak)</h2>
+      <p class="section-intro">
+        myfiti integrates with <strong>Tranzak</strong> to process MTN MoMo and Orange Money payments
+        in Cameroon. There are two distinct flows depending on context — both are fully automated.
+      </p>
+
+      <h3>Flow 1 — S2S USSD Push (Recommended)</h3>
+      <p>Used in the <strong>kiosk day pass</strong> flow and the <strong>member mobile app</strong> renewal. The system sends a USSD prompt directly to the customer's phone. No link, no QR scan, no browser. The customer simply enters their PIN.</p>
+
+      <div class="flow">
+        <div class="flow-box brand">Staff enters phone</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Tranzak USSD push</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Customer enters PIN</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box success">Confirmed</div>
+      </div>
+
+      <div class="callout tip">
+        <span class="callout-icon">✓</span>
+        <div><strong>Best experience.</strong> No steps for the customer beyond entering their PIN on their own phone. Ideal for reception desk and kiosk payments.</div>
+      </div>
+
+      <h3>Flow 2 — Payment Link / QR (Redirect)</h3>
+      <p>Used in the kiosk <strong>SMS link</strong> tile. Generates a Tranzak-hosted payment URL. The kiosk shows a QR code the customer scans, or staff can send the link via SMS. Confirmation is automatic once Tranzak processes the approval.</p>
+
+      <div class="flow">
+        <div class="flow-box">Kiosk generates link</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Customer scans QR</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Approves in browser</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box success">Webhook confirms</div>
+      </div>
+
+      <h3>Phone Number Format</h3>
+      <p>Tranzak requires the full international format with country code and no <code>+</code> sign. myfiti normalises any format you enter:</p>
+      <table>
+        <thead><tr><th>What you type</th><th>Sent to Tranzak</th></tr></thead>
+        <tbody>
+          <tr><td><code>655 123 456</code></td><td><code>237655123456</code></td></tr>
+          <tr><td><code>0655123456</code></td><td><code>237655123456</code></td></tr>
+          <tr><td><code>+237655123456</code></td><td><code>237655123456</code></td></tr>
+          <tr><td><code>237655123456</code></td><td><code>237655123456</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Configuration</h3>
+      <p>Your Tranzak credentials are stored as environment variables. Contact your system administrator or myfiti support to configure:</p>
+      <ul style="color:var(--text-sub);margin:12px 0 12px 20px;line-height:2;">
+        <li><code>TRANZAK_APP_ID</code> — your app ID from the Tranzak developer portal</li>
+        <li><code>TRANZAK_APP_KEY</code> — your app key (secret)</li>
+        <li><code>TRANZAK_ENV</code> — set to <code>live</code> for production</li>
+      </ul>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠</span>
+        <div><strong>Sandbox vs Production.</strong> The sandbox environment requires manual activation by Tranzak support. Once you have production credentials, set <code>TRANZAK_ENV=live</code>.</div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 08. CHECK-IN ══════════ -->
+    <section class="section" id="checkin">
+      <div class="section-label">08 — Operations</div>
+      <h2 class="section-title">Check-In System</h2>
+      <p class="section-intro">
+        The check-in system tracks every member visit. Three methods are supported,
+        and every check-in is recorded with a timestamp, method, and member name.
+      </p>
+
+      <h3>Check-In Methods</h3>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon" style="background:#ede9fe;">QR</div>
+          <h4>QR Code Scan</h4>
+          <p>The member shows their QR code from the mobile app or a printed card. The kiosk camera scans it and grants access in under 2 seconds.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background:#dcfce7;">PIN</div>
+          <h4>4-Digit PIN</h4>
+          <p>The member enters a personal 4-digit PIN on the kiosk numpad. They set their PIN in the mobile app or you can set it from their profile.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background:#dbeafe;">👤</div>
+          <h4>Manual (Name Search)</h4>
+          <p>Staff types the member's name and selects them from the list. Useful when a member forgets their QR and hasn't set a PIN.</p>
+        </div>
+      </div>
+
+      <h3>Kiosk Check-In Response Screens</h3>
+      <table>
+        <thead><tr><th>Screen</th><th>Color</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Welcome back!</td><td style="color:var(--success);font-weight:700;">Green</td><td>Active subscription. Full access granted.</td></tr>
+          <tr><td>Grace period</td><td style="color:var(--warning);font-weight:700;">Amber</td><td>Subscription expired but within grace window. Access allowed with warning.</td></tr>
+          <tr><td>Membership expired</td><td style="color:var(--danger);font-weight:700;">Red</td><td>No valid subscription. Access denied.</td></tr>
+          <tr><td>Suspended</td><td style="color:var(--danger);font-weight:700;">Red</td><td>Account manually suspended. Access denied.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Check-In History</h3>
+      <p>Every check-in is stored permanently. You can view the full history per member (from their profile) or all gym check-ins in aggregate (from the Analytics → Check-ins page). The live kiosk display also shows recent check-ins in the staff panel.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 09. KIOSK ══════════ -->
+    <section class="section" id="kiosk">
+      <div class="section-label">09 — Operations</div>
+      <h2 class="section-title">Self-Service Kiosk</h2>
+      <p class="section-intro">
+        The kiosk is a full-screen, touch-friendly web application designed to run on a tablet or
+        display at your gym entrance. Members and walk-in guests interact with it directly —
+        no staff assistance needed for routine operations.
+      </p>
+
+      <h3>Setting Up the Kiosk</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Open the kiosk URL</h4>
+            <p>From Settings → Kiosk, copy your unique kiosk URL (contains a signed token with your gym's slug). Open this on any tablet or touch display.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Set to full-screen / kiosk mode</h4>
+            <p>Use your browser's full-screen mode (F11 on most browsers) or configure the device in kiosk mode so the URL bar is hidden.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Tap anywhere to begin</h4>
+            <p>The idle screen shows your gym name, the current time, and "Tap anywhere to begin". The kiosk auto-returns to idle after 60 seconds of inactivity.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Kiosk Screens</h3>
+      <table>
+        <thead><tr><th>Screen</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Idle</td><td>Full-screen clock and gym branding. Tap anywhere to start.</td></tr>
+          <tr><td>Home</td><td>Three main options: Member Check-In, Walk-In Day Pass, Today's Classes.</td></tr>
+          <tr><td>Check-in method</td><td>Choose: QR code scan, PIN, search by name, or scan the gym QR.</td></tr>
+          <tr><td>Confirmed / Denied / Grace</td><td>Result screens shown after check-in attempt.</td></tr>
+          <tr><td>Walk-in registration</td><td>Collect guest name and optional phone number.</td></tr>
+          <tr><td>Pass type picker</td><td>Standard, Peak, Off-peak, Student, 10-day bundle.</td></tr>
+          <tr><td>Payment method</td><td>Cash, MTN MoMo (USSD), Orange Money (USSD), SMS link.</td></tr>
+          <tr><td>QR issued</td><td>Day pass QR code displayed for the guest to photograph.</td></tr>
+          <tr><td>Schedule</td><td>Today's class timetable.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Staff Mode</h3>
+      <p>Tap the staff icon (top-right) or tap the gym logo 5 times rapidly to enter <strong>Staff Mode</strong>. Enter the staff PIN to unlock:</p>
+      <ul style="color:var(--text-sub);margin:12px 0 12px 20px;line-height:2;">
+        <li>Live capacity counter (members currently in the gym)</li>
+        <li>Recent check-in feed</li>
+        <li>Manual member lookup and check-in</li>
+      </ul>
+
+      <h3>Multi-Language</h3>
+      <p>The kiosk supports <strong>English</strong> and <strong>French</strong>. Guests can switch languages from the top-right language toggle. All labels, instructions, and buttons switch immediately.</p>
+
+      <h3>Sound &amp; Accessibility</h3>
+      <p>The kiosk plays short audio tones on check-in events (success chime, denial thud, warning pulse, day pass issue beep). Sounds can be muted using the speaker icon in the status bar.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 10. DAY PASSES ══════════ -->
+    <section class="section" id="day-passes">
+      <div class="section-label">10 — Operations</div>
+      <h2 class="section-title">Day Passes</h2>
+      <p class="section-intro">
+        Day passes let walk-in guests access your gym for a single day without becoming members.
+        They pay at the kiosk, receive a QR code, and scan it at the entrance.
+      </p>
+
+      <h3>Pass Types &amp; Pricing</h3>
+      <table>
+        <thead><tr><th>Pass Type</th><th>Description</th><th>Default Price</th></tr></thead>
+        <tbody>
+          <tr><td>Standard</td><td>Full day access, any hours</td><td>2 000 XAF</td></tr>
+          <tr><td>Peak hours</td><td>6–9 am and 5–8 pm only</td><td>2 500 XAF</td></tr>
+          <tr><td>Off-peak</td><td>10 am–3 pm weekdays only</td><td>1 500 XAF</td></tr>
+          <tr><td>Student</td><td>Valid student ID required</td><td>1 000 XAF</td></tr>
+          <tr><td>10-day bundle</td><td>Pre-purchase 10 visits, save 10%</td><td>18 000 XAF</td></tr>
+        </tbody>
+      </table>
+
+      <p>Prices can be updated from the backend. Custom pricing per gym is supported.</p>
+
+      <h3>Kiosk Day Pass Flow</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Guest taps "Walk-In &amp; Day Pass"</h4>
+            <p>From the kiosk home screen.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Enter name and phone</h4>
+            <p>Full name is required. Phone is optional — used for the SMS receipt. Can be skipped.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Select pass type</h4>
+            <p>Guest or staff selects from the available pass tiles with price shown.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Choose payment method</h4>
+            <p><strong>Cash</strong>: staff collects and confirms. <strong>MTN/Orange MoMo</strong>: enter guest's phone → USSD push sent → guest enters PIN → auto-confirmed. <strong>SMS Link</strong>: Tranzak QR shown → guest scans on their phone.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>QR code issued</h4>
+            <p>A branded QR code is displayed. The guest photographs it. Staff can also print a receipt or send it via SMS.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Day Pass QR Validation</h3>
+      <p>Day pass QR codes are <strong>JWT-signed</strong> and expire at midnight on the day of issue. They can only be used <strong>once</strong> — after scanning at the gate, the pass is marked as <code>used</code> and cannot be re-scanned.</p>
+
+      <h3>Day Passes Admin Page</h3>
+      <p>The <strong>Day Passes</strong> page is accessible from the sidebar (between Payments and Classes). It provides a dedicated view of all walk-in guest traffic and day pass revenue — separate from but connected to the Payments page.</p>
+
+      <h4>Summary Cards</h4>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 20px;">
+        <div class="card" style="flex:1;min-width:130px;padding:12px 14px;">
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Revenue Today</div>
+          <div style="font-size:1.2rem;font-weight:900;color:var(--text);">₣ —</div>
+        </div>
+        <div class="card" style="flex:1;min-width:130px;padding:12px 14px;">
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Revenue This Month</div>
+          <div style="font-size:1.2rem;font-weight:900;color:var(--text);">₣ —</div>
+        </div>
+        <div class="card" style="flex:1;min-width:130px;padding:12px 14px;">
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Passes Today</div>
+          <div style="font-size:1.2rem;font-weight:900;color:var(--text);">—</div>
+        </div>
+        <div class="card" style="flex:1;min-width:130px;padding:12px 14px;">
+          <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Total Used</div>
+          <div style="font-size:1.2rem;font-weight:900;color:var(--text);">—</div>
+        </div>
+      </div>
+
+      <h4>Filters</h4>
+      <p>The list supports real-time search by guest name or phone, plus dropdown filters for:</p>
+      <ul style="color:var(--text-sub);margin:10px 0 16px 20px;line-height:2;">
+        <li><strong>Status</strong> — Active, Used, Pending, Expired</li>
+        <li><strong>Pass type</strong> — Standard, Peak, Off-peak, Student, Bundle ×10</li>
+      </ul>
+
+      <h4>Table Columns</h4>
+      <table>
+        <thead><tr><th>Column</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Guest</td><td>Name and phone number of the walk-in guest</td></tr>
+          <tr><td>Type</td><td>Pass type badge (Standard, Peak, etc.)</td></tr>
+          <tr><td>Method</td><td>Cash, Mobile Money, Card, etc.</td></tr>
+          <tr><td>Status</td><td>Active (valid, not yet scanned), Used (scanned at gate), Pending (payment in progress), Expired</td></tr>
+          <tr><td>Date</td><td>Issue date. If the pass was scanned, the check-in time is shown below the date.</td></tr>
+          <tr><td>Amount</td><td>Amount paid in XAF</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="callout-icon">✓</span>
+        <div><strong>Revenue is accounted for.</strong> Day pass income is included in the Payments page summary cards. You do not need to add them up manually — the platform combines subscription and day pass revenue automatically.</div>
+      </div>
+
+      <h3>Convert Walk-In to Member</h3>
+      <p>Any day pass guest can be converted to a full member directly from the Day Passes list. This links the guest record to a new member profile.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 11. CLASSES ══════════ -->
+    <section class="section" id="classes">
+      <div class="section-label">11 — Operations</div>
+      <h2 class="section-title">Classes &amp; Bookings</h2>
+      <p class="section-intro">
+        The classes module lets you schedule group fitness sessions, assign trainers, set capacity
+        limits, and allow members to book their spot — all from the admin panel or the member app.
+      </p>
+
+      <h3>Creating a Class</h3>
+      <p>From <strong>Classes → New class</strong>:</p>
+      <table>
+        <thead><tr><th>Field</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Name</td><td>e.g. "Morning HIIT", "Yoga Flow", "Boxing Fundamentals"</td></tr>
+          <tr><td>Description</td><td>Optional — shown in the member app.</td></tr>
+          <tr><td>Trainer</td><td>Assign a staff member as the class trainer.</td></tr>
+          <tr><td>Start / End time</td><td>Date and time. Duration is calculated automatically.</td></tr>
+          <tr><td>Room / Location</td><td>Which studio or zone the class is in.</td></tr>
+          <tr><td>Capacity</td><td>Maximum number of members who can book.</td></tr>
+          <tr><td>Recurrence</td><td>Set weekly or custom recurrence rules.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Member Bookings</h3>
+      <p>Members can browse upcoming classes and book a spot from the <strong>mobile app</strong>. The app shows available spots in real time. Once capacity is full, the class shows as full.</p>
+
+      <p>Staff can also manage bookings from the admin panel — view who has booked, cancel on behalf of a member, or mark attended.</p>
+
+      <h3>Kiosk Class Schedule</h3>
+      <p>The kiosk home screen includes a <strong>Today's Classes</strong> button. Guests and members can view the day's timetable, class names, trainers, times, and available spots — without needing the app.</p>
+
+      <h3>Analytics</h3>
+      <p>Class utilisation (bookings vs capacity), most popular classes, and trainer workload are available in the Analytics section.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 12. ANALYTICS ══════════ -->
+    <section class="section" id="analytics">
+      <div class="section-label">12 — Tools</div>
+      <h2 class="section-title">Analytics &amp; Reports</h2>
+      <p class="section-intro">
+        The analytics module gives you deep visibility into your gym's performance across
+        members, revenue, check-ins, and retention — with exportable data for external reporting.
+      </p>
+
+      <h3>Available Reports</h3>
+      <div class="card-grid">
+        <div class="card">
+          <h4>Revenue</h4>
+          <p>Monthly revenue, MRR (monthly recurring revenue), period-over-period comparison. Filterable by date range.</p>
+        </div>
+        <div class="card">
+          <h4>Member Growth</h4>
+          <p>New members per month, total active vs inactive, churn rate estimation.</p>
+        </div>
+        <div class="card">
+          <h4>Check-in Patterns</h4>
+          <p>Daily totals and hourly heatmap — see your busiest hours and quietest periods to plan staffing and classes.</p>
+        </div>
+        <div class="card">
+          <h4>Subscription Health</h4>
+          <p>Expiring soon, in grace, suspended, and overdue counts. Helps proactively reach out to at-risk members.</p>
+        </div>
+        <div class="card">
+          <h4>Day Pass Revenue</h4>
+          <p>Daily pass revenue, pass type breakdown, and conversion rate (day pass → full member).</p>
+        </div>
+        <div class="card">
+          <h4>Activity Feed</h4>
+          <p>Chronological log of all gym events: check-ins, new members, payments, class bookings.</p>
+        </div>
+      </div>
+
+      <h3>Data Export</h3>
+      <p>Export your full dataset at any time from <strong>Settings → Export</strong>. The export includes:</p>
+      <ul style="color:var(--text-sub);margin:12px 0 12px 20px;line-height:2;">
+        <li>All members (name, email, phone, status, join date)</li>
+        <li>All payments (amount, currency, provider, status, date)</li>
+        <li>All subscriptions (plan, status, start date, expiry)</li>
+        <li>All check-ins (member, method, timestamp)</li>
+        <li>All plans</li>
+      </ul>
+
+      <p>Payments can also be exported as CSV directly from the Payments page for use in accounting software.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 13. NOTIFICATIONS ══════════ -->
+    <section class="section" id="notifications">
+      <div class="section-label">13 — Tools</div>
+      <h2 class="section-title">Notifications</h2>
+      <p class="section-intro">
+        myfiti sends automated notifications to members at key lifecycle moments.
+        Notifications are delivered by email and, for members using the mobile app,
+        as in-app notifications.
+      </p>
+
+      <h3>Automated Email Notifications</h3>
+      <table>
+        <thead><tr><th>Trigger</th><th>Recipient</th><th>Content</th></tr></thead>
+        <tbody>
+          <tr><td>Subscription expires in 7 days</td><td>Member</td><td>Renewal reminder with plan details and renewal link.</td></tr>
+          <tr><td>Subscription enters grace period</td><td>Member</td><td>Grace period alert — days remaining, contact gym message.</td></tr>
+          <tr><td>Subscription suspended</td><td>Member</td><td>Suspension notice — gym contact details.</td></tr>
+          <tr><td>Payment completed</td><td>Member</td><td>Receipt with amount, plan, new expiry date, PDF attachment.</td></tr>
+          <tr><td>Payment reminder</td><td>Member</td><td>Sent manually by staff for overdue/pending payments.</td></tr>
+          <tr><td>Day pass issued</td><td>Guest (optional)</td><td>SMS receipt with pass details and reference number.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>In-App Notifications (Mobile)</h3>
+      <p>Members using the mobile app receive in-app notifications for subscription events. Unread notifications appear as a badge on the bell icon. Members can mark individual notifications as read or clear all at once.</p>
+
+      <h3>Push Notifications</h3>
+      <p>When a member logs into the mobile app, their device push token is registered. This enables future push notification delivery even when the app is closed.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 14. MOBILE APP ══════════ -->
+    <section class="section" id="mobile-app">
+      <div class="section-label">14 — Tools</div>
+      <h2 class="section-title">Member Mobile App</h2>
+      <p class="section-intro">
+        The myfiti member app gives your members a professional, branded experience on their phone.
+        It handles check-in, subscription management, class browsing, and payment — all in one place.
+      </p>
+
+      <h3>How Members Access the App</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Download myfiti</h4>
+            <p>Available on iOS and Android. Members search "myfiti" in the App Store or Google Play.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Enter your gym's code or scan QR</h4>
+            <p>Each gym has a unique slug (e.g. <code>korafit</code>). Members enter this to connect to your gym's workspace. You can also share a QR code that deep-links directly.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Log in with OTP or PIN</h4>
+            <p>Members log in using a one-time code sent to their email or phone, or a 4-digit PIN they set themselves after first login.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>App Screens</h3>
+      <table>
+        <thead><tr><th>Screen</th><th>What members can do</th></tr></thead>
+        <tbody>
+          <tr><td>Home</td><td>See their name, current plan status, days remaining, last visit, and check-in count.</td></tr>
+          <tr><td>Check-In (QR)</td><td>Display their personal QR code for the kiosk to scan. Branded with gym colors.</td></tr>
+          <tr><td>Membership</td><td>Full subscription details — plan name, price, expiry, auto-renew toggle, recent payments.</td></tr>
+          <tr><td>Renew</td><td>Browse available plans, choose one, enter their phone, and pay via MTN/Orange MoMo USSD push — entirely from the app.</td></tr>
+          <tr><td>Plans</td><td>View all available membership plans with prices and descriptions.</td></tr>
+          <tr><td>Schedule</td><td>See upcoming classes they have booked.</td></tr>
+          <tr><td>Notifications</td><td>In-app notification inbox with read/unread state.</td></tr>
+          <tr><td>Profile</td><td>Edit phone number, set or remove PIN, view emergency contact, manage device sessions, delete account.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>In-App Renewal Flow</h3>
+      <p>The complete mobile money renewal process is handled inside the app in 4 steps:</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content"><h4>Plan picker</h4><p>Member selects a plan from your gym's available plans. Price and duration shown on each card.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content"><h4>Phone entry</h4><p>Member enters their MTN or Orange MoMo number. The network (MTN/Orange) is detected from the prefix.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content"><h4>USSD waiting</h4><p>A USSD prompt is sent to their phone. App shows a pulsing animation and instructions while polling every 3 seconds for up to 2 minutes.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content"><h4>Result</h4><p>On success: green checkmark, subscription extended, "View Membership" button. On failure: red X with option to retry.</p></div>
+        </div>
+      </div>
+
+      <h3>Security</h3>
+      <ul style="color:var(--text-sub);margin:12px 0 12px 20px;line-height:2;">
+        <li>Authentication tokens stored in secure device storage (not localStorage).</li>
+        <li>Each device session is tracked. Members can revoke sessions from their profile.</li>
+        <li>PIN login available as a fast alternative to OTP after initial setup.</li>
+      </ul>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 15. STAFF ══════════ -->
+    <section class="section" id="staff">
+      <div class="section-label">15 — Tools</div>
+      <h2 class="section-title">Staff &amp; Roles</h2>
+      <p class="section-intro">
+        myfiti supports multiple staff members per gym with role-based access control.
+        Each role has a defined set of permissions — staff only see and do what their role allows.
+      </p>
+
+      <h3>Roles</h3>
+      <div class="roles">
+        <span class="role owner">Owner</span>
+        <span class="role admin">Admin</span>
+        <span class="role receptionist">Receptionist</span>
+      </div>
+      <table>
+        <thead><tr><th>Role</th><th>Permissions</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="role owner" style="display:inline;">Owner</span></td>
+            <td>Full access to everything. Only role that can access Settings, billing, and add/remove other staff. There is one Owner per gym.</td>
+          </tr>
+          <tr>
+            <td><span class="role admin" style="display:inline;">Admin</span></td>
+            <td>Full operational access — members, payments, check-ins, classes, day passes, analytics. Cannot access billing or gym settings.</td>
+          </tr>
+          <tr>
+            <td><span class="role receptionist" style="display:inline;">Receptionist</span></td>
+            <td>Day-to-day operations — add members, record payments, issue day passes, manage check-ins. Read-only for analytics.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Managing Staff</h3>
+      <p>Go to <strong>Settings → Staff</strong> to add or remove team members. When you add a staff member, they receive a welcome email with login instructions. Staff log in at <code>app.myfiti.app/login</code> using their email and password.</p>
+
+      <h3>Staff PIN (Kiosk)</h3>
+      <p>Each staff member has a separate PIN for unlocking staff mode on the kiosk. This PIN is different from their admin login password. Set or reset it from their staff profile.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 16. SETTINGS ══════════ -->
+    <section class="section" id="settings">
+      <div class="section-label">16 — Tools</div>
+      <h2 class="section-title">Settings &amp; Branding</h2>
+      <p class="section-intro">
+        All gym-wide configuration lives in the Settings section. Changes here affect
+        the kiosk, member app, email templates, and automated jobs.
+      </p>
+
+      <h3>Gym Profile</h3>
+      <table>
+        <thead><tr><th>Setting</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td>Gym name</td><td>Shown on the kiosk, email receipts, member app header.</td></tr>
+          <tr><td>Logo</td><td>Shown on the kiosk, email templates, and member app.</td></tr>
+          <tr><td>Primary color</td><td>Brand accent used on buttons, badges, QR finders, and the member app.</td></tr>
+          <tr><td>Currency</td><td>Used on all payment displays and receipts (e.g. XAF, USD, EUR).</td></tr>
+          <tr><td>Timezone</td><td>Used for subscription expiry calculations and check-in timestamps.</td></tr>
+          <tr><td>Country</td><td>Determines mobile number format defaults.</td></tr>
+          <tr><td>Grace period (days)</td><td>How many days after expiry a member can still access the gym.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Membership Plans</h3>
+      <p>Create, edit, and deactivate membership plans. Active plans appear in the member app's renewal flow and the kiosk plan picker for day pass pricing.</p>
+
+      <h3>Kiosk</h3>
+      <p>Generate and copy your gym's kiosk URL. This signed URL automatically loads your gym's branding and pricing on any device — no login required. Regenerate it if you need to revoke old kiosk sessions.</p>
+
+      <h3>Payment Provider (Tranzak)</h3>
+      <p>Configure your Tranzak App ID and App Key. You can also test the connection from this page to confirm credentials are valid before going live.</p>
+
+      <h3>Data Export</h3>
+      <p>Download a full JSON export of all your gym's data at any time. Useful for backups or migrating to another system.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 17. CRONS ══════════ -->
+    <section class="section" id="crons">
+      <div class="section-label">17 — Automation</div>
+      <h2 class="section-title">Automated Jobs</h2>
+      <p class="section-intro">
+        Two background processes run continuously on the server, handling all time-sensitive
+        operations automatically. You do not need to trigger anything manually.
+      </p>
+
+      <h3>Subscription Cron — Every Hour</h3>
+      <p>Runs every 60 minutes across all active gyms and transitions subscription statuses:</p>
+
+      <table>
+        <thead><tr><th>Job</th><th>Condition</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Expiry warning</td>
+            <td>Active subscription expires in ≤ 7 days</td>
+            <td>Status → <code>expiring_soon</code>. Renewal reminder email queued.</td>
+          </tr>
+          <tr>
+            <td>Grace period</td>
+            <td>Subscription past expiry, within grace window</td>
+            <td>Status → <code>grace_period</code>. Grace alert email queued. Member status updated.</td>
+          </tr>
+          <tr>
+            <td>Suspension</td>
+            <td>Grace period has also expired</td>
+            <td>Status → <code>suspended</code>. Suspension notice email queued. Member status updated. Kiosk access blocked.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">ℹ</span>
+        <div>If the cron shows <strong>"0 transitions"</strong> in the server log, that simply means no subscriptions crossed a threshold in that hour. This is normal.</div>
+      </div>
+
+      <h3>Billing Cron — Every 6 Hours</h3>
+      <p>Handles platform-level billing (the gym's subscription to myfiti) across 5 jobs:</p>
+
+      <table>
+        <thead><tr><th>Job</th><th>When</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>Invoice generation</td><td>1st of each month, once</td><td>Creates platform invoices for all paid-plan gyms. Sends PDF by email.</td></tr>
+          <tr><td>Overdue detection</td><td>Every tick</td><td>Flips pending invoices past their due date to <code>overdue</code>.</td></tr>
+          <tr><td>Trial lifecycle</td><td>Every tick</td><td>Sends 7-day trial warning. Transitions <code>trialing → past_due</code> on expiry.</td></tr>
+          <tr><td>Access lifecycle</td><td>Every tick</td><td>Active gym with overdue invoice past grace → <code>past_due</code>. Past-due > 7 days → <code>suspended</code>.</td></tr>
+          <tr><td>Renewal reminders</td><td>Every tick</td><td>Sends renewal reminder email 7 days before subscription_renewal_at.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Queue System (BullMQ)</h3>
+      <p>Email notifications are queued through <strong>BullMQ with Redis (Upstash)</strong>. If the queue is temporarily unavailable (e.g. DNS issue), status transitions in the database still happen — only the notification email is delayed. It will be retried automatically.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 18. BILLING ══════════ -->
+    <section class="section" id="billing">
+      <div class="section-label">18 — Automation</div>
+      <h2 class="section-title">Platform Billing</h2>
+      <p class="section-intro">
+        This section covers your gym's subscription to the myfiti platform itself —
+        the monthly invoice you receive from myfiti for using the service.
+      </p>
+
+      <h3>Plans</h3>
+      <table>
+        <thead><tr><th>Plan</th><th>Monthly Price</th><th>Best for</th></tr></thead>
+        <tbody>
+          <tr><td>Starter</td><td>Free</td><td>Getting started, small gyms.</td></tr>
+          <tr><td>Growth</td><td>9 900 XAF</td><td>Growing gyms with active member management needs.</td></tr>
+          <tr><td>Growth+</td><td>19 900 XAF</td><td>Multi-staff gyms with classes and analytics.</td></tr>
+          <tr><td>Enterprise</td><td>49 900 XAF</td><td>High-volume operations, custom needs, priority support.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Invoice Delivery</h3>
+      <p>Invoices are generated automatically on the <strong>1st of each month</strong> and emailed to the gym owner with a PDF attachment. Payment is due by the <strong>15th</strong>. After the due date, invoices transition to <code>overdue</code>.</p>
+
+      <h3>Trial Period</h3>
+      <p>Every new gym gets a <strong>14-day free trial</strong> with full access. 7 days before the trial ends, the owner receives a warning email. When the trial expires, the account transitions to <code>past_due</code> — a grace period applies before access is restricted.</p>
+
+      <h3>Superadmin Invoice Management</h3>
+      <p>myfiti administrators can view all platform invoices, manually generate invoices at any time, and mark invoices as paid from the superadmin panel.</p>
+
+      <hr class="divider" />
+
+      <div style="text-align:center;padding:40px 0 20px;">
+        <div style="display:inline-flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;">
+            <span style="color:#fff;font-weight:900;font-size:1rem;">M</span>
+          </div>
+          <span style="font-size:1.2rem;font-weight:900;color:var(--text);letter-spacing:-0.02em;">myfiti</span>
+        </div>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:6px;">
+          Questions? We're here to help.
+        </p>
+        <p style="color:var(--brand);font-size:0.9rem;font-weight:600;">
+          support@myfiti.app
+        </p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

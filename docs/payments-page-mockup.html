@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Payments Page — Layout Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f1f5f9;
+    font-size: 13px;
+    color: #0f172a;
+  }
+
+  /* ── Shell ── */
+  .shell { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: #fff;
+    border-right: 1px solid #e2e8f0;
+    padding: 20px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 9px;
+    padding: 4px 8px 18px;
+    border-bottom: 1px solid #f1f5f9; margin-bottom: 8px;
+  }
+  .sidebar-logo .dot {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: linear-gradient(135deg,#818cf8,#6366f1);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; color: #fff; font-size: 0.85rem;
+  }
+  .sidebar-logo span { font-weight: 800; font-size: 0.95rem; color: #0f172a; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: 8px;
+    font-size: 0.8rem; font-weight: 500; color: #64748b;
+    cursor: default;
+  }
+  .nav-item.active { background: #ede9fe; color: #6366f1; font-weight: 700; }
+  .nav-item .ico { font-size: 0.95rem; width: 18px; text-align: center; }
+  .nav-label {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #cbd5e1;
+    padding: 14px 10px 4px;
+  }
+
+  /* ── Main ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── Topbar ── */
+  .topbar {
+    background: #fff; border-bottom: 1px solid #e2e8f0;
+    padding: 14px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .topbar-left h1 { font-size: 1.1rem; font-weight: 800; color: #0f172a; }
+  .topbar-left p { font-size: 0.75rem; color: #94a3b8; margin-top: 1px; }
+  .topbar-right { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 8px; font-size: 0.78rem;
+    font-weight: 600; cursor: default; border: none;
+  }
+  .btn-primary { background: #6366f1; color: #fff; }
+  .btn-default { background: #fff; color: #374151; border: 1px solid #e2e8f0; }
+  .btn-ghost { background: transparent; color: #64748b; border: 1px solid #e2e8f0; }
+
+  /* ── Content ── */
+  .content { padding: 24px 28px; overflow-y: auto; flex: 1; }
+
+  /* ── Summary cards ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 14px; padding: 18px 20px;
+    position: relative; overflow: hidden;
+  }
+  .stat-card .label {
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #94a3b8; margin-bottom: 8px;
+  }
+  .stat-card .value {
+    font-size: 1.55rem; font-weight: 900; color: #0f172a;
+    letter-spacing: -0.03em; line-height: 1; margin-bottom: 10px;
+  }
+  .stat-card .split {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .split-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.65rem; font-weight: 600; color: #64748b;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 99px; padding: 2px 8px;
+  }
+  .split-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .stat-card .trend {
+    position: absolute; top: 16px; right: 16px;
+    font-size: 0.68rem; font-weight: 700;
+    padding: 3px 8px; border-radius: 99px;
+  }
+  .trend-up { background: #dcfce7; color: #16a34a; }
+  .trend-down { background: #fee2e2; color: #dc2626; }
+  .stat-card .accent-bar {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+  }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .tabs { display: flex; gap: 2px; background: #f1f5f9; border-radius: 10px; padding: 3px; }
+  .tab {
+    padding: 7px 16px; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600; color: #64748b;
+    cursor: default; display: flex; align-items: center; gap: 6px;
+  }
+  .tab.active { background: #fff; color: #6366f1; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .tab .count {
+    font-size: 0.65rem; font-weight: 800;
+    background: #ede9fe; color: #6366f1;
+    border-radius: 99px; padding: 1px 6px;
+  }
+  .tab.active-day .count { background: #fef3c7; color: #d97706; }
+  .tab-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* ── Filter bar ── */
+  .filter-bar {
+    display: flex; gap: 10px; align-items: center;
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 12px; padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 8px; padding: 7px 12px; flex: 1; max-width: 260px;
+  }
+  .search-box span { font-size: 0.75rem; color: #94a3b8; }
+  .filter-sep { width: 1px; height: 24px; background: #e2e8f0; }
+  .filter-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 8px; padding: 6px 12px;
+    font-size: 0.75rem; font-weight: 500; color: #374151;
+    cursor: default;
+  }
+  .filter-chip .chip-label { font-size: 0.65rem; color: #94a3b8; font-weight: 600; }
+  .filter-chip .chip-val { font-weight: 700; color: #0f172a; }
+  .filter-chip .caret { color: #94a3b8; font-size: 0.7rem; }
+
+  /* ── Table ── */
+  .table-wrap {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 14px; overflow: hidden;
+  }
+  .table-header {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 0.8fr 0.5fr;
+    padding: 10px 20px;
+    background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+  }
+  .table-header span {
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.09em;
+    text-transform: uppercase; color: #94a3b8;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .sort-ico { font-size: 0.55rem; color: #cbd5e1; }
+
+  .table-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 0.8fr 0.5fr;
+    padding: 13px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    align-items: center;
+    transition: background 0.1s;
+  }
+  .table-row:last-child { border-bottom: none; }
+  .table-row:hover { background: #fafafa; }
+
+  .member-cell { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .member-name { font-weight: 700; font-size: 0.82rem; color: #0f172a; }
+  .member-email { font-size: 0.7rem; color: #94a3b8; margin-top: 1px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 99px;
+    font-size: 0.68rem; font-weight: 700;
+  }
+  .badge-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .badge-green { background: #dcfce7; color: #16a34a; }
+  .badge-green .badge-dot { background: #16a34a; }
+  .badge-yellow { background: #fef3c7; color: #d97706; }
+  .badge-yellow .badge-dot { background: #d97706; }
+  .badge-red { background: #fee2e2; color: #dc2626; }
+  .badge-red .badge-dot { background: #dc2626; }
+  .badge-gray { background: #f1f5f9; color: #64748b; }
+  .badge-gray .badge-dot { background: #94a3b8; }
+  .badge-purple { background: #ede9fe; color: #7c3aed; }
+  .badge-purple .badge-dot { background: #7c3aed; }
+  .badge-amber { background: #fef3c7; color: #d97706; }
+  .badge-amber .badge-dot { background: #f59e0b; }
+  .badge-blue { background: #dbeafe; color: #1d4ed8; }
+  .badge-blue .badge-dot { background: #3b82f6; }
+
+  .amount { font-weight: 800; font-size: 0.88rem; color: #0f172a; }
+  .amount-sub { font-size: 0.68rem; color: #94a3b8; margin-top: 1px; }
+
+  .method-cell { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #374151; font-weight: 500; }
+  .method-ico { font-size: 0.9rem; }
+
+  .type-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 6px;
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.03em;
+  }
+  .type-sub { background: #ede9fe; color: #6366f1; }
+  .type-day { background: #fef3c7; color: #d97706; }
+
+  .date-cell { font-size: 0.78rem; color: #64748b; }
+  .date-time { font-size: 0.65rem; color: #94a3b8; margin-top: 1px; }
+
+  .action-btn {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: default; font-size: 0.9rem; color: #64748b;
+  }
+
+  /* ── Table footer ── */
+  .table-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 20px; border-top: 1px solid #f1f5f9;
+    background: #fafafa;
+  }
+  .table-footer span { font-size: 0.72rem; color: #94a3b8; }
+  .pagination { display: flex; gap: 4px; }
+  .page-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid #e2e8f0; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 600; color: #374151; cursor: default;
+  }
+  .page-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+  /* ── Day Passes tab preview ── */
+  .tab-daypass .table-header {
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.8fr 0.5fr;
+  }
+  .tab-daypass .table-row {
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 0.8fr 0.5fr;
+  }
+
+  /* ── Annotation labels ── */
+  .annotation {
+    position: absolute;
+    background: #0f172a;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+  }
+  .annotation::after {
+    content: '';
+    position: absolute;
+    border: 4px solid transparent;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.12em;
+    text-transform: uppercase; color: #94a3b8;
+    margin-bottom: 10px; margin-top: 28px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 10px; padding: 12px 16px;
+    margin-top: 28px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 7px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+  .legend-label { font-size: 0.72rem; font-weight: 600; color: #64748b; }
+
+  /* ── Tab switcher demo ── */
+  .demo-note {
+    background: #fffbeb; border: 1px solid #fde68a;
+    border-radius: 8px; padding: 8px 14px;
+    font-size: 0.72rem; font-weight: 600; color: #92400e;
+    margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="dot">M</div>
+      <span>myfiti</span>
+    </div>
+    <div class="nav-item"><span class="ico">📊</span> Dashboard</div>
+    <div class="nav-item"><span class="ico">👥</span> Members</div>
+    <div class="nav-item"><span class="ico">🎫</span> Subscriptions</div>
+    <div class="nav-item active"><span class="ico">💳</span> Payments</div>
+    <div class="nav-item"><span class="ico">🎟</span> Day Passes</div>
+    <div class="nav-item"><span class="ico">✅</span> Check-ins</div>
+    <div class="nav-item"><span class="ico">📅</span> Classes</div>
+    <div class="nav-label">Analytics</div>
+    <div class="nav-item"><span class="ico">📈</span> Analytics</div>
+    <div class="nav-label">Settings</div>
+    <div class="nav-item"><span class="ico">⚙️</span> Settings</div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <!-- ── Topbar ── -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Payments</h1>
+        <p>All income — subscriptions &amp; day passes</p>
+      </div>
+      <div class="topbar-right">
+        <div class="btn btn-ghost">⬇ Export CSV</div>
+        <div class="btn btn-ghost">📅 Date range</div>
+        <div class="btn btn-primary">+ Record payment</div>
+      </div>
+    </div>
+
+    <!-- ── Content ── -->
+    <div class="content">
+
+      <!-- ── SECTION A: Summary cards ── -->
+      <div class="section-label">A — Summary cards (combined subscription + day pass revenue)</div>
+
+      <div class="summary-grid">
+
+        <!-- Today -->
+        <div class="stat-card">
+          <div class="accent-bar" style="background:linear-gradient(90deg,#6366f1,#818cf8);"></div>
+          <div class="label">Today</div>
+          <div class="value">₣ 47 500</div>
+          <div class="split">
+            <span class="split-pill"><span class="split-dot" style="background:#6366f1;"></span>₣ 45 000 subs</span>
+            <span class="split-pill"><span class="split-dot" style="background:#f59e0b;"></span>₣ 2 500 day</span>
+          </div>
+          <span class="trend trend-up">+12%</span>
+        </div>
+
+        <!-- This month -->
+        <div class="stat-card">
+          <div class="accent-bar" style="background:linear-gradient(90deg,#10b981,#34d399);"></div>
+          <div class="label">This month</div>
+          <div class="value">₣ 892 000</div>
+          <div class="split">
+            <span class="split-pill"><span class="split-dot" style="background:#6366f1;"></span>₣ 860 000 subs</span>
+            <span class="split-pill"><span class="split-dot" style="background:#f59e0b;"></span>₣ 32 000 day</span>
+          </div>
+          <span class="trend trend-up">+8%</span>
+        </div>
+
+        <!-- Last month -->
+        <div class="stat-card">
+          <div class="accent-bar" style="background:linear-gradient(90deg,#64748b,#94a3b8);"></div>
+          <div class="label">Last month</div>
+          <div class="value">₣ 826 000</div>
+          <div class="split">
+            <span class="split-pill"><span class="split-dot" style="background:#6366f1;"></span>₣ 800 000 subs</span>
+            <span class="split-pill"><span class="split-dot" style="background:#f59e0b;"></span>₣ 26 000 day</span>
+          </div>
+        </div>
+
+        <!-- All time -->
+        <div class="stat-card">
+          <div class="accent-bar" style="background:linear-gradient(90deg,#f59e0b,#fbbf24);"></div>
+          <div class="label">All time</div>
+          <div class="value">₣ 9.2M</div>
+          <div class="split">
+            <span class="split-pill"><span class="split-dot" style="background:#6366f1;"></span>₣ 8.8M subs</span>
+            <span class="split-pill"><span class="split-dot" style="background:#f59e0b;"></span>₣ 0.4M day</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── SECTION B: Tab bar + filters ── -->
+      <div class="section-label">B — Tab switcher (controls which rows appear in table below)</div>
+
+      <div class="tab-bar">
+        <div class="tabs">
+          <div class="tab active">All <span class="count">247</span></div>
+          <div class="tab">Subscriptions <span class="count" style="background:#ede9fe;color:#6366f1;">198</span></div>
+          <div class="tab active-day" style="color:#64748b;">Day Passes <span class="count" style="background:#fef3c7;color:#d97706;">49</span></div>
+        </div>
+        <div class="tab-actions">
+          <div class="btn btn-ghost" style="font-size:0.72rem;">🔄 Refresh</div>
+        </div>
+      </div>
+
+      <!-- ── SECTION C: Filter bar ── -->
+      <div class="section-label">C — Filter bar</div>
+
+      <div class="filter-bar">
+        <div class="search-box">
+          <span>🔍</span>
+          <span>Search member or guest…</span>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-chip">
+          <span class="chip-label">STATUS</span>
+          <span class="chip-val">All</span>
+          <span class="caret">▾</span>
+        </div>
+        <div class="filter-chip">
+          <span class="chip-label">METHOD</span>
+          <span class="chip-val">All</span>
+          <span class="caret">▾</span>
+        </div>
+        <div class="filter-chip">
+          <span class="chip-label">TYPE</span>
+          <span class="chip-val">All</span>
+          <span class="caret">▾</span>
+        </div>
+        <div class="filter-chip">
+          <span class="chip-label">DATE</span>
+          <span class="chip-val">Aug 2025</span>
+          <span class="caret">▾</span>
+        </div>
+      </div>
+
+      <!-- ── SECTION D: Table (All tab active) ── -->
+      <div class="section-label">D — Table rows — "All" tab (subscriptions + day passes merged, newest first)</div>
+
+      <div class="demo-note">⚑ "All" tab is active — rows below mix subscription payments and day pass payments. The TYPE column distinguishes them.</div>
+
+      <div class="table-wrap">
+        <div class="table-header">
+          <span>Member / Guest <span class="sort-ico">⇅</span></span>
+          <span>Type</span>
+          <span>Amount <span class="sort-ico">⇅</span></span>
+          <span>Method</span>
+          <span>Status <span class="sort-ico">⇅</span></span>
+          <span>Date <span class="sort-ico">⇅</span></span>
+          <span></span>
+        </div>
+
+        <!-- Row 1 — subscription, completed -->
+        <div class="table-row">
+          <div class="member-cell">
+            <div class="avatar" style="background:#6366f1;">AM</div>
+            <div>
+              <div class="member-name">Amara Mbeki</div>
+              <div class="member-email">amara@example.com</div>
+            </div>
+          </div>
+          <div><span class="type-pill type-sub">Subscription</span></div>
+          <div>
+            <div class="amount">₣ 15 000</div>
+            <div class="amount-sub">Monthly Standard</div>
+          </div>
+          <div class="method-cell"><span class="method-ico">📱</span> MTN MoMo</div>
+          <div><span class="badge badge-green"><span class="badge-dot"></span>Paid</span></div>
+          <div>
+            <div class="date-cell">26 Aug 2025</div>
+            <div class="date-time">09:14 am</div>
+          </div>
+          <div><div class="action-btn">⋯</div></div>
+        </div>
+
+        <!-- Row 2 — day pass, completed -->
+        <div class="table-row" style="background:#fffdf7;">
+          <div class="member-cell">
+            <div class="avatar" style="background:#f59e0b;">JN</div>
+            <div>
+              <div class="member-name">Jean Nkeng</div>
+              <div class="member-email" style="color:#f59e0b;">Walk-in guest · +237 655 123 456</div>
+            </div>
+          </div>
+          <div><span class="type-pill type-day">Day Pass</span></div>
+          <div>
+            <div class="amount">₣ 2 000</div>
+            <div class="amount-sub">Standard pass</div>
+          </div>
+          <div class="method-cell"><span class="method-ico">💵</span> Cash</div>
+          <div><span class="badge badge-green"><span class="badge-dot"></span>Active</span></div>
+          <div>
+            <div class="date-cell">26 Aug 2025</div>
+            <div class="date-time">08:52 am</div>
+          </div>
+          <div><div class="action-btn">⋯</div></div>
+        </div>
+
+        <!-- Row 3 — subscription, pending -->
+        <div class="table-row">
+          <div class="member-cell">
+            <div class="avatar" style="background:#10b981;">CF</div>
+            <div>
+              <div class="member-name">Christelle Fopa</div>
+              <div class="member-email">cfopa@gmail.com</div>
+            </div>
+          </div>
+          <div><span class="type-pill type-sub">Subscription</span></div>
+          <div>
+            <div class="amount">₣ 15 000</div>
+            <div class="amount-sub">Monthly Standard</div>
+          </div>
+          <div class="method-cell"><span class="method-ico">📱</span> Orange Money</div>
+          <div><span class="badge badge-yellow"><span class="badge-dot"></span>Pending</span></div>
+          <div>
+            <div class="date-cell">25 Aug 2025</div>
+            <div class="date-time">03:40 pm</div>
+          </div>
+          <div><div class="action-btn">⋯</div></div>
+        </div>
+
+        <!-- Row 4 — day pass, used -->
+        <div class="table-row" style="background:#fffdf7;">
+          <div class="member-cell">
+            <div class="avatar" style="background:#f97316;">BT</div>
+            <div>
+              <div class="member-name">Boris Tchamba</div>
+              <div class="member-email" style="color:#f59e0b;">Walk-in guest · no phone</div>
+            </div>
+          </div>
+          <div><span class="type-pill type-day">Day Pass</span></div>
+          <div>
+            <div class="amount">₣ 2 500</div>
+            <div class="amount-sub">Peak hours pass</div>
+          </div>
+          <div class="method-cell"><span class="method-ico">📱</span> MTN MoMo</div>
+          <div><span class="badge badge-gray"><span class="badge-dot"></span>Used</span></div>
+          <div>
+            <div class="date-cell">25 Aug 2025</div>
+            <div class="date-time">06:05 am</div>
+          </div>
+          <div><div class="action-btn">⋯</div></div>
+        </div>
+
+        <!-- Row 5 — subscription, refunded -->
+        <div class="table-row">
+          <div class="member-cell">
+            <div class="avatar" style="background:#8b5cf6;">LK</div>
+            <div>
+              <div class="member-name">Lionel Kamga</div>
+              <div class="member-email">lkamga@mail.com</div>
+            </div>
+          </div>
+          <div><span class="type-pill type-sub">Subscription</span></div>
+          <div>
+            <div class="amount" style="color:#94a3b8;text-decoration:line-through;">₣ 25 000</div>
+            <div class="amount-sub">Quarterly Plan</div>
+          </div>
+          <div class="method-cell"><span class="method-ico">🏦</span> Bank transfer</div>
+          <div><span class="badge badge-gray"><span class="badge-dot"></span>Refunded</span></div>
+          <div>
+            <div class="date-cell">24 Aug 2025</div>
+            <div class="date-time">11:30 am</div>
+          </div>
+          <div><div class="action-btn">⋯</div></div>
+        </div>
+
+        <!-- Row 6 — day pass, pending (MoMo awaiting) -->
+        <div class="table-row" style="background:#fffdf7;">
+          <div class="member-cell">
+            <div class="avatar" style="background:#ec4899;">SM</div>
+            <div>
+              <div class="member-name">Sylvie Mvogo</div>
+              <div class="member-email" style="color:#f59e0b;">Walk-in guest · +237 699 887 766</div>
+            </div>
+          </div>
+          <div><span class="type-pill type-day">Day Pass</span></div>
+          <div>
+            <div class="amount">₣ 1 000</div>
+            <div class="amount-sub">Student pass</div>
+          </div>
+          <div class="method-cell"><span class="method-ico">📱</span> Orange Money</div>
+          <div><span class="badge badge-yellow"><span class="badge-dot"></span>Pending</span></div>
+          <div>
+            <div class="date-cell">24 Aug 2025</div>
+            <div class="date-time">10:02 am</div>
+          </div>
+          <div><div class="action-btn">⋯</div></div>
+        </div>
+
+        <!-- Table footer -->
+        <div class="table-footer">
+          <span>Showing 6 of 247 records</span>
+          <div class="pagination">
+            <div class="page-btn">‹</div>
+            <div class="page-btn active">1</div>
+            <div class="page-btn">2</div>
+            <div class="page-btn">3</div>
+            <div class="page-btn">…</div>
+            <div class="page-btn">25</div>
+            <div class="page-btn">›</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Day Passes tab preview ── -->
+      <div class="section-label" style="margin-top:40px;">E — Table when "Day Passes" tab is active (guest-focused columns)</div>
+
+      <div class="demo-note" style="background:#fffbeb;border-color:#fde68a;color:#92400e;">⚑ "Day Passes" tab — columns change: Guest name, Pass type, Amount, Method, Status, Date, Actions.</div>
+
+      <div class="table-wrap tab-daypass">
+        <div class="table-header" style="grid-template-columns: 2fr 1fr 0.8fr 1fr 1fr 0.9fr 0.5fr;">
+          <span>Guest name <span class="sort-ico">⇅</span></span>
+          <span>Pass type <span class="sort-ico">⇅</span></span>
+          <span>Amount <span class="sort-ico">⇅</span></span>
+          <span>Method</span>
+          <span>Status <span class="sort-ico">⇅</span></span>
+          <span>Date <span class="sort-ico">⇅</span></span>
+          <span></span>
+        </div>
+
+        <div class="table-row" style="grid-template-columns: 2fr 1fr 0.8fr 1fr 1fr 0.9fr 0.5fr;">
+          <div class="member-cell">
+            <div class="avatar" style="background:#f59e0b;">JN</div>
+            <div>
+              <div class="member-name">Jean Nkeng</div>
+              <div class="member-email">+237 655 123 456</div>
+            </div>
+          </div>
+          <div><span class="badge badge-blue"><span class="badge-dot"></span>Standard</span></div>
+          <div class="amount">₣ 2 000</div>
+          <div class="method-cell"><span class="method-ico">💵</span> Cash</div>
+          <div><span class="badge badge-green"><span class="badge-dot"></span>Active</span></div>
+          <div>
+            <div class="date-cell">26 Aug 2025</div>
+            <div class="date-time">08:52 am</div>
+          </div>
+          <div><div class="action-btn">⋯</div></div>
+        </div>
+
+        <div class="table-row" style="grid-template-columns: 2fr 1fr 0.8fr 1fr 1fr 0.9fr 0.5fr;">
+          <div class="member-cell">
+            <div class="avatar" style="background:#f97316;">BT</div>
+            <div>
+              <div class="member-name">Boris Tchamba</div>
+              <div class="member-email">No phone</div>
+            </div>
+          </div>
+          <div><span class="badge badge-amber"><span class="badge-dot"></span>Peak hours</span></div>
+          <div class="amount">₣ 2 500</div>
+          <div class="method-cell"><span class="method-ico">📱</span> MTN MoMo</div>
+          <div><span class="badge badge-gray"><span class="badge-dot"></span>Used</span></div>
+          <div>
+            <div class="date-cell">25 Aug 2025</div>
+            <div class="date-time">06:05 am</div>
+          </div>
+          <div><div class="action-btn">⋯</div></div>
+        </div>
+
+        <div class="table-row" style="grid-template-columns: 2fr 1fr 0.8fr 1fr 1fr 0.9fr 0.5fr;">
+          <div class="member-cell">
+            <div class="avatar" style="background:#ec4899;">SM</div>
+            <div>
+              <div class="member-name">Sylvie Mvogo</div>
+              <div class="member-email">+237 699 887 766</div>
+            </div>
+          </div>
+          <div><span class="badge badge-purple"><span class="badge-dot"></span>Student</span></div>
+          <div class="amount">₣ 1 000</div>
+          <div class="method-cell"><span class="method-ico">📱</span> Orange Money</div>
+          <div><span class="badge badge-yellow"><span class="badge-dot"></span>Pending</span></div>
+          <div>
+            <div class="date-cell">24 Aug 2025</div>
+            <div class="date-time">10:02 am</div>
+          </div>
+          <div><div class="action-btn">⋯</div></div>
+        </div>
+
+        <div class="table-footer">
+          <span>Showing 3 of 49 day pass records</span>
+          <div class="pagination">
+            <div class="page-btn active">1</div>
+            <div class="page-btn">2</div>
+            <div class="page-btn">3</div>
+            <div class="page-btn">›</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Legend ── -->
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#6366f1;"></div><span class="legend-label">Subscription payment — linked to a member</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;border-radius:2px;"></div><span class="legend-label">Day pass payment — walk-in guest, no membership</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#16a34a;"></div><span class="legend-label">Paid / Active — money received</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#d97706;"></div><span class="legend-label">Pending — USSD awaiting PIN or not yet confirmed</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#94a3b8;"></div><span class="legend-label">Used / Refunded — completed or reversed</span></div>
+      </div>
+
+      <!-- ── Row background note ── -->
+      <div style="margin-top:16px;padding:12px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;font-size:0.72rem;color:#64748b;line-height:1.8;">
+        <strong style="color:#0f172a;">Row background:</strong> white = subscription payment · warm yellow tint = day pass payment — makes it easy to visually distinguish them at a glance without reading the Type badge.
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+</body>
+</html>
