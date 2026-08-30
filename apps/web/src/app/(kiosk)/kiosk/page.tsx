@@ -3021,7 +3021,7 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
                       tenantSlugRef.current,
                     )
                     sounds.passIssued()
-                    setIssuedPass({ id: r.id, qr_token: r.qr_token, amount: r.amount, currency: r.currency })
+                    setIssuedPass({ id: r.id, qrToken: r.qr_token, amount: r.amount, currency: r.currency })
                     setShiftCount(c => c + 1)
                     setScreen('qr_issued')
                   } catch {
