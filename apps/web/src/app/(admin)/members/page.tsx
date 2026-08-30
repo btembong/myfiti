@@ -54,11 +54,12 @@ interface Member {
   notes: string | null
   joined_at: string
   created_at: string
-  sub_status: 'active' | 'expired' | 'cancelled' | null
+  sub_status: 'active' | 'expiring_soon' | 'expired' | 'cancelled' | 'frozen' | null
   expires_at: string | null
   plan_name: string | null
   plan_price: number | null
   plan_currency: string | null
+  pin: string | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
