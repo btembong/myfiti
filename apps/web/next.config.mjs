@@ -38,17 +38,28 @@ const config = {
     ]
   },
   webpack(webpackConfig) {
-    // Alias react directly to the CJS file, NOT to the package directory.
-    // The package directory has a "react-server" exports condition that Next.js's
-    // server webpack activates, resolving 'react' -> react.react-server.js (RSC-only,
-    // no useEffectEvent). Pointing to the CJS file bypasses exports conditions entirely
-    // and ensures client React (with our polyfills) is used for all app code.
+    // Alias 'react' (exact) to the CJS file directly, bypassing the package's
+    // "react-server" exports condition which Next.js server webpack activates
+    // (resolving 'react' → react.react-server.js, an RSC-only build with no hooks).
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
       'react$': path.join(NEXT_COMPILED, 'react/cjs/react.production.js'),
       'react/jsx-runtime': path.join(NEXT_COMPILED, 'react/jsx-runtime.js'),
       'react/jsx-dev-runtime': path.join(NEXT_COMPILED, 'react/jsx-dev-runtime.js'),
     }
+
+    // Append useEffectEvent + Activity to react.production.js at build time.
+    // The IIFE reads module.exports *after* React finishes setting it up,
+    // so the polyfill lands on the object that require('react') actually returns.
+    webpackConfig.module.rules.push({
+      test: /react\.production\.js$/,
+      include: /compiled[\\/]react[\\/]cjs/,
+      enforce: 'post',
+      use: [
+        { loader: path.resolve(__dirname, './scripts/react-compat-loader.js') },
+      ],
+    })
+
     return webpackConfig
   },
 }
