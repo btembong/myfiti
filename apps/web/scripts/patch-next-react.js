@@ -1,11 +1,10 @@
 /**
  * Patches React builds to add missing exports required by Mantine 9.x:
- *   - useEffectEvent: required by Mantine but missing from Next.js canary bundle
- *   - Activity: required by Mantine 9.x, only in React 19.2-canary; polyfilled here
- *     so webpack builds work with the stable react@19.1.0 workspace package.
+ *   - useEffectEvent: missing from Next.js canary bundle
+ *   - Activity: only in React 19.2-canary; polyfilled for webpack + react@19.1.0
  * Run automatically via postinstall.
  */
-const fs = require('fs')
+const fs   = require('fs')
 const path = require('path')
 
 const NEXT_ROOT  = path.resolve(__dirname, '../../../node_modules/next/dist')
@@ -45,12 +44,14 @@ const NEXT_BUNDLES = [
   },
 ]
 
-// ── Workspace react@19.1.0 — patch Activity + useEffectEvent for webpack ─────
-// Webpack resolves named ESM imports against the workspace react package.
-// Mantine 9.x imports Activity which doesn't exist in 19.1.0.
-// This polyfill is a no-op pass-through — same UI, no behavior change.
+// ── Workspace react — patch Activity + useEffectEvent for webpack ─────────────
+// Webpack resolves ESM named imports against the workspace react package.
+// Mantine 9.x imports Activity which only exists in React 19.2-canary.
+// We scan ALL files in react/cjs/ so we're not sensitive to exact filenames
+// (react.production.min.js vs react.production.js etc.).
+const SENTINEL = 'Polyfills added by patch-next-react.js'
 const WORKSPACE_POLYFILL = `
-// Polyfills added by patch-next-react.js for Mantine 9.x compat
+// ${SENTINEL}
 if (!exports.Activity) {
   exports.Activity = function Activity(props) { return props.children; };
 }
@@ -58,11 +59,6 @@ if (!exports.useEffectEvent) {
   exports.useEffectEvent = function useEffectEvent(fn) { return fn; };
 }
 `
-
-const WORKSPACE_REACT_FILES = [
-  path.join(REACT_ROOT, 'cjs', 'react.development.js'),
-  path.join(REACT_ROOT, 'cjs', 'react.production.min.js'),
-]
 
 let totalPatched = 0
 
@@ -78,14 +74,20 @@ for (const { file, marker, polyfill } of NEXT_BUNDLES) {
   totalPatched++
 }
 
-// Patch workspace React (append — version-agnostic)
-for (const file of WORKSPACE_REACT_FILES) {
-  if (!fs.existsSync(file)) continue
-  const src = fs.readFileSync(file, 'utf8')
-  if (src.includes('Polyfills added by patch-next-react.js')) continue
-  fs.writeFileSync(file, src + WORKSPACE_POLYFILL)
-  console.log(`  patched ${path.basename(file)}`)
-  totalPatched++
+// Patch ALL workspace react CJS files (scan directory — version-agnostic)
+const reactCjsDir = path.join(REACT_ROOT, 'cjs')
+if (fs.existsSync(reactCjsDir)) {
+  for (const filename of fs.readdirSync(reactCjsDir)) {
+    if (!filename.startsWith('react.') || !filename.endsWith('.js')) continue
+    const file = path.join(reactCjsDir, filename)
+    const src  = fs.readFileSync(file, 'utf8')
+    if (src.includes(SENTINEL)) continue  // already patched
+    fs.writeFileSync(file, src + WORKSPACE_POLYFILL)
+    console.log(`  patched workspace react: ${filename}`)
+    totalPatched++
+  }
+} else {
+  console.log(`  warning: workspace react/cjs not found at ${reactCjsDir}`)
 }
 
 if (totalPatched > 0) {
