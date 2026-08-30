@@ -45,19 +45,29 @@ const NEXT_BUNDLES = [
 ]
 
 // ── Workspace react — patch Activity + useEffectEvent for webpack ─────────────
-// Webpack resolves ESM named imports against the workspace react package.
-// Mantine 9.x imports Activity which only exists in React 19.2-canary.
-// We scan ALL files in react/cjs/ so we're not sensitive to exact filenames
-// (react.production.min.js vs react.production.js etc.).
-const SENTINEL = 'Polyfills added by patch-next-react.js'
-const WORKSPACE_POLYFILL = `
+//
+// Webpack detects CJS named exports via STATIC analysis — it only picks up
+// UNCONDITIONAL `exports.X =` or `module.exports.X =` patterns.
+// Our previous polyfill used `if (!exports.X)` which webpack ignores.
+// The new format uses `exports.X = exports.X || ...` which is detectable.
+//
+// We patch BOTH react/index.js (webpack's entry point) AND all cjs/*.js files.
+
+// Sentinel v2 — bump version to re-apply over old conditional polyfills
+const SENTINEL = 'myfiti-polyfill-v2'
+
+// Polyfill for react/index.js — uses module.exports (entry point form)
+const INDEX_POLYFILL = `
 // ${SENTINEL}
-if (!exports.Activity) {
-  exports.Activity = function Activity(props) { return props.children; };
-}
-if (!exports.useEffectEvent) {
-  exports.useEffectEvent = function useEffectEvent(fn) { return fn; };
-}
+module.exports.Activity = module.exports.Activity || function Activity(props) { return props.children; };
+module.exports.useEffectEvent = module.exports.useEffectEvent || function useEffectEvent(fn) { return fn; };
+`
+
+// Polyfill for cjs/*.js — uses exports (direct CJS form)
+const CJS_POLYFILL = `
+// ${SENTINEL}
+exports.Activity = exports.Activity || function Activity(props) { return props.children; };
+exports.useEffectEvent = exports.useEffectEvent || function useEffectEvent(fn) { return fn; };
 `
 
 let totalPatched = 0
@@ -74,15 +84,26 @@ for (const { file, marker, polyfill } of NEXT_BUNDLES) {
   totalPatched++
 }
 
-// Patch ALL workspace react CJS files (scan directory — version-agnostic)
+// Patch react/index.js — webpack's entry point for the react package
+const reactIndex = path.join(REACT_ROOT, 'index.js')
+if (fs.existsSync(reactIndex)) {
+  const src = fs.readFileSync(reactIndex, 'utf8')
+  if (!src.includes(SENTINEL)) {
+    fs.writeFileSync(reactIndex, src + INDEX_POLYFILL)
+    console.log('  patched workspace react: index.js')
+    totalPatched++
+  }
+}
+
+// Patch all CJS files (scan directory — covers any filename variant)
 const reactCjsDir = path.join(REACT_ROOT, 'cjs')
 if (fs.existsSync(reactCjsDir)) {
   for (const filename of fs.readdirSync(reactCjsDir)) {
     if (!filename.startsWith('react.') || !filename.endsWith('.js')) continue
     const file = path.join(reactCjsDir, filename)
     const src  = fs.readFileSync(file, 'utf8')
-    if (src.includes(SENTINEL)) continue  // already patched
-    fs.writeFileSync(file, src + WORKSPACE_POLYFILL)
+    if (src.includes(SENTINEL)) continue
+    fs.writeFileSync(file, src + CJS_POLYFILL)
     console.log(`  patched workspace react: ${filename}`)
     totalPatched++
   }
