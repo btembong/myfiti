@@ -1104,15 +1104,15 @@ superadminRouter.post('/billing/record-cash', requireSuperAuth, async (req, res)
 
     // Email invoice to gym owner
     await sendInvoiceNotificationEmail({
-      to:          { email: tenant.owner_email, name: tenant.owner_name },
-      gymName:     'myfiti',
-      amount,
-      currency:    curr,
-      description: planLabel,
-      receiptNo:   invNo,
+      to:            { email: tenant.owner_email, name: tenant.owner_name },
+      invoiceId:     existRows[0]?.id ?? invNo,
+      invoiceNumber: invNo,
+      planLabel,
+      amountXaf:     amount,
+      periodStart,
+      periodEnd,
+      dueDate:       new Date(paidAtIso),
       pdfBuffer,
-      pdfFileName: `${invNo}.pdf`,
-      isInvoice:   true,
     })
 
     res.json({ ok: true, invoice_number: invNo, renewal_at: renewalAt })
