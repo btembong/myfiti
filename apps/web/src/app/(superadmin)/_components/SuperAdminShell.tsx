@@ -306,7 +306,7 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
           {NAV_GROUPS.map((group, gi) => (
             <div key={group.group} style={{ marginBottom: 4 }}>
               {!collapsed && (
-                <p style={{ fontSize: 11, fontWeight: 500, color: T.navGroupLabel, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '10px 8px 4px', margin: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: T.navGroupLabel, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '10px 8px 4px', margin: 0 }}>
                   {gi > 0 ? group.group : ''}
                 </p>
               )}
@@ -326,7 +326,7 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
                         gap: collapsed ? 0 : 9,
                         padding: collapsed ? '9px 0' : '8px 10px',
                         borderRadius: 8, textDecoration: 'none',
-                        fontWeight: active ? 500 : 400, fontSize: 13,
+                        fontWeight: active ? 500 : 400, fontSize: 15,
                         background: active ? T.navActive : T.navInactive,
                         color: active ? T.navTextActive : T.navTextInactive,
                         transition: 'background 0.1s, color 0.1s',
@@ -343,7 +343,7 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
                           transition={{ type: 'spring', stiffness: 400, damping: 34 }}
                         />
                       )}
-                      <Icon size={16} style={{ flexShrink: 0 }} />
+                      <Icon size={20} style={{ flexShrink: 0 }} />
                       <AnimatePresence>
                         {!collapsed && (
                           <motion.span key="label"
@@ -375,8 +375,8 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
               <AnimatePresence>
                 {!collapsed && (
                   <motion.div key="user" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.1 }} style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: T.textPrimary, margin: 0, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Super Admin</p>
-                    <p style={{ fontSize: 11, color: T.textSecondary, margin: 0, lineHeight: 1.3 }}>Platform owner</p>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: T.textPrimary, margin: 0, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Super Admin</p>
+                    <p style={{ fontSize: 12, color: T.textSecondary, margin: 0, lineHeight: 1.3 }}>Platform owner</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -387,17 +387,17 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
                 <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={() => setUserOpen(false)} />
                 <div style={{ position: 'absolute', bottom: '100%', left: collapsed ? 8 : 6, right: 6, marginBottom: 6, background: '#0d0d0d', border: `1px solid ${T.border}`, borderRadius: 10, overflow: 'hidden', zIndex: 50, minWidth: 160 }}>
                   <Link href="/dashboard" onClick={() => setUserOpen(false)}
-                    style={{ display: 'block', padding: '10px 14px', fontSize: 13, color: '#555', textDecoration: 'none', outline: 'none' }}
+                    style={{ display: 'block', padding: '10px 14px', fontSize: 14, color: '#555', textDecoration: 'none', outline: 'none' }}
                     onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#141414')}
                     onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'none')}>
                     ← Admin portal
                   </Link>
                   <div style={{ height: 1, background: T.border }} />
                   <button onClick={() => { clearSuperToken(); setIsAuthed(false); setUserOpen(false) }}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', fontSize: 13, color: '#888', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', outline: 'none' }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', fontSize: 14, color: '#888', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', outline: 'none' }}
                     onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#141414')}
                     onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'none')}>
-                    <Logout01Icon size={14} /> Sign out
+                    <Logout01Icon size={16} /> Sign out
                   </button>
                 </div>
               </>
@@ -426,11 +426,11 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
         >
           {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            <span style={{ fontSize: 13, color: T.textMuted }}>Platform</span>
+            <span style={{ fontSize: 14, color: T.textMuted }}>Platform</span>
             {crumbs.map((c, i) => (
               <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 12, color: T.textMuted }}>/</span>
-                <span style={{ fontSize: 14, fontWeight: i === crumbs.length - 1 ? 500 : 400, color: i === crumbs.length - 1 ? T.textPrimary : '#3a3a3a' }}>
+                <span style={{ fontSize: 13, color: T.textMuted }}>/</span>
+                <span style={{ fontSize: 15, fontWeight: i === crumbs.length - 1 ? 500 : 400, color: i === crumbs.length - 1 ? T.textPrimary : '#3a3a3a' }}>
                   {c}
                 </span>
               </div>
@@ -441,9 +441,9 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             {/* Search */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', height: 34, background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 8, cursor: 'text', flex: '0 1 240px' }}>
-              <Search01Icon size={14} style={{ color: T.textSecondary, flexShrink: 0 }} />
-              <span style={{ fontSize: 13, color: T.textSecondary, flex: 1 }}>Search platform…</span>
-              <kbd style={{ fontSize: 11, fontWeight: 600, padding: '1px 5px', borderRadius: 4, background: '#141414', color: T.textSecondary, border: `1px solid ${T.border}`, fontFamily: 'inherit' }}>⌘K</kbd>
+              <Search01Icon size={16} style={{ color: T.textSecondary, flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: T.textSecondary, flex: 1 }}>Search platform…</span>
+              <kbd style={{ fontSize: 12, fontWeight: 600, padding: '1px 5px', borderRadius: 4, background: '#141414', color: T.textSecondary, border: `1px solid ${T.border}`, fontFamily: 'inherit' }}>⌘K</kbd>
             </div>
 
             {/* Notifications */}
@@ -463,8 +463,8 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
                   <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={() => setNotifOpen(false)} />
                   <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, width: 310, background: '#0a0a0a', border: `1px solid ${T.border}`, borderRadius: 12, overflow: 'hidden', zIndex: 50 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '13px 16px', borderBottom: `1px solid ${T.border}` }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: T.textPrimary }}>Notifications</span>
-                      {unread > 0 && <span style={{ fontSize: 11, fontWeight: 500, color: '#555', background: '#141414', border: `1px solid ${T.border}`, padding: '2px 7px', borderRadius: 4 }}>{unread} new</span>}
+                      <span style={{ fontSize: 14, fontWeight: 600, color: T.textPrimary }}>Notifications</span>
+                      {unread > 0 && <span style={{ fontSize: 12, fontWeight: 500, color: '#555', background: '#141414', border: `1px solid ${T.border}`, padding: '2px 7px', borderRadius: 4 }}>{unread} new</span>}
                     </div>
                     {notifications.map(n => {
                       const NIcon = NOTIF_ICON[n.type]
@@ -478,9 +478,9 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
                             <NIcon size={14} style={{ color: '#444' }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: 13, fontWeight: 500, color: T.textPrimary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</p>
-                            <p style={{ fontSize: 12, color: '#3a3a3a', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.desc}</p>
-                            <p style={{ fontSize: 11, color: T.textMuted, margin: '3px 0 0' }}>{n.time}</p>
+                            <p style={{ fontSize: 14, fontWeight: 500, color: T.textPrimary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</p>
+                            <p style={{ fontSize: 13, color: '#3a3a3a', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.desc}</p>
+                            <p style={{ fontSize: 12, color: T.textMuted, margin: '3px 0 0' }}>{n.time}</p>
                           </div>
                         </button>
                       )
