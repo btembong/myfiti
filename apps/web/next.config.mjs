@@ -13,6 +13,17 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 const NEXT_COMPILED = path.resolve(__dirname, '../../node_modules/next/dist/compiled')
 
 const config = {
+  transpilePackages: [
+    '@mantine/core',
+    '@mantine/hooks',
+    '@mantine/form',
+    '@mantine/dates',
+    '@mantine/notifications',
+    '@mantine/modals',
+    '@mantine/charts',
+    '@mantine/spotlight',
+    'mantine-datatable',
+  ],
   images: {
     remotePatterns: [
       { hostname: 'media.gymflow.app' },
