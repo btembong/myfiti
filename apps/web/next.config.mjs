@@ -45,7 +45,7 @@ const config = {
     // and ensures client React (with our polyfills) is used for all app code.
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
-      react: path.join(NEXT_COMPILED, 'react/cjs/react.production.js'),
+      'react$': path.join(NEXT_COMPILED, 'react/cjs/react.production.js'),
       'react/jsx-runtime': path.join(NEXT_COMPILED, 'react/jsx-runtime.js'),
       'react/jsx-dev-runtime': path.join(NEXT_COMPILED, 'react/jsx-dev-runtime.js'),
     }
