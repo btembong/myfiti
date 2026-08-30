@@ -38,10 +38,14 @@ const config = {
     ]
   },
   webpack(webpackConfig) {
+    // Alias react directly to the CJS file, NOT to the package directory.
+    // The package directory has a "react-server" exports condition that Next.js's
+    // server webpack activates, resolving 'react' -> react.react-server.js (RSC-only,
+    // no useEffectEvent). Pointing to the CJS file bypasses exports conditions entirely
+    // and ensures client React (with our polyfills) is used for all app code.
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
-      react: path.join(NEXT_COMPILED, 'react'),
-      'react-dom': path.join(NEXT_COMPILED, 'react-dom'),
+      react: path.join(NEXT_COMPILED, 'react/cjs/react.production.js'),
       'react/jsx-runtime': path.join(NEXT_COMPILED, 'react/jsx-runtime.js'),
       'react/jsx-dev-runtime': path.join(NEXT_COMPILED, 'react/jsx-dev-runtime.js'),
     }
