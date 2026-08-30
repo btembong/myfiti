@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -259,6 +259,14 @@ interface FormState {
 }
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#000' }} />}>
+      <SignupContent />
+    </Suspense>
+  )
+}
+
+function SignupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [step, setStep] = useState(1)
