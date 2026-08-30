@@ -42,6 +42,7 @@ interface Subscription {
   id: string; memberName: string; memberEmail: string
   plan: string; status: 'active' | 'expiring' | 'expired' | 'cancelled'
   startDate: string; endDate: string; amount: number; currency: string
+  duration_days: number
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -76,6 +77,55 @@ export default function SubscriptionsPage() {
   const [editForm, setEditForm] = useState({ name: '', price: 0, cycle: 'monthly' })
   const [editSaving, setEditSaving] = useState(false)
 
+  // Vouchers
+  interface Voucher { id: string; code: string; value: number; currency: string; status: string; batch_label: string | null; redeemed_by_name: string | null; redeemed_at: string | null; expires_at: string | null; created_at: string }
+  const [vouchers, setVouchers] = useState<Voucher[]>([])
+  const [voucherFilter, setVoucherFilter] = useState('active')
+  const [voucherTotal, setVoucherTotal] = useState(0)
+  const [genOpen, setGenOpen] = useState(false)
+  const [genForm, setGenForm] = useState({ count: 1, value: 5000, expires_at: '', batch_label: '' })
+  const [genSaving, setGenSaving] = useState(false)
+  const [generatedCodes, setGeneratedCodes] = useState<string[]>([])
+
+  function loadVouchers(status = voucherFilter) {
+    api.get<{ vouchers: Voucher[]; total: number }>(`/api/vouchers?status=${status}&limit=50`)
+      .then(d => { setVouchers(d.vouchers ?? []); setVoucherTotal(d.total ?? 0) })
+      .catch(catchToast('Failed to load vouchers'))
+  }
+
+  useEffect(() => { loadVouchers() }, [voucherFilter])
+
+  async function generateVouchers() {
+    if (!genForm.value || genForm.value <= 0) { showError('Enter a valid value'); return }
+    setGenSaving(true)
+    try {
+      const body: Record<string, unknown> = { count: genForm.count, value: genForm.value }
+      if (genForm.expires_at) body.expires_at = genForm.expires_at
+      if (genForm.batch_label.trim()) body.batch_label = genForm.batch_label.trim()
+      const res = await api.post<{ codes: string[] }>('/api/vouchers/generate', body)
+      setGeneratedCodes(res.codes ?? [])
+      loadVouchers('active')
+      showSuccess(`${res.codes?.length ?? 0} voucher code(s) generated`)
+    } catch (err) { showError(err instanceof Error ? err.message : 'Failed to generate vouchers') }
+    finally { setGenSaving(false) }
+  }
+
+  function cancelVoucher(v: Voucher) {
+    modals.openConfirmModal({
+      title: 'Cancel voucher',
+      children: `Cancel voucher ${v.code}? This cannot be undone.`,
+      labels: { confirm: 'Cancel voucher', cancel: 'Keep' },
+      confirmProps: { color: 'red' },
+      onConfirm: async () => {
+        try {
+          await api.patch(`/api/vouchers/${v.id}/cancel`, {})
+          showSuccess(`Voucher ${v.code} cancelled`)
+          loadVouchers()
+        } catch (err) { showError(err instanceof Error ? err.message : 'Failed to cancel voucher') }
+      },
+    })
+  }
+
   const fetchData = useCallback(() => {
     setLoading(true)
     Promise.all([
@@ -89,7 +139,7 @@ export default function SubscriptionsPage() {
         }))))
         .catch(catchToast('Failed to load plans')),
 
-      api.get<{ subscriptions: Array<{ id: string; member_name: string; member_email: string; plan_name: string; status: string; started_at: string; expires_at: string; price: string }> }>('/api/subscriptions')
+      api.get<{ subscriptions: Array<{ id: string; member_name: string; member_email: string; plan_name: string; status: string; started_at: string; expires_at: string; price: string; duration_days: number }> }>('/api/subscriptions')
         .then(d => setSubscriptions((d.subscriptions ?? []).map(s => ({
           id: s.id, memberName: s.member_name, memberEmail: s.member_email,
           plan: s.plan_name,
@@ -97,6 +147,7 @@ export default function SubscriptionsPage() {
           startDate: s.started_at?.slice(0, 10) ?? '',
           endDate: s.expires_at?.slice(0, 10) ?? '',
           amount: parseFloat(s.price ?? '0'), currency: 'XAF',
+          duration_days: s.duration_days ?? 30,
         }))))
         .catch(catchToast('Failed to load subscriptions')),
     ]).finally(() => setLoading(false))
@@ -171,11 +222,20 @@ export default function SubscriptionsPage() {
   }
 
   async function renewSubscription(sub: Subscription) {
+    const days = sub.duration_days ?? 30
     try {
-      await api.patch(`/api/subscriptions/${sub.id}`, { extends_days: 30 })
-      showSuccess(`${sub.memberName}'s subscription renewed (+30 days)`)
+      await api.patch(`/api/subscriptions/${sub.id}`, { extends_days: days })
+      showSuccess(`${sub.memberName}'s subscription renewed (+${days} days)`)
       fetchData()
     } catch (err) { showError(err instanceof Error ? err.message : 'Failed to renew subscription') }
+  }
+
+  // ── Stats computed from loaded data ───────────────────────────────────────
+  const stats = {
+    active:   subscriptions.filter(s => s.status === 'active').length,
+    expiring: subscriptions.filter(s => s.status === 'expiring').length,
+    expired:  subscriptions.filter(s => s.status === 'expired').length,
+    mrr:      subscriptions.filter(s => s.status === 'active' || s.status === 'expiring').reduce((sum, s) => sum + s.amount, 0),
   }
 
   const filtered = subscriptions.filter(s => {
@@ -211,8 +271,27 @@ export default function SubscriptionsPage() {
         </Group>
       </motion.div>
 
-      {/* Plans row */}
+      {/* Stats row */}
       <motion.div variants={fade} custom={1} initial="hidden" animate="show">
+        <Group gap="md" grow>
+          {[
+            { label: 'Active',        value: stats.active,   color: '#10b981', bg: '#f0fdf4', border: '#bbf7d0' },
+            { label: 'Expiring soon', value: stats.expiring, color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
+            { label: 'Expired',       value: stats.expired,  color: '#ef4444', bg: '#fef2f2', border: '#fca5a5' },
+            { label: 'MRR (active)',  value: `₣${stats.mrr.toLocaleString('fr-CM')}`, color: '#6366f1', bg: '#eef2ff', border: '#c7d2fe' },
+          ].map(stat => (
+            <Paper key={stat.label} radius="xl" p="md" style={{ background: stat.bg, border: `1px solid ${stat.border}` }}>
+              <Text style={{ fontSize: '1.5rem', fontWeight: 900, lineHeight: 1, color: stat.color, letterSpacing: '-0.02em' }}>
+                {stat.value}
+              </Text>
+              <Text size="xs" fw={600} style={{ color: stat.color, opacity: 0.8 }} mt={4}>{stat.label}</Text>
+            </Paper>
+          ))}
+        </Group>
+      </motion.div>
+
+      {/* Plans row */}
+      <motion.div variants={fade} custom={2} initial="hidden" animate="show">
         <Stack gap="sm">
           <Text size="xs" fw={700} tt="uppercase" style={{ letterSpacing: '0.1em', color: '#b0b7c3' }}>
             Membership plans
@@ -396,6 +475,130 @@ export default function SubscriptionsPage() {
           )}
         </Paper>
       </motion.div>
+
+      {/* Vouchers section */}
+      <motion.div variants={fade} custom={4} initial="hidden" animate="show">
+        <Stack gap="sm">
+          <Group justify="space-between" align="center">
+            <Stack gap={2}>
+              <Text size="xs" fw={700} tt="uppercase" style={{ letterSpacing: '0.1em', color: '#b0b7c3' }}>
+                Vouchers
+              </Text>
+              <Text size="xs" c="dimmed">Generate scratch-card codes members redeem to top up their wallet.</Text>
+            </Stack>
+            <Button size="xs" color="indigo" leftSection={<Coins01Icon size={13} />} onClick={() => { setGeneratedCodes([]); setGenOpen(true) }}>
+              Generate codes
+            </Button>
+          </Group>
+
+          <Paper radius="xl" withBorder style={{ borderColor: '#edeef4', overflow: 'hidden' }}>
+            <Group px="lg" py="sm" style={{ borderBottom: '1px solid #f4f5f9' }} gap="xs">
+              {['active', 'redeemed', 'cancelled'].map(s => (
+                <Button
+                  key={s} size="xs" radius="xl"
+                  variant={voucherFilter === s ? 'filled' : 'subtle'}
+                  color={voucherFilter === s ? 'indigo' : 'gray'}
+                  onClick={() => setVoucherFilter(s)}
+                  styles={{ root: { textTransform: 'capitalize' } }}
+                >
+                  {s}
+                </Button>
+              ))}
+              <Text size="xs" c="dimmed" ml="auto">{voucherTotal} total</Text>
+            </Group>
+
+            {vouchers.length === 0 ? (
+              <Flex direction="column" align="center" justify="center" gap="sm" py="xl">
+                <Coins01Icon size={28} style={{ color: '#e5e7eb' }} />
+                <Text size="sm" fw={500} style={{ color: '#9ca3af' }}>No {voucherFilter} vouchers</Text>
+              </Flex>
+            ) : (
+              <Stack gap={0}>
+                {vouchers.map(v => (
+                  <Group key={v.id} px="lg" py="sm" style={{ borderBottom: '1px solid #f9fafb' }} justify="space-between">
+                    <Group gap="sm">
+                      <Text size="sm" fw={700} style={{ fontFamily: 'monospace', color: '#111827', letterSpacing: '0.05em' }}>{v.code}</Text>
+                      {v.batch_label && <Badge size="xs" color="gray" variant="light">{v.batch_label}</Badge>}
+                    </Group>
+                    <Group gap="lg">
+                      <Text size="sm" fw={700} style={{ color: '#111827' }}>₣{Number(v.value).toLocaleString('fr-CM')}</Text>
+                      <Badge size="xs" color={v.status === 'active' ? 'green' : v.status === 'redeemed' ? 'blue' : 'red'} variant="light">
+                        {v.status}
+                      </Badge>
+                      {v.redeemed_by_name && (
+                        <Text size="xs" c="dimmed">by {v.redeemed_by_name}</Text>
+                      )}
+                      {v.expires_at && (
+                        <Text size="xs" c="dimmed">exp {new Date(v.expires_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}</Text>
+                      )}
+                      {v.status === 'active' && (
+                        <ActionIcon size="xs" variant="subtle" color="red" onClick={() => cancelVoucher(v)}>
+                          <Cancel01Icon size={12} />
+                        </ActionIcon>
+                      )}
+                    </Group>
+                  </Group>
+                ))}
+              </Stack>
+            )}
+          </Paper>
+        </Stack>
+      </motion.div>
+
+      {/* Generate vouchers modal */}
+      <Modal
+        opened={genOpen} onClose={() => setGenOpen(false)}
+        title={<Text fw={700} size="sm">Generate voucher codes</Text>}
+        radius="xl" size="sm"
+      >
+        <Stack gap="md">
+          {generatedCodes.length > 0 ? (
+            <>
+              <Text size="sm" fw={600} style={{ color: '#10b981' }}>
+                {generatedCodes.length} code{generatedCodes.length > 1 ? 's' : ''} generated — print or share these:
+              </Text>
+              <Paper radius="md" p="md" style={{ background: '#f9fafb', border: '1px solid #edeef4' }}>
+                <Stack gap={4}>
+                  {generatedCodes.map(c => (
+                    <Text key={c} size="sm" fw={700} style={{ fontFamily: 'monospace', letterSpacing: '0.08em', color: '#111827' }}>{c}</Text>
+                  ))}
+                </Stack>
+              </Paper>
+              <Button fullWidth variant="default" size="sm" onClick={() => { setGenOpen(false); setGeneratedCodes([]) }}>Done</Button>
+            </>
+          ) : (
+            <>
+              <NumberInput
+                label="Number of codes" min={1} max={200}
+                value={genForm.count} onChange={v => setGenForm(f => ({ ...f, count: Number(v) }))}
+                radius="md" size="sm"
+              />
+              <NumberInput
+                label="Value per code (XAF)" min={100}
+                value={genForm.value} onChange={v => setGenForm(f => ({ ...f, value: Number(v) }))}
+                leftSection={<Text size="xs" c="dimmed">₣</Text>}
+                radius="md" size="sm"
+              />
+              <TextInput
+                label="Batch label (optional)" placeholder="August promo"
+                value={genForm.batch_label} onChange={e => setGenForm(f => ({ ...f, batch_label: e.target.value }))}
+                radius="md" size="sm"
+              />
+              <TextInput
+                label="Expires on (optional)" type="date"
+                value={genForm.expires_at} onChange={e => setGenForm(f => ({ ...f, expires_at: e.target.value }))}
+                radius="md" size="sm"
+              />
+              <Group justify="flex-end" mt="xs">
+                <Button variant="default" size="sm" onClick={() => setGenOpen(false)}>Cancel</Button>
+                <Button size="sm" color="indigo" loading={genSaving} onClick={generateVouchers}>
+                  Generate
+                </Button>
+              </Group>
+            </>
+          )}
+        </Stack>
+      </Modal>
 
       {/* Create plan modal */}
       <Modal

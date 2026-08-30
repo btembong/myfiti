@@ -18,13 +18,16 @@ import {
   Notebook01Icon,
   MessageNotification01Icon,
   Alert01Icon,
+  Megaphone01Icon,
+  Clock01Icon,
+  SmartPhone01Icon,
 } from 'hugeicons-react'
 import { api } from '@/lib/api'
 import { notifications } from '@mantine/notifications'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Channel = 'in_app' | 'email'
+type Channel = 'in_app' | 'email' | 'push'
 
 interface ApiConversation {
   member_id: string
@@ -62,14 +65,15 @@ interface ApiMemberDetail {
 const CHANNEL_META: Record<Channel, { icon: React.ElementType; color: string; label: string; bg: string }> = {
   in_app: { icon: Notification01Icon, color: '#6366f1', label: 'In-app', bg: '#eef2ff' },
   email:  { icon: Mail01Icon,         color: '#0d9488', label: 'Email',  bg: '#f0fdfa' },
+  push:   { icon: SmartPhone01Icon,   color: '#ea580c', label: 'Push',   bg: '#fff7ed' },
 }
 
 const MEMBER_STATUS_COLOR: Record<string, string> = {
   active: 'green', expired: 'red', expiring_soon: 'yellow', grace_period: 'orange', inactive: 'gray',
 }
 
-function initials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
+function initials(name: string | null | undefined) {
+  return (name ?? '?').split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?'
 }
 
 function formatDate(iso: string | null) {
@@ -116,6 +120,13 @@ export default function MessagingPage() {
   const [sending, setSending]               = useState(false)
   const [loadingThread, setLoadingThread]   = useState(false)
   const [composeOpen, setComposeOpen]       = useState(false)
+  const [broadcastOpen, setBroadcastOpen]   = useState(false)
+  const [bTitle, setBTitle]                 = useState('')
+  const [bBody, setBBody]                   = useState('')
+  const [bSegment, setBSegment]             = useState('active')
+  const [audienceCount, setAudienceCount]   = useState<number | null>(null)
+  const [recentBroadcasts, setRecentBroadcasts] = useState<Array<{ title: string; body: string; sent_at: string; sent_count: string }>>([])
+  const [broadcasting, setBroadcasting]     = useState(false)
   const threadRef = useRef<HTMLDivElement>(null)
 
   // ── Fetch conversation list ──────────────────────────────────────────────
@@ -158,6 +169,54 @@ export default function MessagingPage() {
       threadRef.current.scrollTop = threadRef.current.scrollHeight
     }
   }, [messages, selectedId])
+
+  // ── Load recent broadcasts ───────────────────────────────────────────────
+
+  useEffect(() => {
+    api.get<{ announcements: Array<{ title: string; body: string; sent_at: string; sent_count: string }> }>('/api/announcements')
+      .then(d => setRecentBroadcasts(d.announcements ?? []))
+      .catch(() => {})
+  }, [])
+
+  // ── Load audience count when segment changes ─────────────────────────────
+
+  useEffect(() => {
+    if (!broadcastOpen) return
+    setAudienceCount(null)
+    api.get<{ count: number }>(`/api/announcements/audience-count?segment=${bSegment}`)
+      .then(d => setAudienceCount(d.count))
+      .catch(() => {})
+  }, [broadcastOpen, bSegment])
+
+  // ── Broadcast announcement ───────────────────────────────────────────────
+
+  async function sendBroadcast() {
+    if (!bTitle.trim() || !bBody.trim()) return
+    setBroadcasting(true)
+    try {
+      const res = await api.post<{ ok: boolean; sent: number; pushed: number }>(
+        '/api/announcements',
+        { title: bTitle.trim(), body: bBody.trim(), segment: bSegment },
+      )
+      setBroadcastOpen(false)
+      setBTitle('')
+      setBBody('')
+      setBSegment('active')
+      notifications.show({
+        color: 'green',
+        title: 'Announcement sent',
+        message: `Delivered to ${res.sent} members · ${res.pushed} push notifications sent`,
+      })
+      // Refresh recent broadcasts
+      api.get<{ announcements: Array<{ title: string; body: string; sent_at: string; sent_count: string }> }>('/api/announcements')
+        .then(d => setRecentBroadcasts(d.announcements ?? []))
+        .catch(() => {})
+    } catch {
+      notifications.show({ color: 'red', message: 'Failed to send announcement.' })
+    } finally {
+      setBroadcasting(false)
+    }
+  }
 
   // ── Send message ─────────────────────────────────────────────────────────
 
@@ -211,11 +270,18 @@ export default function MessagingPage() {
                 <Badge size="xs" color="red" variant="filled" circle>{totalUnread}</Badge>
               )}
             </Group>
-            <Tooltip label="New message" fz="xs" withArrow>
-              <ActionIcon size="sm" variant="light" color="indigo" radius="md" onClick={() => setComposeOpen(true)}>
-                <PencilEdit01Icon size={13} />
-              </ActionIcon>
-            </Tooltip>
+            <Group gap={4}>
+              <Tooltip label="Broadcast to all members" fz="xs" withArrow>
+                <ActionIcon size="sm" variant="light" color="orange" radius="md" onClick={() => setBroadcastOpen(true)}>
+                  <Megaphone01Icon size={13} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="New message" fz="xs" withArrow>
+                <ActionIcon size="sm" variant="light" color="indigo" radius="md" onClick={() => setComposeOpen(true)}>
+                  <PencilEdit01Icon size={13} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
           </Group>
 
           <TextInput
@@ -242,6 +308,28 @@ export default function MessagingPage() {
             ))}
           </Group>
         </Box>
+
+        {/* Recent broadcasts strip */}
+        {recentBroadcasts.length > 0 && (
+          <Box px="md" py="xs" style={{ borderBottom: '1px solid #edeef4', background: '#fffbf5' }}>
+            <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.08em' }} mb={6}>
+              Recent broadcasts
+            </Text>
+            <Stack gap={4}>
+              {recentBroadcasts.slice(0, 3).map((b, i) => (
+                <Box key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <Clock01Icon size={11} style={{ color: '#d97706', flexShrink: 0, marginTop: 2 }} />
+                  <Box style={{ flex: 1, minWidth: 0 }}>
+                    <Text size="xs" fw={600} style={{ color: '#374151' }} truncate>{b.title}</Text>
+                    <Text size="xs" c="dimmed" style={{ fontSize: 10 }}>
+                      {formatDate(b.sent_at)} · {b.sent_count} recipients
+                    </Text>
+                  </Box>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
+        )}
 
         <ScrollArea style={{ flex: 1 }} scrollbarSize={4}>
           <Stack gap={0}>
@@ -431,7 +519,8 @@ export default function MessagingPage() {
                     onChange={v => setReplyChannel((v as Channel) ?? 'in_app')}
                     data={[
                       { value: 'in_app', label: 'In-app' },
-                      { value: 'email',  label: 'Email' },
+                      { value: 'email',  label: 'Email'  },
+                      { value: 'push',   label: 'Push notification' },
                     ]}
                     styles={{ input: { background: '#eef2ff', border: 'none', color: '#4f46e5', fontWeight: 600 } }}
                     w={100}
@@ -526,6 +615,79 @@ export default function MessagingPage() {
           </Box>
         </Box>
       )}
+
+      {/* ── Broadcast Modal ── */}
+      <Modal
+        opened={broadcastOpen}
+        onClose={() => setBroadcastOpen(false)}
+        title={
+          <Group gap="xs">
+            <Megaphone01Icon size={16} style={{ color: '#ea580c' }} />
+            <Text fw={700} size="sm">Broadcast announcement</Text>
+          </Group>
+        }
+        radius="lg"
+        size="md"
+      >
+        <Stack gap="sm">
+          <Select
+            label="Audience"
+            value={bSegment}
+            onChange={v => setBSegment(v ?? 'active')}
+            data={[
+              { value: 'active',   label: 'Active members (active + expiring + grace)' },
+              { value: 'expiring', label: 'Expiring soon only' },
+              { value: 'expired',  label: 'Expired / inactive members' },
+              { value: 'all',      label: 'All members' },
+            ]}
+            size="sm" radius="md"
+          />
+          {/* Audience count badge */}
+          <Box style={{ background: '#f0fdf4', borderRadius: 10, padding: '8px 14px', border: '1px solid #bbf7d0' }}>
+            <Text size="xs" style={{ color: '#166534' }}>
+              {audienceCount === null
+                ? 'Counting audience…'
+                : `This will be sent to ${audienceCount} member${audienceCount !== 1 ? 's' : ''}.`}
+            </Text>
+          </Box>
+          <TextInput
+            label="Title"
+            placeholder="e.g. Gym closed Saturday"
+            value={bTitle}
+            onChange={e => setBTitle(e.target.value)}
+            size="sm"
+            radius="md"
+          />
+          <Textarea
+            label="Message"
+            placeholder="Write your announcement…"
+            value={bBody}
+            onChange={e => setBBody(e.target.value)}
+            size="sm"
+            radius="md"
+            autosize
+            minRows={3}
+            maxRows={8}
+          />
+          <Group justify="flex-end" mt="xs">
+            <ActionIcon
+              size="lg"
+              radius="md"
+              color="orange"
+              variant={bTitle.trim() && bBody.trim() ? 'filled' : 'light'}
+              onClick={sendBroadcast}
+              loading={broadcasting}
+              disabled={!bTitle.trim() || !bBody.trim()}
+              style={{ width: 'auto', paddingInline: 16 }}
+            >
+              <Group gap={6}>
+                <Megaphone01Icon size={14} />
+                <Text size="xs" fw={700}>Send to all</Text>
+              </Group>
+            </ActionIcon>
+          </Group>
+        </Stack>
+      </Modal>
 
       {/* ── New Message Modal ── */}
       <Modal

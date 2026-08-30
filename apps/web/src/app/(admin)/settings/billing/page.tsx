@@ -87,25 +87,47 @@ export default function BillingPage() {
   const [paying, setPaying] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  // Iframe payment modal
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
+
   // Plan change modal
   const [changePlanKey, setChangePlanKey] = useState<string | null>(null)
   const [changing, setChanging] = useState(false)
 
-  useEffect(() => {
+  function reloadBilling() {
     Promise.all([
       api.get<BillingInfo>('/api/settings'),
       api.get<{ invoices: PlatformInvoice[] }>('/api/settings/billing/invoices'),
     ]).then(([b, inv]) => {
       setBilling(b)
       setInvoices(inv.invoices)
-    }).catch(() => {}).finally(() => setLoading(false))
+    }).catch(() => {})
+  }
+
+  useEffect(() => {
+    setLoading(true)
+    reloadBilling()
+    setLoading(false)
+  }, [])
+
+  // Listen for iframe postMessage when payment completes
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (e.data === 'payment_complete') {
+        setPaymentUrl(null)
+        notifications.show({ color: 'green', message: 'Payment received! Your billing status will update shortly.' })
+        reloadBilling()
+      }
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
   }, [])
 
   async function handlePayNow() {
     setPaying(true)
     try {
       const res = await api.post<{ payment_url: string }>('/api/settings/billing/initiate-payment', {})
-      if (res.payment_url) window.location.href = res.payment_url
+      if (res.payment_url) setPaymentUrl(res.payment_url)
     } catch {
       notifications.show({ color: 'red', message: 'Failed to initiate payment. Please try again.' })
     } finally {
@@ -438,6 +460,26 @@ export default function BillingPage() {
           )}
         </Paper>
       </motion.div>
+
+      {/* Iframe payment modal */}
+      <Modal
+        opened={paymentUrl !== null}
+        onClose={() => setPaymentUrl(null)}
+        title={<Text fw={700} size="sm">Complete payment</Text>}
+        radius="xl"
+        size="xl"
+      >
+        <Text size="xs" c="dimmed" mb="sm">
+          Complete your Mobile Money payment below. This window will close automatically once payment is confirmed.
+        </Text>
+        {paymentUrl && (
+          <iframe
+            src={paymentUrl}
+            style={{ width: '100%', height: 560, border: 'none', borderRadius: 10 }}
+            title="Tranzak payment"
+          />
+        )}
+      </Modal>
 
       {/* Plan change confirmation modal */}
       <Modal

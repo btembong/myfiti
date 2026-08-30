@@ -43,8 +43,13 @@ export async function provisionTenantSchema(schemaName: string) {
     `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS pin TEXT`,
     `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS pin_hash TEXT`,
     `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS emergency_contact_name TEXT`,
+    // Backfill referral_code for existing members who have none
+    `UPDATE "${schemaName}".members
+     SET referral_code = UPPER(REGEXP_REPLACE(name, '[^a-zA-Z]', '', 'g') || FLOOR(1000 + RANDOM() * 9000)::TEXT)
+     WHERE referral_code IS NULL`,
     `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS emergency_contact_phone TEXT`,
     `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS emergency_contact_relation TEXT`,
+    `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS push_token TEXT`,
 
     `CREATE TABLE IF NOT EXISTS "${schemaName}".membership_plans (
       id            TEXT PRIMARY KEY,
@@ -245,6 +250,48 @@ export async function provisionTenantSchema(schemaName: string) {
       created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`,
 
+    // ── Wallet ───────────────────────────────────────────────────────────────
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".wallet_accounts (
+      id         TEXT PRIMARY KEY,
+      member_id  TEXT NOT NULL UNIQUE REFERENCES "${schemaName}".members(id) ON DELETE CASCADE,
+      balance    DECIMAL(12,2) NOT NULL DEFAULT 0,
+      currency   TEXT NOT NULL DEFAULT 'XAF',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".wallet_transactions (
+      id          TEXT PRIMARY KEY,
+      member_id   TEXT NOT NULL REFERENCES "${schemaName}".members(id) ON DELETE CASCADE,
+      type        TEXT NOT NULL,
+      amount      DECIMAL(12,2) NOT NULL,
+      description TEXT NOT NULL,
+      tranzak_ref TEXT,
+      status      TEXT NOT NULL DEFAULT 'pending',
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+
+    `CREATE INDEX IF NOT EXISTS idx_wallet_tx_member_id ON "${schemaName}".wallet_transactions(member_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_wallet_tx_created_at ON "${schemaName}".wallet_transactions(created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_wallet_tx_tranzak_ref ON "${schemaName}".wallet_transactions(tranzak_ref) WHERE tranzak_ref IS NOT NULL`,
+
+    // ── Vouchers ─────────────────────────────────────────────────────────────
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".vouchers (
+      id            TEXT PRIMARY KEY,
+      code          TEXT NOT NULL UNIQUE,
+      value         DECIMAL(12,2) NOT NULL,
+      currency      TEXT NOT NULL DEFAULT 'XAF',
+      status        TEXT NOT NULL DEFAULT 'active',
+      redeemed_by   TEXT REFERENCES "${schemaName}".members(id) ON DELETE SET NULL,
+      redeemed_at   TIMESTAMPTZ,
+      expires_at    TIMESTAMPTZ,
+      batch_label   TEXT,
+      created_by    TEXT,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_vouchers_code   ON "${schemaName}".vouchers(code)`,
+    `CREATE INDEX IF NOT EXISTS idx_vouchers_status ON "${schemaName}".vouchers(status)`,
+
     // Indexes
     `CREATE INDEX IF NOT EXISTS idx_member_sessions_member_id ON "${schemaName}".member_sessions(member_id)`,
     `CREATE INDEX IF NOT EXISTS idx_members_status ON "${schemaName}".members(status)`,
@@ -279,6 +326,26 @@ export async function provisionTenantSchema(schemaName: string) {
     `CREATE INDEX IF NOT EXISTS idx_sub_events_subscription_id ON "${schemaName}".subscription_events(subscription_id)`,
     `CREATE INDEX IF NOT EXISTS idx_sub_events_member_id ON "${schemaName}".subscription_events(member_id)`,
     `CREATE INDEX IF NOT EXISTS idx_sub_events_created_at ON "${schemaName}".subscription_events(created_at DESC)`,
+
+    // ── Financial audit log (PCI DSS Req 10) ─────────────────────────────────
+    `CREATE TABLE IF NOT EXISTS "${schemaName}".financial_audit_log (
+      id         TEXT PRIMARY KEY,
+      actor_id   TEXT NOT NULL,
+      actor_ip   TEXT,
+      action     TEXT NOT NULL,
+      amount     DECIMAL(12,2),
+      currency   TEXT,
+      reference  TEXT,
+      metadata   JSONB,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_fin_audit_actor    ON "${schemaName}".financial_audit_log(actor_id, created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_fin_audit_action   ON "${schemaName}".financial_audit_log(action, created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_fin_audit_ref      ON "${schemaName}".financial_audit_log(reference) WHERE reference IS NOT NULL`,
+
+    // ── Idempotent additions for existing tenant schemas ──────────────────────
+    // wallet_transactions: context columns for secure webhook resolution (H4)
+    `ALTER TABLE "${schemaName}".wallet_transactions ADD COLUMN IF NOT EXISTS expected_amount DECIMAL(12,2)`,
   ]
 
   for (const stmt of stmts) {
@@ -289,6 +356,28 @@ export async function provisionTenantSchema(schemaName: string) {
       // This is safe because all statements are idempotent (IF NOT EXISTS / IF EXISTS).
       const msg = err instanceof Error ? err.message : String(err)
       console.warn(`[provision] stmt skipped (${msg.slice(0, 120)}):`, stmt.slice(0, 80))
+    }
+  }
+}
+
+/**
+ * Idempotent migrations for the global (public) schema.
+ * Adds columns/indexes that aren't in the original Drizzle schema definition
+ * but are required for security fixes.
+ */
+export async function migrateGlobalSchema() {
+  const stmts = [
+    // C2: unique transaction_ref on webhook_events for atomic idempotency
+    `ALTER TABLE webhook_events ADD COLUMN IF NOT EXISTS transaction_ref TEXT`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS webhook_events_txref_uidx ON webhook_events(transaction_ref)
+     WHERE transaction_ref IS NOT NULL`,
+  ]
+  for (const stmt of stmts) {
+    try {
+      await globalQuery(stmt)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.warn(`[provision-global] stmt skipped (${msg.slice(0, 120)})`)
     }
   }
 }

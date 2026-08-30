@@ -1,20 +1,22 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { SvgXml } from 'react-native-svg'
 import {
-  View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, RefreshControl, Dimensions,
+  View, Text, StyleSheet, ScrollView, Dimensions, Image,
+  TouchableOpacity, RefreshControl, ImageBackground, StatusBar,
+  Modal,
 } from 'react-native'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { MotiView } from 'moti'
 import {
-  Eye, EyeOff, QrCode, Calendar, CreditCard,
+  QrCode, Calendar, CreditCard,
   Crown, ChevronRight,
-  ScanLine, CheckCheck, Users, TrendingUp,
+  Users, TrendingUp, Wallet, Gift,
+  MoreHorizontal, X, Bell, User, Ticket, Send, Banknote, History,
 } from 'lucide-react-native'
-import { SvgXml } from 'react-native-svg'
-import { PROFILE_HERO_BG_RAW } from '../../src/assets/profileHeroBg'
+import { TxRow, fmtTxDate } from '../../src/components/ui/TxRow'
 import { Badge } from '../../src/components/ui/Badge'
 import { NotificationIcon } from '../../src/components/ui/TabIcons'
 import { StyledQRCode } from '../../src/components/ui/StyledQRCode'
@@ -39,33 +41,10 @@ function mixColor(hex: string, withWhite: boolean, amount: number): string {
 function daysRemaining(iso: string) {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000))
 }
-function getGreeting() {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
-}
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
 }
 
-const DAILY_QUOTES = [
-  "The only bad workout is the one that didn't happen.",
-  "Push yourself — no one else is going to do it for you.",
-  "Your body can stand almost anything. It's your mind you have to convince.",
-  "Don't limit your challenges. Challenge your limits.",
-  "Train insane or remain the same.",
-  "The pain you feel today is the strength you feel tomorrow.",
-  "Sweat is just fat crying.",
-  "Be stronger than your excuses.",
-  "Every rep gets you closer.",
-  "Consistency beats perfection.",
-  "Make yourself proud.",
-  "Earn it.",
-]
-function getDailyQuote() {
-  return DAILY_QUOTES[new Date().getDate() % DAILY_QUOTES.length]
-}
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
@@ -139,40 +118,6 @@ function CheckinCustomIcon({ size = 28 }: { size?: number; color?: string }) {
   return <SvgXml xml={xml} width={size} height={size} />
 }
 
-// ─── Action button ────────────────────────────────────────────────────────────
-function HeroAction({ icon: Icon, label, onPress, iconBg, iconSize = 22 }: {
-  icon: any; label: string; onPress: () => void
-  iconBg?: string; iconSize?: number
-}) {
-  return (
-    <TouchableOpacity style={styles.heroAction} onPress={onPress} activeOpacity={0.78}>
-      <View style={[styles.heroActionIcon, { backgroundColor: iconBg ?? 'rgba(255,255,255,0.18)' }]}>
-        <Icon size={iconSize} color="#fff" strokeWidth={1.8} />
-      </View>
-      <Text style={styles.heroActionLabel}>{label}</Text>
-    </TouchableOpacity>
-  )
-}
-
-// ─── Activity row ─────────────────────────────────────────────────────────────
-function ActivityRow({ icon: Icon, iconBg, title, sub, tag, tagColor }: {
-  icon: any; iconBg: string; title: string; sub: string; tag: string; tagColor: string
-}) {
-  return (
-    <View style={styles.actRow}>
-      <View style={[styles.actIcon, { backgroundColor: iconBg }]}>
-        <Icon size={18} color="#fff" strokeWidth={2} />
-      </View>
-      <View style={styles.actBody}>
-        <Text style={styles.actTitle} numberOfLines={1}>{title}</Text>
-        <Text style={styles.actSub}>{sub}</Text>
-      </View>
-      <View style={[styles.actTag, { backgroundColor: tagColor + '18' }]}>
-        <Text style={[styles.actTagText, { color: tagColor }]}>{tag}</Text>
-      </View>
-    </View>
-  )
-}
 
 // ─── Promo card ───────────────────────────────────────────────────────────────
 function PromoCard({ title, body, color, onPress }: {
@@ -204,8 +149,7 @@ export default function HomeScreen() {
   const { theme } = useTheme()
   const accent = branding?.primary_color ?? '#22C55E'
   const slug   = branding?.slug ?? ''
-
-  const [statHidden, setStatHidden] = useState(false)
+  const [servicesOpen, setServicesOpen] = useState(false)
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['member-profile', slug],
@@ -227,10 +171,14 @@ export default function HomeScreen() {
     queryFn:  () => memberApi.getReceipts(slug),
     enabled:  !!slug && !!accessToken,
   })
+  const { data: walletData } = useQuery({
+    queryKey: ['member-wallet', slug],
+    queryFn:  () => memberApi.getWallet(slug),
+    enabled:  !!slug && !!accessToken,
+  })
 
   const profile   = data?.member
   const sub       = data?.subscription
-  const stats     = data?.stats
   const gym       = data?.gym
   const bookings  = scheduleData?.bookings ?? []
   const notifs    = notifData?.notifications?.slice(0, 4) ?? []
@@ -239,6 +187,9 @@ export default function HomeScreen() {
   const avatarSeed = String(profile?.name ?? profile?.id ?? 'member')
 
   const daysLeft   = sub?.expires_at ? daysRemaining(sub.expires_at) : 0
+  const walletBalance = walletData?.balance ?? 0
+  const walletCurrency = walletData?.currency ?? (gym?.currency ?? 'XAF')
+
   const barWidth: `${number}%` = sub
     ? `${Math.min(100, Math.max(6, (daysLeft / 365) * 100))}%`
     : '0%'
@@ -250,170 +201,77 @@ export default function HomeScreen() {
 
   const isExpiringSoon = sub?.status === 'expiring_soon'
   const hasNoSub       = !sub
-  const checkIns       = stats?.visitsThisMonth ?? 0
-  const greeting       = getGreeting()
-
-  const gradTop = mixColor(accent, false, 0.15)
-  const gradBot = mixColor(accent, false, 0.55)
-
-  const heroBgSvg = useMemo(
-    () => PROFILE_HERO_BG_RAW.replace('FILL_COLOR', 'rgba(255,255,255,0.13)'),
-    [],
-  )
 
   return (
     <View style={[styles.root, { backgroundColor: theme.bg }]}>
-      {/* Hero gradient — covers top 60% only, so status bar and bottom show theme.bg */}
-      <LinearGradient
-        colors={[gradTop, gradBot]}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: SCREEN_H * 0.60 }}
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={accent} />}
       >
-        <SvgXml
-          xml={heroBgSvg}
-          width="100%"
-          height="100%"
-          preserveAspectRatio="xMidYMid meet"
-          style={StyleSheet.absoluteFill}
-        />
-      </LinearGradient>
 
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#fff" />}
+        {/* ── Full-bleed hero (bleeds behind status bar) ── */}
+        <ImageBackground
+          source={require('../../assets/images/pushup.png')}
+          style={[styles.hero, { height: SCREEN_H * 0.52 }]}
+          imageStyle={styles.heroImg}
         >
+          {/* top gradient — status bar icons readable */}
+          <LinearGradient
+            colors={['rgba(0,0,0,0.58)', 'transparent']}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }} end={{ x: 0, y: 0.32 }}
+          />
+          {/* bottom gradient — greeting text readable */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.82)']}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0.48 }} end={{ x: 0, y: 1 }}
+          />
 
-          {/* ── Header ── */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.avatarPill}
-              onPress={() => router.push('/(tabs)/profile')}
-              activeOpacity={0.85}
-            >
-              <DiceBearAvatar seed={avatarSeed} size={44} photoUrl={profile?.avatar_url} />
-              <Text style={styles.avatarPillName} numberOfLines={1}>
-                {isLoading ? '...' : firstName}
-              </Text>
+          {/* Header row — clears status bar with insets.top */}
+          <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
+            <TouchableOpacity style={styles.heroAvatarRow} onPress={() => router.push('/(tabs)/profile')} activeOpacity={0.85}>
+              <DiceBearAvatar seed={avatarSeed} size={40} photoUrl={profile?.avatar_url} />
+              <View>
+                <Text style={styles.heroGymLabel} numberOfLines={1}>
+                  {(gym?.name ?? branding?.name ?? slug).toUpperCase()}
+                </Text>
+                <Text style={styles.heroMemberLabel}>MEMBER</Text>
+              </View>
             </TouchableOpacity>
 
-            <View style={styles.headerRight}>
+            <View style={styles.heroActions}>
               {(hasNoSub || isExpiringSoon) && (
-                <TouchableOpacity
-                  style={[styles.upgradeBtn, { backgroundColor: '#fff' }]}
-                  onPress={() => router.push('/plans')}
-                  activeOpacity={0.85}
-                >
-                  <Crown size={14} color={accent} strokeWidth={2} fill={accent} />
-                  <Text style={[styles.upgradeBtnText, { color: accent }]}>
-                    {hasNoSub ? 'Get a Plan' : 'Renew'}
-                  </Text>
+                <TouchableOpacity style={styles.heroUpgradeBtn} onPress={() => router.push('/plans')} activeOpacity={0.85}>
+                  <Crown size={13} color="#fff" strokeWidth={2} fill="#fff" />
+                  <Text style={styles.heroUpgradeTxt}>{hasNoSub ? 'Get Plan' : 'Renew'}</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                onPress={() => router.push('/(tabs)/notifications')}
-                activeOpacity={0.75}
-                style={styles.bellBtn}
-              >
-                <NotificationIcon size={22} color="#fff" />
+              <TouchableOpacity style={styles.heroBell} onPress={() => router.push('/(tabs)/notifications')} activeOpacity={0.75}>
+                <NotificationIcon size={20} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* ── Greeting ── */}
-          <View style={styles.greetWrap}>
-            <Text style={styles.greetHi}>
-              {isLoading ? 'Welcome back' : greeting}
+          {/* Greeting — pinned to bottom of image */}
+          <View style={styles.heroBottom}>
+            <Text style={styles.heroGreetSm}>
+              {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'},
             </Text>
-            <Text style={styles.greetPunch}>
-              {isExpiringSoon
-                ? "Don't lose your streak — renew now."
-                : hasNoSub
-                ? 'Your body is waiting. Start today.'
-                : 'Stay consistent. Results follow.'}
+            <Text style={styles.heroGreetLg} numberOfLines={1}>
+              {isExpiringSoon ? "Don't lose your streak."
+                : hasNoSub ? 'Your body is waiting.'
+                : firstName ? `${firstName}.` : "Let's go."}
             </Text>
           </View>
-
-          {/* ── Daily motivation ── */}
-          <View style={styles.quoteCard}>
-            <Text style={styles.quoteLabel}>Today's motivation</Text>
-            <Text style={styles.quoteText}>"{getDailyQuote()}"</Text>
-          </View>
-
-          {/* ── Hero stats ── */}
-          <View style={styles.hero}>
-
-            {/* Eye toggle row — always visible, collapses the block below */}
-            <TouchableOpacity
-              onPress={() => setStatHidden(v => !v)}
-              activeOpacity={0.7}
-              style={styles.eyeRow}
-            >
-              {statHidden
-                ? <EyeOff size={15} color="rgba(255,255,255,0.5)" strokeWidth={1.8} />
-                : <Eye    size={15} color="rgba(255,255,255,0.5)" strokeWidth={1.8} />
-              }
-              <Text style={styles.eyeRowLabel}>
-                {statHidden ? 'Show stats' : 'Hide stats'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Collapsible stat pills — maxHeight collapses layout so content pulls up */}
-            <MotiView
-              animate={{ opacity: statHidden ? 0 : 1, maxHeight: statHidden ? 0 : 300 }}
-              transition={{ type: 'timing', duration: 280 }}
-              style={{ overflow: 'hidden' }}
-              pointerEvents={statHidden ? 'none' : 'auto'}
-            >
-              <View style={styles.statPills}>
-                <View style={styles.statPill}>
-                  <Text style={styles.statPillLabel}>Days Left</Text>
-                  <Text style={styles.statPillNum}>{sub ? daysLeft : '—'}</Text>
-                  <Text style={styles.statPillSub} numberOfLines={1}>
-                    {sub ? sub.plan_name : 'No plan'}
-                  </Text>
-                </View>
-
-                <View style={styles.statPillDivider} />
-
-                <View style={styles.statPill}>
-                  <Text style={styles.statPillLabel}>Check-ins</Text>
-                  <Text style={styles.statPillNum}>{checkIns}</Text>
-                  <Text style={styles.statPillSub}>This month</Text>
-                </View>
-              </View>
-
-              {sub && (
-                <View style={styles.statBarWrap}>
-                  <View style={styles.statBarTrack}>
-                    <View style={[styles.statBarFill, { width: barWidth as any, backgroundColor: '#fff' }]} />
-                  </View>
-                  <Text style={styles.statBarLabel}>
-                    {sub.plan_name} · expires {new Date(sub.expires_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </Text>
-                </View>
-              )}
-            </MotiView>
-
-            {/* Quick actions */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.heroActions}
-            >
-              <HeroAction icon={QrCode}      label="My QR"     onPress={() => router.push('/(tabs)/checkin')}   />
-              <HeroAction icon={ScanLine}    label="Scan"      onPress={() => router.push('/scan-checkin')}    />
-              <HeroAction icon={Calendar}    label="Book"      onPress={() => router.push('/(tabs)/schedule')} />
-              <HeroAction icon={CheckCheck}  label="Check-ins" onPress={() => router.push('/(tabs)/schedule')}  />
-              <HeroAction icon={CreditCard}  label="Payments"  onPress={() => router.push('/(tabs)/payments')}  />
-            </ScrollView>
-          </View>
+        </ImageBackground>
 
           {/* ── White card body ── */}
           <View style={styles.body}>
 
-            {/* Membership card (mini, clean) */}
+            {/* ── Membership card ── */}
             <TouchableOpacity
               onPress={() => router.push('/plans')}
               activeOpacity={0.88}
@@ -487,18 +345,54 @@ export default function HomeScreen() {
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* ── Quick Actions Grid — 3 per row, 2 rows ── */}
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            {/* ── Wallet strip ── */}
+            <TouchableOpacity
+              style={styles.walletStrip}
+              onPress={() => router.push('/wallet')}
+              activeOpacity={0.82}
+            >
+              <View style={[styles.walletStripIcon, { backgroundColor: accent + '18' }]}>
+                <Wallet size={18} color={accent} strokeWidth={1.8} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.walletStripLabel}>My Wallet</Text>
+                <Text style={[styles.walletStripBalance, { color: accent }]}>
+                  {walletCurrency} {Number(walletBalance).toLocaleString('fr-CM', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.walletStripBtn, { backgroundColor: accent }]}
+                onPress={() => router.push('/referral')}
+                activeOpacity={0.85}
+              >
+                <Gift size={13} color="#fff" strokeWidth={2} />
+                <Text style={styles.walletStripBtnText}>Refer & Earn</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+
+            {/* ── Quick Actions Grid — 4 per row, 2 rows ── */}
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Quick Actions</Text>
+              <TouchableOpacity
+                style={[styles.moreBtn, { backgroundColor: accent + '18' }]}
+                onPress={() => setServicesOpen(true)}
+                activeOpacity={0.75}
+              >
+                <MoreHorizontal size={18} color={accent} strokeWidth={2} />
+              </TouchableOpacity>
+            </View>
             {([
               [
-                { icon: ScanCustomIcon,   label: 'Scan',      route: '/scan-checkin',        size: 80 },
-                { icon: CheckinCustomIcon, label: 'Check-in',  route: '/(tabs)/checkin',  size: 80    },
-                { icon: BookCalendarIcon, label: 'Book',      route: '/(tabs)/schedule',     size: 80 },
+                { icon: ScanCustomIcon,    label: 'Scan',       route: '/scan-checkin',        size: 72 },
+                { icon: CheckinCustomIcon, label: 'Check-in',   route: '/(tabs)/checkin',      size: 72 },
+                { icon: BookCalendarIcon,  label: 'Book',       route: '/(tabs)/schedule',     size: 72 },
+                { icon: Wallet,            label: 'Wallet',     route: '/wallet'                         },
               ],
               [
-                { icon: CreditCard,  label: 'Payments',  route: '/(tabs)/payments'      },
-                { icon: Users,       label: 'Referrals', route: '/(tabs)/notifications' },
-                { icon: TrendingUp,  label: 'Progress',  route: '/(tabs)/progress'      },
+                { icon: CreditCard,  label: 'Payments',     route: '/(tabs)/payments'        },
+                { icon: Users,       label: 'Referrals',    route: '/referral'               },
+                { icon: TrendingUp,  label: 'Membership',   route: '/(tabs)/subscription'    },
+                { icon: Gift,        label: 'Refer & Earn', route: '/referral'               },
               ],
             ] as { icon: any; label: string; route: string; size?: number }[][]).map((row, ri) => (
               <View key={ri} style={styles.gridRow}>
@@ -510,13 +404,23 @@ export default function HomeScreen() {
                     activeOpacity={0.75}
                   >
                     <View style={[styles.gridIconBox, { backgroundColor: accent + '18' }]}>
-                      <Icon size={size ?? 30} color={accent} strokeWidth={1.8} />
+                      <Icon size={size ?? 28} color={accent} strokeWidth={1.8} />
                     </View>
                     <Text style={styles.gridLabel}>{label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
             ))}
+
+            {/* ── Promo banner ── */}
+            <TouchableOpacity activeOpacity={0.9} style={styles.promoBanner} onPress={() => router.push('/(tabs)/notifications')}>
+              <Image source={require('../../assets/images/pushup.png')} style={styles.promoBannerImg} resizeMode="cover" />
+              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.55)']} style={StyleSheet.absoluteFill} />
+              <View style={styles.promoBannerText}>
+                <Text style={styles.promoBannerTitle}>Transform your body</Text>
+                <Text style={styles.promoBannerSub}>See what's on at your gym</Text>
+              </View>
+            </TouchableOpacity>
 
             {/* ── Recent Payments ── */}
             <View style={styles.sectionRow}>
@@ -527,18 +431,20 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.actCard}>
-              {receipts.length > 0 ? receipts.map((r, i) => (
-                <View key={r.id}>
-                  <ActivityRow
-                    icon={CreditCard}
-                    iconBg={r.status === 'paid' ? '#2563EB' : '#9CA3AF'}
-                    title={r.plan_name ?? 'Payment'}
-                    sub={r.paid_at ? fmtRelative(r.paid_at) : fmtRelative(r.created_at)}
-                    tag={`${r.currency} ${Number(r.amount).toLocaleString()}`}
-                    tagColor={r.status === 'paid' ? '#2563EB' : '#9CA3AF'}
-                  />
-                  {i < receipts.length - 1 && <View style={styles.actDivider} />}
-                </View>
+              {receipts.length > 0 ? receipts.map((r: any, i: number) => (
+                <TxRow
+                  key={r.id}
+                  circleKey={r.provider ?? r.payment_type ?? 'membership'}
+                  title={r.plan_name ?? 'Payment'}
+                  dateStr={fmtTxDate(r.paid_at ?? r.created_at)}
+                  amount={r.amount}
+                  currency={r.currency}
+                  category={r.payment_type === 'day_pass' ? 'Day Pass' : 'Membership'}
+                  isCredit={false}
+                  isLast={i === receipts.length - 1}
+                  dividerColor={theme.border}
+                  theme={theme}
+                />
               )) : (
                 <View style={styles.emptyRow}>
                   <CreditCard size={22} color="#C4C9D4" strokeWidth={1.5} />
@@ -627,8 +533,67 @@ export default function HomeScreen() {
 
             <View style={{ height: 32 }} />
           </View>
-        </ScrollView>
-      </SafeAreaView>
+      </ScrollView>
+
+      {/* ── All Services Modal ── */}
+      <Modal visible={servicesOpen} animationType="slide" transparent onRequestClose={() => setServicesOpen(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setServicesOpen(false)} />
+        <View style={[styles.servicesSheet, { backgroundColor: theme.surface, paddingBottom: insets.bottom + 16 }]}>
+          <View style={[styles.servicesHandle, { backgroundColor: theme.border }]} />
+          <View style={styles.servicesHeader}>
+            <Text style={[styles.servicesTitle, { color: theme.text }]}>All Services</Text>
+            <TouchableOpacity onPress={() => setServicesOpen(false)} activeOpacity={0.7} style={styles.servicesClose}>
+              <X size={18} color={theme.textMuted ?? '#9CA3AF'} strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
+
+          {([
+            { section: 'Check-In', items: [
+              { icon: ScanCustomIcon,    label: 'Scan QR',      route: '/scan-checkin'        },
+              { icon: CheckinCustomIcon, label: 'Check-in',     route: '/(tabs)/checkin'      },
+              { icon: BookCalendarIcon,  label: 'Book Class',   route: '/(tabs)/schedule'     },
+              { icon: Calendar,          label: 'My Schedule',  route: '/(tabs)/schedule'     },
+            ]},
+            { section: 'Wallet', items: [
+              { icon: Wallet,    label: 'My Wallet',    route: '/wallet'                   },
+              { icon: Send,      label: 'Send Money',   route: '/wallet'                   },
+              { icon: Banknote,  label: 'Cash Out',     route: '/wallet'                   },
+              { icon: History,   label: 'Transactions', route: '/wallet'                   },
+            ]},
+            { section: 'Membership', items: [
+              { icon: TrendingUp, label: 'My Plan',     route: '/(tabs)/subscription'      },
+              { icon: Ticket,     label: 'Get a Plan',  route: '/plans'                    },
+              { icon: CreditCard, label: 'Payments',    route: '/(tabs)/payments'          },
+              { icon: Gift,       label: 'Refer & Earn',route: '/referral'                 },
+            ]},
+            { section: 'Account', items: [
+              { icon: User,      label: 'Profile',       route: '/(tabs)/profile'          },
+              { icon: Bell,      label: 'Notifications', route: '/(tabs)/notifications'    },
+              { icon: TrendingUp,label: 'My Progress',   route: '/(tabs)/progress'         },
+              { icon: QrCode,    label: 'My QR Code',    route: '/(tabs)/checkin'          },
+            ]},
+          ] as { section: string; items: { icon: any; label: string; route: string }[] }[]).map(({ section, items }) => (
+            <View key={section} style={styles.servicesSection}>
+              <Text style={[styles.servicesSectionLabel, { color: theme.textMuted ?? '#9CA3AF' }]}>{section}</Text>
+              <View style={styles.servicesGrid}>
+                {items.map(({ icon: Icon, label, route }) => (
+                  <TouchableOpacity
+                    key={label}
+                    style={styles.servicesItem}
+                    onPress={() => { setServicesOpen(false); router.push(route as any) }}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.servicesIconBox, { backgroundColor: accent + '18' }]}>
+                      <Icon size={26} color={accent} strokeWidth={1.8} />
+                    </View>
+                    <Text style={[styles.servicesLabel, { color: theme.text ?? '#0D0D18' }]}>{label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ))}
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -639,20 +604,16 @@ const styles = StyleSheet.create({
   /* Header */
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4,
+    paddingHorizontal: 20, paddingBottom: 16,
   },
-  avatarPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 99,
-    paddingVertical: 5, paddingHorizontal: 10,
-  },
-  avatarPillName: { fontSize: 14, fontFamily: F.semibold, color: '#fff' },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  helloText:  { fontSize: 13, fontFamily: F.regular },
+  nameText:   { fontSize: 20, fontFamily: F.extrabold },
 
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   bellBtn: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 42, height: 42, borderRadius: 21, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   upgradeBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -660,7 +621,7 @@ const styles = StyleSheet.create({
   },
   upgradeBtnText: { fontSize: 13, fontFamily: F.bold },
 
-  /* Quick actions grid — 3 per row, 2 rows */
+  /* Quick actions grid — 4 per row, 2 rows */
   gridRow: {
     flexDirection: 'row',
     marginHorizontal: 16, marginBottom: 12, gap: 12,
@@ -696,46 +657,62 @@ const styles = StyleSheet.create({
     fontStyle: 'italic', lineHeight: 18,
   },
 
-  /* Eye toggle row */
-  eyeRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    alignSelf: 'flex-end', marginBottom: 8, opacity: 0.75,
+  /* ── Full-bleed hero ── */
+  hero: {
+    width: '100%',
+    justifyContent: 'space-between',
   },
-  eyeRowLabel: { fontSize: 11, fontFamily: F.medium, color: 'rgba(255,255,255,0.6)' },
+  heroImg: { resizeMode: 'cover' },
 
-  /* Hero */
-  hero: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 32 },
-
-  statPills: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 20, padding: 16, gap: 12,
-    marginBottom: 14,
+  heroHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingBottom: 8,
   },
-  statPill:       { flex: 1, alignItems: 'center', gap: 2 },
-  statPillLabel:  { fontSize: 11, fontFamily: F.semibold, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.6 },
-  statPillNum:    { fontSize: 36, fontFamily: F.extrabold, color: '#fff', lineHeight: 42 },
-  statPillSub:    { fontSize: 11, fontFamily: F.regular, color: 'rgba(255,255,255,0.5)' },
-  statPillDivider:{ width: 1, height: 48, backgroundColor: 'rgba(255,255,255,0.15)' },
-  statEyeBtn: {
-    position: 'absolute', top: 10, right: 12,
-    padding: 4,
+  heroAvatarRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  heroGymLabel:   { fontSize: 13, fontFamily: F.bold, color: '#fff', letterSpacing: 0.4 },
+  heroMemberLabel:{ fontSize: 11, fontFamily: F.regular, color: 'rgba(255,255,255,0.55)', letterSpacing: 0.2 },
+
+  heroActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  heroUpgradeBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7,
+  },
+  heroUpgradeTxt: { fontSize: 12, fontFamily: F.semibold, color: '#fff' },
+  heroBell: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)',
+    alignItems: 'center', justifyContent: 'center',
   },
 
+  heroBottom: { paddingHorizontal: 22, paddingBottom: 52 },
+  heroGreetSm: {
+    fontSize: 14, fontFamily: F.regular,
+    color: 'rgba(255,255,255,0.65)', marginBottom: 6,
+  },
+  heroGreetLg: {
+    fontSize: 34, fontFamily: F.extrabold,
+    color: '#fff', lineHeight: 40,
+  },
+
+  statRow:     { flexDirection: 'row', alignItems: 'center', gap: 24, marginBottom: 14 },
+  statItem:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  statIconWrap:{ width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  statNum:     { fontSize: 22, fontFamily: F.extrabold, color: '#fff', lineHeight: 26 },
+  statLabel:   { fontSize: 11, fontFamily: F.medium, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.5 },
+  statDivider: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,0.2)' },
   statBarWrap:  { marginBottom: 14, gap: 5 },
   statBarTrack: { height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)' },
   statBarFill:  { height: 3, borderRadius: 2 },
   statBarLabel: { fontSize: 11, fontFamily: F.regular, color: 'rgba(255,255,255,0.55)' },
 
-  heroActions:    { flexDirection: 'row', marginTop: 28, gap: 8, paddingRight: 8 },
-  heroAction:     { width: 72, alignItems: 'center', gap: 8 },
-  heroActionIcon: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  heroActionLabel:{ fontSize: 12, fontFamily: F.semibold, color: 'rgba(255,255,255,0.85)' },
-
   /* White body */
   body: {
     backgroundColor: '#F5F6FA',
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    borderTopLeftRadius: 32, borderTopRightRadius: 32,
+    marginTop: -32,
     paddingTop: 24, paddingHorizontal: 16, gap: 16,
   },
 
@@ -769,6 +746,21 @@ const styles = StyleSheet.create({
   mcQrLabel:    { fontSize: 9, fontFamily: F.semibold, color: 'rgba(255,255,255,0.75)', textAlign: 'center' },
   mcQrId:       { fontSize: 8, fontFamily: F.regular, color: 'rgba(255,255,255,0.5)', textAlign: 'center' },
 
+  /* Wallet strip */
+  walletStrip: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#fff', borderRadius: 18, padding: 14,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2,
+  },
+  walletStripIcon:    { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  walletStripLabel:   { fontSize: 11, fontFamily: F.medium, color: '#8A94A6' },
+  walletStripBalance: { fontSize: 16, fontFamily: F.extrabold, marginTop: 1 },
+  walletStripBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    borderRadius: 99, paddingHorizontal: 12, paddingVertical: 8,
+  },
+  walletStripBtnText: { fontSize: 12, fontFamily: F.bold, color: '#fff' },
+
   /* Activity */
   actCard:    { backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden' },
   actRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14 },
@@ -781,6 +773,17 @@ const styles = StyleSheet.create({
   actDivider: { height: 1, backgroundColor: '#F3F4F6', marginLeft: 68 },
   emptyRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 20, justifyContent: 'center' },
   emptyText:  { fontSize: 13, fontFamily: F.regular, color: '#C4C9D4' },
+
+  /* Banner */
+  promoBanner: {
+    borderRadius: 20, overflow: 'hidden', height: 160,
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  promoBannerImg:   { width: '100%', height: '100%' },
+  promoBannerText:  { position: 'absolute', bottom: 14, left: 16, right: 16 },
+  promoBannerTitle: { fontSize: 17, fontFamily: F.extrabold, color: '#fff' },
+  promoBannerSub:   { fontSize: 12, fontFamily: F.regular, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
 
   /* Promos */
   promoScroll: { gap: 12, paddingRight: 4 },
@@ -805,4 +808,49 @@ const styles = StyleSheet.create({
   classCardName:    { fontSize: 14, fontFamily: F.bold, color: '#0D0D18' },
   classCardTime:    { fontSize: 12, fontFamily: F.regular, color: '#6B7280' },
   classCardTrainer: { fontSize: 11, fontFamily: F.regular, color: '#9CA3AF' },
+
+  /* Three-dots button */
+  moreBtn: {
+    width: 34, height: 34, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  /* All Services modal */
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  servicesSheet: {
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    paddingHorizontal: 20, paddingTop: 12,
+    maxHeight: '88%',
+  },
+  servicesHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    alignSelf: 'center', marginBottom: 16,
+  },
+  servicesHeader: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 20,
+  },
+  servicesTitle:   { fontSize: 20, fontFamily: F.extrabold },
+  servicesClose:   { padding: 4 },
+  servicesSection: { marginBottom: 20 },
+  servicesSectionLabel: {
+    fontSize: 11, fontFamily: F.bold, letterSpacing: 0.8,
+    textTransform: 'uppercase', marginBottom: 12,
+  },
+  servicesGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 12,
+  },
+  servicesItem: {
+    width: '22%', alignItems: 'center', gap: 7,
+  },
+  servicesIconBox: {
+    width: 58, height: 58, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  servicesLabel: {
+    fontSize: 11, fontFamily: F.semibold,
+    textAlign: 'center', lineHeight: 14,
+  },
 })

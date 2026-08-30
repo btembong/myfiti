@@ -8,8 +8,8 @@ import { chargeMobileWallet, tranzak } from '../lib/tranzak.js'
 
 export const dayPassesRouter = Router()
 
-// Day pass pricing in XAF
-const DAY_PASS_PRICES: Record<string, number> = {
+// Default day pass pricing in XAF (fallback when no tenant overrides exist)
+const DEFAULT_DAY_PASS_PRICES: Record<string, number> = {
   standard: 2000,
   peak: 2500,
   off_peak: 1500,
@@ -17,11 +17,27 @@ const DAY_PASS_PRICES: Record<string, number> = {
   bundle_10: 18000,
 }
 
-// ─── GET /api/day-passes/pricing ─────────────────────────────────────────────
-// Return pricing table (public, no auth required)
+// Fetch per-tenant pricing from gym_settings.features->>'day_pass_pricing', fallback to defaults
+async function getTenantDayPassPrices(slug: string): Promise<Record<string, number>> {
+  try {
+    const { rows } = await tenantQuery<{ features: Record<string, unknown> }>(
+      slug,
+      `SELECT features FROM gym_settings WHERE id = 'singleton' LIMIT 1`,
+    )
+    const features = rows[0]?.features
+    if (features?.day_pass_pricing && typeof features.day_pass_pricing === 'object') {
+      return { ...DEFAULT_DAY_PASS_PRICES, ...(features.day_pass_pricing as Record<string, number>) }
+    }
+  } catch { /* fallback */ }
+  return { ...DEFAULT_DAY_PASS_PRICES }
+}
 
-dayPassesRouter.get('/pricing', (_req, res) => {
-  res.json({ pricing: DAY_PASS_PRICES })
+// ─── GET /api/day-passes/pricing ─────────────────────────────────────────────
+// Return pricing table (public, no auth required). Tenant-aware — reads from DB.
+
+dayPassesRouter.get('/pricing', async (req, res) => {
+  const pricing = await getTenantDayPassPrices(req.tenant.slug)
+  res.json({ pricing })
 })
 
 // ─── GET /api/day-passes ──────────────────────────────────────────────────────
@@ -143,11 +159,12 @@ dayPassesRouter.post('/initiate-payment', async (req, res) => {
     if (!guest_name || !pass_type) {
       return res.status(400).json({ error: 'guest_name and pass_type are required.' })
     }
-    if (!DAY_PASS_PRICES[pass_type]) {
-      return res.status(400).json({ error: `Invalid pass_type. Valid: ${Object.keys(DAY_PASS_PRICES).join(', ')}` })
+    const prices = await getTenantDayPassPrices(req.tenant.slug)
+    if (!prices[pass_type]) {
+      return res.status(400).json({ error: `Invalid pass_type. Valid: ${Object.keys(prices).join(', ')}` })
     }
 
-    const amount = DAY_PASS_PRICES[pass_type]
+    const amount = prices[pass_type]
     const dayPassId = uuid()
     const validDate = new Date().toISOString().split('T')[0]
 
@@ -249,14 +266,15 @@ dayPassesRouter.post('/charge', async (req, res) => {
     if (!guest_name || !guest_phone || !pass_type) {
       return res.status(400).json({ error: 'guest_name, guest_phone and pass_type are required.' })
     }
-    if (!DAY_PASS_PRICES[pass_type]) {
-      return res.status(400).json({ error: `Invalid pass_type. Valid: ${Object.keys(DAY_PASS_PRICES).join(', ')}` })
+    const prices = await getTenantDayPassPrices(req.tenant.slug)
+    if (!prices[pass_type]) {
+      return res.status(400).json({ error: `Invalid pass_type. Valid: ${Object.keys(prices).join(', ')}` })
     }
     if (!process.env.TRANZAK_APP_ID || !process.env.TRANZAK_APP_KEY) {
       return res.status(503).json({ error: 'Payment provider not configured.' })
     }
 
-    const amount     = DAY_PASS_PRICES[pass_type]
+    const amount     = prices[pass_type]
     const dayPassId  = uuid()
     const validDate  = new Date().toISOString().split('T')[0]
     const curr       = currency ?? 'XAF'
@@ -374,12 +392,13 @@ dayPassesRouter.post('/kiosk-issue', async (req, res) => {
     if (!guest_name || !pass_type) {
       return res.status(400).json({ error: 'guest_name and pass_type are required.' })
     }
-    if (!DAY_PASS_PRICES[pass_type]) {
-      return res.status(400).json({ error: `Invalid pass_type. Valid: ${Object.keys(DAY_PASS_PRICES).join(', ')}` })
+    const prices = await getTenantDayPassPrices(req.tenant.slug)
+    if (!prices[pass_type]) {
+      return res.status(400).json({ error: `Invalid pass_type. Valid: ${Object.keys(prices).join(', ')}` })
     }
 
     const id = uuid()
-    const amount = DAY_PASS_PRICES[pass_type]
+    const amount = prices[pass_type]
     const validDate = new Date().toISOString().split('T')[0]
     const midnight = new Date()
     midnight.setHours(23, 59, 59, 999)
@@ -407,6 +426,120 @@ dayPassesRouter.post('/kiosk-issue', async (req, res) => {
     res.status(201).json({ id, ok: true, qr_token: qrJwt, amount, currency: currency ?? 'XAF', valid_until: midnight.toISOString() })
   } catch (err) {
     console.error('[day-passes/kiosk-issue]', err)
+    res.status(500).json({ error: 'Failed to issue day pass.' })
+  }
+})
+
+// ─── GET /api/day-passes/wallet-lookup?phone=XXX ─────────────────────────────
+// Public (kiosk) — look up a member by phone and return their name + wallet balance.
+// No staff JWT required; tenant resolved via X-Tenant-Slug header.
+
+dayPassesRouter.get('/wallet-lookup', async (req, res) => {
+  try {
+    const phone = (req.query.phone as string | undefined)?.trim()
+    if (!phone) return res.status(400).json({ error: 'phone is required.' })
+
+    const { rows: memberRows } = await tenantQuery<{ id: string; first_name: string; last_name: string }>(
+      req.tenant.slug,
+      `SELECT id, first_name, last_name FROM members
+       WHERE REPLACE(REPLACE(phone, ' ', ''), '+', '') = REPLACE(REPLACE($1, ' ', ''), '+', '')
+       LIMIT 1`,
+      [phone],
+    )
+    if (!memberRows[0]) return res.status(404).json({ error: 'No member found with that number.' })
+    const m = memberRows[0]
+
+    const { rows: walletRows } = await tenantQuery<{ balance: string; currency: string }>(
+      req.tenant.slug,
+      `SELECT balance, currency FROM wallet_accounts WHERE member_id = $1`,
+      [m.id],
+    )
+
+    res.json({
+      id: m.id,
+      name: `${m.first_name} ${m.last_name}`.trim(),
+      balance: parseFloat(walletRows[0]?.balance ?? '0'),
+      currency: walletRows[0]?.currency ?? 'XAF',
+    })
+  } catch (err) {
+    console.error('[day-passes/wallet-lookup]', err)
+    res.status(500).json({ error: 'Lookup failed.' })
+  }
+})
+
+// ─── POST /api/day-passes/wallet-issue ───────────────────────────────────────
+// Public (kiosk) — deducts from a member's wallet and issues a day pass.
+// No staff JWT required; tenant resolved via X-Tenant-Slug header.
+
+dayPassesRouter.post('/wallet-issue', async (req, res) => {
+  try {
+    const slug = req.tenant.slug
+    const { member_id, pass_type, guest_name, guest_phone } = req.body as {
+      member_id: string; pass_type: string; guest_name: string; guest_phone?: string
+    }
+    if (!member_id || !pass_type || !guest_name) {
+      return res.status(400).json({ error: 'member_id, pass_type and guest_name are required.' })
+    }
+    const prices = await getTenantDayPassPrices(slug)
+    if (!prices[pass_type]) {
+      return res.status(400).json({ error: 'Invalid pass_type.' })
+    }
+    const amount = prices[pass_type]
+
+    // Atomic wallet debit
+    const { rows: debitRows } = await tenantQuery<{ balance: string }>(
+      slug,
+      `UPDATE wallet_accounts SET balance = balance - $1 WHERE member_id = $2 AND balance >= $1 RETURNING balance`,
+      [amount, member_id],
+    )
+    if (!debitRows[0]) return res.status(400).json({ error: 'Insufficient wallet balance.' })
+
+    // Get currency
+    const { rows: walletRows } = await tenantQuery<{ currency: string }>(
+      slug,
+      `SELECT currency FROM wallet_accounts WHERE member_id = $1`,
+      [member_id],
+    )
+    const currency = walletRows[0]?.currency ?? 'XAF'
+
+    // Record wallet transaction
+    await tenantQuery(
+      slug,
+      `INSERT INTO wallet_transactions (id, member_id, type, amount, description, status)
+       VALUES ($1, $2, 'debit', $3, $4, 'completed')`,
+      [uuid(), member_id, amount, `Day pass (${pass_type}) — ${guest_name}`],
+    )
+
+    // Issue day pass
+    const id = uuid()
+    const validDate = new Date().toISOString().split('T')[0]
+    const midnight = new Date(); midnight.setHours(23, 59, 59, 999)
+    const qrJwt = jwt.sign(
+      { sub: id, type: 'daypass', guest: guest_name, pass_type, valid_date: validDate },
+      process.env.JWT_SECRET!,
+      { expiresIn: Math.floor((midnight.getTime() - Date.now()) / 1000) },
+    )
+
+    await tenantQuery(
+      slug,
+      `INSERT INTO day_passes (id, guest_name, guest_phone, pass_type, amount, currency, payment_method, qr_token, status, valid_date, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'wallet', $7, 'active', $8, NOW())`,
+      [id, guest_name, guest_phone ?? null, pass_type, amount, currency, qrJwt, validDate],
+    )
+
+    await tenantQuery(
+      slug,
+      `INSERT INTO check_ins (id, member_id, method, notes, checked_in_at) VALUES ($1, NULL, 'daypass', $2, NOW())`,
+      [uuid(), `Day pass: ${guest_name}`],
+    )
+
+    res.status(201).json({
+      id, ok: true, qr_token: qrJwt, amount, currency,
+      new_balance: parseFloat(debitRows[0].balance),
+      valid_until: midnight.toISOString(),
+    })
+  } catch (err) {
+    console.error('[day-passes/wallet-issue]', err)
     res.status(500).json({ error: 'Failed to issue day pass.' })
   }
 })
@@ -481,12 +614,13 @@ dayPassesRouter.post('/issue', async (req, res) => {
     if (!guest_name || !pass_type) {
       return res.status(400).json({ error: 'guest_name and pass_type are required.' })
     }
-    if (!DAY_PASS_PRICES[pass_type]) {
-      return res.status(400).json({ error: `Invalid pass_type. Valid: ${Object.keys(DAY_PASS_PRICES).join(', ')}` })
+    const prices = await getTenantDayPassPrices(req.tenant.slug)
+    if (!prices[pass_type]) {
+      return res.status(400).json({ error: `Invalid pass_type. Valid: ${Object.keys(prices).join(', ')}` })
     }
 
     const id = uuid()
-    const amount = DAY_PASS_PRICES[pass_type]
+    const amount = prices[pass_type]
     const validDate = new Date().toISOString().split('T')[0]
 
     const midnight = new Date()

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Dimensions, RefreshControl,
@@ -12,6 +12,7 @@ import Svg, {
   Defs, LinearGradient as SvgGrad, Stop,
 } from 'react-native-svg'
 import { Bell, Plus, Flame, Zap, Target, Award } from 'lucide-react-native'
+import { Pedometer } from 'expo-sensors'
 import { memberApi } from '../../src/lib/api'
 import { useTenant } from '../../src/context/TenantContext'
 import { useAuth } from '../../src/context/AuthContext'
@@ -24,15 +25,64 @@ const HERO_W   = W - 48       // card width in carousel
 const HERO_GAP = 12
 const COL_W    = (W - 20 * 2 - 12) / 2   // 2-col grid, 20px side padding, 12px gap
 
-// ── Mock health data ──────────────────────────────────────────────────────────
-// Swap these out for expo-health calls once on a dev build
+// ── Real health data via expo-sensors Pedometer ───────────────────────────────
+// Steps + 7-day history: works in Expo Go on iOS & Android.
+// Heart rate & workout calories: require HealthKit/Health Connect (dev build only).
 function useHealthData() {
+  const [steps, setSteps]               = useState(0)
+  const [stepsHistory, setStepsHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0])
+  const [available, setAvailable]       = useState(false)
+
+  useEffect(() => {
+    let sub: { remove: () => void } | null = null
+
+    async function init() {
+      if (!Pedometer) return   // package not yet installed
+      const isAvail = await Pedometer.isAvailableAsync()
+      setAvailable(isAvail)
+      if (!isAvail) return
+
+      // Today's live step count
+      const now   = new Date()
+      const start = new Date(now); start.setHours(0, 0, 0, 0)
+      try {
+        const todayResult = await Pedometer.getStepCountAsync(start, now)
+        setSteps(todayResult.steps)
+      } catch { /* permission not granted or unavailable */ }
+
+      // Past 7 days history
+      const history: number[] = []
+      for (let i = 6; i >= 0; i--) {
+        const dayStart = new Date(now); dayStart.setDate(now.getDate() - i); dayStart.setHours(0, 0, 0, 0)
+        const dayEnd   = new Date(dayStart); dayEnd.setHours(23, 59, 59, 999)
+        try {
+          const r = await Pedometer.getStepCountAsync(dayStart, dayEnd)
+          history.push(r.steps)
+        } catch {
+          history.push(0)
+        }
+      }
+      setStepsHistory(history)
+
+      // Live updates for today
+      sub = Pedometer.watchStepCount((result: { steps: number }) => setSteps(result.steps))
+    }
+
+    init()
+    return () => { sub?.remove() }
+  }, [])
+
+  // Rough calorie estimate: ~0.04 kcal per step (average 70 kg person walking)
+  const calories = Math.round(steps * 0.04)
+  const calHistory = stepsHistory.map(s => Math.round(s * 0.04))
+
   return {
-    steps:        8_240,
-    calories:     412,
-    heartRate:    72,
-    stepsHistory: [4_200, 6_800, 9_100, 5_300, 7_600, 8_900, 8_240],
-    calHistory:   [280, 450, 380, 510, 290, 620, 412],
+    steps,
+    calories,
+    heartRate: null as number | null,   // requires HealthKit/Health Connect in a dev build
+    stepsHistory,
+    calHistory,
+    pedometerAvailable: available,
   }
 }
 
@@ -235,10 +285,15 @@ export default function ProgressScreen() {
     queryFn:  () => memberApi.getSchedule(slug),
     enabled:  !!slug && !!accessToken,
   })
+  const { data: checkinData } = useQuery({
+    queryKey: ['member-checkin-history', slug],
+    queryFn:  () => memberApi.getCheckinHistory(slug, 60),
+    enabled:  !!slug && !!accessToken,
+  })
 
   const profile  = data?.member
   const sub      = data?.subscription
-  const checkins = (data as any)?.recentCheckins ?? []
+  const checkins = checkinData?.checkins ?? []
   const bars     = getWeekBars(checkins)
   const maxBar   = Math.max(1, ...bars.map(b => b.count))
 
@@ -265,7 +320,7 @@ export default function ProgressScreen() {
     return s
   })()
 
-  const totalVisits = (data?.stats as any)?.totalVisits ?? 0
+  const totalVisits = data?.stats?.visitsThisMonth ?? 0
 
   const achievements = [
     { icon: Flame,  label: 'First visit',  done: totalVisits >= 1,  sub: 'Show up once'      },
@@ -356,9 +411,9 @@ export default function ProgressScreen() {
           >
             <View style={s.healthRow}>
               {[
-                { val: health.steps.toLocaleString(), unit: 'steps'    },
-                { val: health.calories.toString(),    unit: 'kcal'     },
-                { val: `${health.heartRate}`,         unit: 'bpm ❤️'  },
+                { val: health.steps.toLocaleString(),                                  unit: 'steps'   },
+                { val: health.calories.toString(),                                      unit: 'kcal'    },
+                { val: health.heartRate !== null ? `${health.heartRate}` : '--',       unit: 'bpm ❤️' },
               ].map(item => (
                 <View key={item.unit} style={s.healthItem}>
                   <Text style={[s.healthVal, { color: isDark ? '#FFFFFF' : '#0D1117' }]}>{item.val}</Text>
@@ -424,11 +479,19 @@ export default function ProgressScreen() {
                     <Text style={s.emoji}>🚶</Text>
                     <Text style={[s.statLabel, { color: '#16A34A' }]}>Steps</Text>
                   </View>
-                  <AreaChart data={health.stepsHistory} color="#22C55E" w={COL_W - 24} h={60} />
-                  <Text style={[s.bigNum, { color: isDark ? '#4ADE80' : '#15803D' }]}>
-                    {health.steps.toLocaleString()}
-                  </Text>
-                  <Text style={[s.unit, { color: isDark ? '#166534' : '#86EFAC' }]}>steps today</Text>
+                  {health.pedometerAvailable ? (
+                    <>
+                      <AreaChart data={health.stepsHistory} color="#22C55E" w={COL_W - 24} h={60} />
+                      <Text style={[s.bigNum, { color: isDark ? '#4ADE80' : '#15803D' }]}>
+                        {health.steps.toLocaleString()}
+                      </Text>
+                      <Text style={[s.unit, { color: isDark ? '#166534' : '#86EFAC' }]}>steps today</Text>
+                    </>
+                  ) : (
+                    <Text style={[s.unit, { color: '#16A34A', marginTop: 8 }]}>
+                      Pedometer not available on this device
+                    </Text>
+                  )}
                 </View>
               </MotiView>
             )}
@@ -469,7 +532,39 @@ export default function ProgressScreen() {
                   </View>
                   <BarChart data={health.calHistory} color="#60A5FA" w={COL_W - 24} h={60} />
                   <Text style={[s.bigNum, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>{health.calories}</Text>
-                  <Text style={[s.unit, { color: isDark ? '#1E3A8A' : '#BFDBFE' }]}>kcal burned</Text>
+                  <Text style={[s.unit, { color: isDark ? '#1E3A8A' : '#BFDBFE' }]}>kcal est.</Text>
+                </View>
+              </MotiView>
+            )}
+
+            {/* Heart rate */}
+            {show('Health') && (
+              <MotiView
+                from={{ opacity: 0, translateY: 14 }} animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 380, delay: 150 }}
+              >
+                <View style={[s.statCard, { backgroundColor: isDark ? '#1A0D1A' : '#FDF4FF' }]}>
+                  <View style={s.statTop}>
+                    <Text style={s.emoji}>❤️</Text>
+                    <Text style={[s.statLabel, { color: '#9333EA' }]}>Heart Rate</Text>
+                  </View>
+                  {health.heartRate !== null ? (
+                    <>
+                      <ECGLine color="#A855F7" w={COL_W - 24} h={50} />
+                      <Text style={[s.bigNum, { color: isDark ? '#C084FC' : '#7E22CE' }]}>
+                        {health.heartRate}
+                      </Text>
+                      <Text style={[s.unit, { color: isDark ? '#581C87' : '#E9D5FF' }]}>bpm resting</Text>
+                    </>
+                  ) : (
+                    <>
+                      <ECGLine color="#D8B4FE" w={COL_W - 24} h={50} />
+                      <Text style={[s.bigNum, { color: isDark ? '#C084FC' : '#7E22CE' }]}>--</Text>
+                      <Text style={[s.unit, { color: '#9333EA', lineHeight: 16 }]}>
+                        Connect Apple Health or Google Fit to see live data
+                      </Text>
+                    </>
+                  )}
                 </View>
               </MotiView>
             )}

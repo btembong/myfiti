@@ -150,7 +150,19 @@ export default function ScanCheckInScreen() {
   function handleScan({ data }: { data: string }) {
     if (!data || data === lastScan.current || mutation.isPending || result) return
     lastScan.current = data
-    mutation.mutate(data)
+
+    // The gym QR encodes a URL like https://app.myfiti.com/kiosk?t=<JWT>
+    // Extract just the JWT if the scan is a URL with ?t= param
+    let token = data
+    try {
+      const url = new URL(data)
+      const t = url.searchParams.get('t')
+      if (t) token = t
+    } catch {
+      // Not a URL — use raw data as token
+    }
+
+    mutation.mutate(token)
   }
 
   function handleDismiss() {

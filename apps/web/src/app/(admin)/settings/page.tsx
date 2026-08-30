@@ -9,7 +9,6 @@ import {
 import {
   Dumbbell01Icon,
   Location01Icon,
-  GlobeIcon,
   Clock01Icon,
   FloppyDiskIcon,
   CheckmarkCircle01Icon,
@@ -28,7 +27,6 @@ export default function SettingsGeneralPage() {
     slug:     '',
     country:  'CM',
     timezone: 'Africa/Douala',
-    website:  '',
   })
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -116,16 +114,6 @@ export default function SettingsGeneralPage() {
                 </Text>
               }
               leftSectionWidth={96}
-              radius="md"
-              size="sm"
-            />
-            <TextInput
-              label="Website"
-              description="Optional"
-              placeholder="https://yourgym.com"
-              value={form.website}
-              onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
-              leftSection={<GlobeIcon size={14} style={{ color: '#9ca3af' }} />}
               radius="md"
               size="sm"
             />

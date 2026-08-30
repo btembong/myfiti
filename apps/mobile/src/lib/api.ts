@@ -178,6 +178,12 @@ export const memberApi = {
       tenantSlug,
     }),
 
+  deregisterPushToken: (tenantSlug: string) =>
+    apiRequest<{ ok: boolean }>('/member/me/push-token', {
+      method: 'DELETE',
+      tenantSlug,
+    }),
+
   setPin: (tenantSlug: string, pin: string) =>
     apiRequest<{ ok: boolean }>('/member/me/pin', {
       method: 'POST',
@@ -202,6 +208,65 @@ export const memberApi = {
     apiRequest<{ ok: boolean }>('/member/me', {
       method: 'DELETE',
       body: JSON.stringify({ reason }),
+      tenantSlug,
+    }),
+
+  getReferral: (tenantSlug: string) =>
+    apiRequest<{
+      referral_code: string
+      total_referred: number
+      converted: number
+      total_earned: number
+      referred: Array<{ initials: string; status: string; created_at: string }>
+    }>('/member/me/referral', { method: 'GET', tenantSlug }),
+
+  getWallet: (tenantSlug: string) =>
+    apiRequest<{
+      balance: number
+      currency: string
+      transactions: Array<{
+        id: string; type: string; amount: number
+        description: string; status: string; created_at: string
+      }>
+    }>('/member/wallet', { method: 'GET', tenantSlug }),
+
+  walletTopup: (tenantSlug: string, amount: number, phone: string) =>
+    apiRequest<{ ok: boolean; requestId: string; reference: string }>('/member/wallet/topup', {
+      method: 'POST',
+      body: JSON.stringify({ amount, phone }),
+      tenantSlug,
+    }),
+
+  walletPaySubscription: (tenantSlug: string) =>
+    apiRequest<{ ok: boolean; newBalance: number; newEndDate: string }>('/member/wallet/pay-subscription', {
+      method: 'POST',
+      tenantSlug,
+    }),
+
+  walletPayPlan: (tenantSlug: string, planId: string) =>
+    apiRequest<{ ok: boolean; newBalance: number; newEndDate: string }>('/member/wallet/pay-plan', {
+      method: 'POST',
+      body: JSON.stringify({ planId }),
+      tenantSlug,
+    }),
+
+  walletLookupRecipient: (tenantSlug: string, phone: string) =>
+    apiRequest<{ id: string; name: string }>(`/member/wallet/lookup?phone=${encodeURIComponent(phone)}`, {
+      method: 'GET',
+      tenantSlug,
+    }),
+
+  walletTransfer: (tenantSlug: string, recipientId: string, amount: number, note?: string) =>
+    apiRequest<{ ok: boolean; senderBalance: number; recipientBalance: number; recipientName: string }>('/member/wallet/transfer', {
+      method: 'POST',
+      body: JSON.stringify({ recipientId, amount, note }),
+      tenantSlug,
+    }),
+
+  walletCashout: (tenantSlug: string, amount: number, phone: string) =>
+    apiRequest<{ ok: boolean; requestId: string; newBalance: number }>('/member/wallet/cashout', {
+      method: 'POST',
+      body: JSON.stringify({ amount, phone }),
       tenantSlug,
     }),
 
@@ -230,7 +295,14 @@ export const memberApi = {
     apiRequest<{ plans: Array<{
       id: string; name: string; description: string | null
       price: number; currency: string; duration_days: number; cycle: string
-    }> }>(`/public/gym/${tenantSlug}/plans`, { skipAuth: true }),
+      features: string[] | null
+    }> }>('/member/me/plans', { tenantSlug }),
+
+  redeemVoucher: (tenantSlug: string, code: string) =>
+    apiRequest<{ ok: boolean; credit: number; newBalance: number; currency: string }>(
+      '/member/me/redeem-voucher',
+      { method: 'POST', body: JSON.stringify({ code }), tenantSlug },
+    ),
 
   initiateRenewal: (tenantSlug: string, data: { plan_id: string; phone: string }) =>
     apiRequest<{ ok: boolean; payment_id: string; request_id: string }>(
@@ -243,6 +315,11 @@ export const memberApi = {
       `/member/me/payment/${paymentId}`,
       { tenantSlug },
     ),
+
+  getCheckinHistory: (tenantSlug: string, limit = 60) =>
+    apiRequest<{
+      checkins: Array<{ id: string; method: string; checked_in_at: string }>
+    }>(`/member/me/checkin-history?limit=${limit}`, { tenantSlug }),
 
   scanCheckIn: (tenantSlug: string, token: string) =>
     apiRequest<{

@@ -11,6 +11,27 @@ export const membersRouter = Router()
 membersRouter.use(requireAuth)
 membersRouter.use(requireRole('owner', 'admin', 'receptionist', 'trainer'))
 
+// ─── Referral code generator ──────────────────────────────────────────────────
+
+function generateReferralCode(name: string): string {
+  const prefix = name.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4).padEnd(2, 'X')
+  const suffix = Math.floor(1000 + Math.random() * 9000)
+  return `${prefix}${suffix}`
+}
+
+async function uniqueReferralCode(tenantSlug: string, name: string): Promise<string> {
+  for (let i = 0; i < 10; i++) {
+    const code = generateReferralCode(name)
+    const { rows } = await tenantQuery<{ count: string }>(
+      tenantSlug,
+      `SELECT COUNT(*) as count FROM members WHERE referral_code = $1`,
+      [code],
+    )
+    if (rows[0]?.count === '0') return code
+  }
+  return `REF${Date.now().toString(36).toUpperCase().slice(-6)}`
+}
+
 // ─── PIN helpers ──────────────────────────────────────────────────────────────
 
 async function generateUniquePin(tenantSlug: string): Promise<string> {
@@ -135,18 +156,42 @@ membersRouter.get('/:id', async (req, res) => {
 
 membersRouter.post('/', validate(createMemberSchema), async (req, res) => {
   try {
-    const { name, email, phone, notes } = req.body
+    const { name, email, phone, notes, referredByCode } = req.body
     const id = uuid()
     const qrCode = `myfiti-${id.slice(0, 8).toUpperCase()}`
-    const pin = await generateUniquePin(req.tenant.slug)
+    const [pin, referralCode] = await Promise.all([
+      generateUniquePin(req.tenant.slug),
+      uniqueReferralCode(req.tenant.slug, name),
+    ])
+
+    // Resolve referrer if a code was provided
+    let referredById: string | null = null
+    if (referredByCode?.trim()) {
+      const { rows: refRows } = await tenantQuery<{ id: string }>(
+        req.tenant.slug,
+        `SELECT id FROM members WHERE referral_code = $1 LIMIT 1`,
+        [referredByCode.trim().toUpperCase()],
+      )
+      referredById = refRows[0]?.id ?? null
+    }
 
     await tenantQuery(
       req.tenant.slug,
       `INSERT INTO members
-        (id, name, email, phone, status, qr_code, pin, notes, joined_at, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, NOW(), NOW(), NOW())`,
-      [id, name.trim(), email.toLowerCase().trim(), phone?.trim() ?? null, qrCode, pin, notes?.trim() ?? null],
+        (id, name, email, phone, status, qr_code, pin, referral_code, referred_by_id, notes, joined_at, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $9, NOW(), NOW(), NOW())`,
+      [id, name.trim(), email.toLowerCase().trim(), phone?.trim() ?? null, qrCode, pin, referralCode, referredById, notes?.trim() ?? null],
     )
+
+    // Create referral record if referred
+    if (referredById) {
+      await tenantQuery(
+        req.tenant.slug,
+        `INSERT INTO referrals (id, referrer_id, referred_id, status, created_at)
+         VALUES ($1, $2, $3, 'pending', NOW())`,
+        [uuid(), referredById, id],
+      )
+    }
 
     // Send welcome email — best-effort, never fail the request
     sendMemberWelcomeEmail(
@@ -349,6 +394,37 @@ membersRouter.get('/:id/subscription-events', async (req, res) => {
   } catch (err) {
     console.error('[members/:id/subscription-events]', err)
     res.status(500).json({ error: 'Failed to load activity.' })
+  }
+})
+
+// ─── GET /api/members/:id/wallet ─────────────────────────────────────────────
+// Wallet balance + recent transactions for a specific member (admin view)
+
+membersRouter.get('/:id/wallet', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { rows: walletRows } = await tenantQuery<{ balance: string; currency: string }>(
+      req.tenant.slug,
+      `SELECT balance, currency FROM wallet_accounts WHERE member_id = $1`,
+      [id],
+    )
+    const { rows: txRows } = await tenantQuery<{
+      id: string; type: string; amount: string; description: string; status: string; created_at: string
+    }>(
+      req.tenant.slug,
+      `SELECT id, type, amount, description, status, created_at
+       FROM wallet_transactions WHERE member_id = $1
+       ORDER BY created_at DESC LIMIT 30`,
+      [id],
+    )
+    return res.json({
+      balance: parseFloat(walletRows[0]?.balance ?? '0'),
+      currency: walletRows[0]?.currency ?? 'XAF',
+      transactions: txRows.map(t => ({ ...t, amount: parseFloat(t.amount) })),
+    })
+  } catch (err) {
+    console.error('[members/:id/wallet]', err)
+    return res.status(500).json({ error: 'Failed to load wallet.' })
   }
 })
 

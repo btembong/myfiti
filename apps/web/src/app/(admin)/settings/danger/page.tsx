@@ -12,7 +12,8 @@ import {
   Download01Icon,
   DatabaseIcon,
 } from 'hugeicons-react'
-import { api, downloadCsv } from '@/lib/api'
+import { api } from '@/lib/api'
+import { getToken, getTenantSlug } from '@/lib/auth'
 import { notifications } from '@mantine/notifications'
 import { useRouter } from 'next/navigation'
 
@@ -32,15 +33,28 @@ export default function DangerPage() {
   const router = useRouter()
 
   useEffect(() => {
-    api.get<{ profile: Record<string, unknown> }>('/api/settings/profile')
-      .then(data => { if (data.profile?.gym_name) setGymName(data.profile.gym_name as string) })
+    api.get<{ gym_name?: string }>('/api/settings/profile')
+      .then(data => { if (data.gym_name) setGymName(data.gym_name) })
       .catch(() => {})
   }, [])
 
   async function handleExport() {
     setExporting(true)
     try {
-      await downloadCsv('/api/settings/export', 'gym-data.json')
+      const token = getToken()
+      const slug = getTenantSlug()
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      if (slug) headers['X-Tenant-Slug'] = slug
+      const res = await fetch('/api/settings/export', { method: 'POST', headers })
+      if (!res.ok) throw new Error('Export failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'gym-data.json'
+      a.click()
+      URL.revokeObjectURL(url)
     } catch {
       notifications.show({ color: 'red', message: 'Export failed.' })
     } finally {

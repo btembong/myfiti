@@ -74,8 +74,8 @@ export default function TrainersPage() {
 
   useEffect(() => {
     Promise.all([
-      api.get<{ settings: { plan: string } }>('/api/settings')
-        .then(r => setIsGrowthPlus(r.settings?.plan === 'growth_plus')).catch(catchToast('Failed to load settings')),
+      api.get<{ plan: string }>('/api/settings')
+        .then(r => setIsGrowthPlus(r.plan === 'growth_plus' || r.plan === 'enterprise')).catch(catchToast('Failed to load settings')),
       api.get<{ staff: Record<string, unknown>[] }>('/api/settings/staff')
         .then(r => {
           const t = (r.staff ?? []).filter((s: Record<string, unknown>) => s.role === 'trainer')

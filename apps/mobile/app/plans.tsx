@@ -1,9 +1,11 @@
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert,
+  ActivityIndicator,
 } from 'react-native'
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { MotiView } from 'moti'
-import { Check, Phone, Zap, Clock, Calendar } from 'lucide-react-native'
+import { Check, Phone, Zap, Clock, Calendar, Wallet } from 'lucide-react-native'
 import { Screen } from '../src/components/ui/Screen'
 import { AppHeader } from '../src/components/ui/AppHeader'
 import { Card } from '../src/components/ui/Card'
@@ -35,23 +37,74 @@ export default function PlansScreen() {
   const { branding } = useTenant()
   const { accessToken } = useAuth()
   const { theme } = useTheme()
-  const accent = branding?.primary_color ?? '#5B8EF4'
-  const slug   = branding?.slug ?? ''
+  const queryClient = useQueryClient()
+  const accent  = branding?.primary_color ?? '#5B8EF4'
+  const slug    = branding?.slug ?? ''
 
-  const { data, isLoading } = useQuery({
+  const [payingPlanId, setPayingPlanId] = useState<string | null>(null)
+
+  const { data: profileData } = useQuery({
     queryKey: ['member-profile', slug],
     queryFn: () => memberApi.getProfile(slug),
     enabled: !!slug && !!accessToken,
   })
 
-  const gym      = data?.gym
-  const gymAny   = gym as any
-  const currency = gym?.currency ?? 'XAF'
-  // Plans may be in gymAny.plans or we show generic info
-  const plans: any[] = gymAny?.plans ?? []
+  const { data: plansData, isLoading } = useQuery({
+    queryKey: ['member-plans', slug],
+    queryFn: () => memberApi.getPlans(slug),
+    enabled: !!slug && !!accessToken,
+  })
+
+  const { data: walletData } = useQuery({
+    queryKey: ['member-wallet', slug],
+    queryFn: () => memberApi.getWallet(slug),
+    enabled: !!slug && !!accessToken,
+  })
+
+  const gym           = profileData?.gym
+  const currency      = gym?.currency ?? 'XAF'
+  const plans: any[]  = plansData?.plans ?? []
+  const walletBalance = walletData?.balance ?? 0
+
+  async function handleWalletPay(plan: any) {
+    if (walletBalance < plan.price) {
+      Alert.alert(
+        'Insufficient balance',
+        `Your wallet has ${currency} ${walletBalance.toLocaleString('fr-CM')} but this plan costs ${currency} ${plan.price.toLocaleString('fr-CM')}.`,
+        [{ text: 'OK' }],
+      )
+      return
+    }
+    Alert.alert(
+      `Pay with wallet?`,
+      `${currency} ${plan.price.toLocaleString('fr-CM')} will be deducted from your wallet for the ${plan.name} plan.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm',
+          onPress: async () => {
+            setPayingPlanId(plan.id)
+            try {
+              const res = await memberApi.walletPayPlan(slug, plan.id)
+              queryClient.invalidateQueries({ queryKey: ['member-wallet', slug] })
+              queryClient.invalidateQueries({ queryKey: ['member-profile', slug] })
+              Alert.alert(
+                'Done!',
+                `${plan.name} activated until ${new Date(res.newEndDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}.\nWallet balance: ${currency} ${res.newBalance.toLocaleString('fr-CM')}`,
+              )
+            } catch (err: any) {
+              Alert.alert('Payment failed', err?.message ?? 'Please try again.')
+            } finally {
+              setPayingPlanId(null)
+            }
+          },
+        },
+      ],
+    )
+  }
 
   function callGym() {
-    const phone = gymAny?.phone
+    const phone = (gym as any)?.phone
     if (phone) {
       Linking.openURL(`tel:${phone}`).catch(() =>
         Alert.alert('Cannot call', 'Unable to open the phone app.')
@@ -129,6 +182,33 @@ export default function PlansScreen() {
                       </View>
                     ))}
                   </View>
+
+                  {/* Wallet pay button — only shown when plan has a real ID and price */}
+                  {plan.id && plan.price > 0 && (
+                    <TouchableOpacity
+                      style={[
+                        styles.walletBtn,
+                        {
+                          borderColor: walletBalance >= plan.price ? accent : theme.border,
+                          backgroundColor: walletBalance >= plan.price ? accent + '10' : theme.surfaceHigh,
+                        },
+                      ]}
+                      onPress={() => handleWalletPay(plan)}
+                      disabled={payingPlanId === plan.id}
+                      activeOpacity={0.8}
+                    >
+                      {payingPlanId === plan.id ? (
+                        <ActivityIndicator size="small" color={accent} />
+                      ) : (
+                        <>
+                          <Wallet size={14} color={walletBalance >= plan.price ? accent : theme.textMuted} strokeWidth={1.8} />
+                          <Text style={[styles.walletBtnText, { color: walletBalance >= plan.price ? accent : theme.textMuted }]}>
+                            Pay with wallet · {currency} {walletBalance.toLocaleString('fr-CM')} available
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  )}
                 </Card>
               </MotiView>
             )
@@ -218,6 +298,12 @@ const styles = StyleSheet.create({
   featureRow:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   featureCheck:{ width: 22, height: 22, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
   featureText: { fontSize: 13, fontFamily: F.regular },
+
+  walletBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7,
+    borderWidth: 1.5, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14,
+  },
+  walletBtnText: { fontSize: 12, fontFamily: F.semibold, flexShrink: 1 },
 
   contactBtn: {
     height: 52, borderRadius: 14,

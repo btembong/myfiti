@@ -25,7 +25,7 @@ export async function tenantMiddleware(req: Request, res: Response, next: NextFu
 
   // Resolve tenant from X-Tenant-ID header (set by API gateway from subdomain)
   const tenantId = req.headers['x-tenant-id'] as string | undefined
-  const tenantSlug = req.headers['x-tenant-slug'] as string | undefined
+  const tenantSlug = (req.headers['x-tenant-slug'] as string | undefined) ?? (req.query.slug as string | undefined)
 
   if (!tenantId && !tenantSlug) {
     return res.status(400).json({ error: 'missing_tenant', message: 'Tenant could not be resolved.' })

@@ -8,6 +8,7 @@ import { buildInvoicePDF, type InvoiceData } from '../lib/pdf.js'
 import { sendInvoiceNotificationEmail, sendPlanChangeEmail, sendSuperadminMessageEmail, sendSupportReplyEmail, sendAnnouncementEmail } from '../lib/email.js'
 import { redis } from '../lib/redis.js'
 import { generateMonthlyInvoices } from '../jobs/billing-cron.js'
+import { runWalletReconcile } from '../jobs/wallet-reconcile-cron.js'
 
 // ─── Account number bootstrap (idempotent) ───────────────────────────────────
 // Adds account_number column and backfills existing tenants with GYM-XXXXXX IDs
@@ -951,6 +952,20 @@ superadminRouter.post('/invoices/generate', async (_req, res) => {
   } catch (err) {
     console.error('[superadmin/invoices/generate]', err)
     res.status(500).json({ error: 'Failed to generate invoices.' })
+  }
+})
+
+// ─── POST /api/superadmin/wallet/reconcile ───────────────────────────────────
+// Manually trigger wallet balance reconciliation across all tenants.
+// Also runs automatically every 24 hours via startWalletReconcileCron().
+
+superadminRouter.post('/wallet/reconcile', async (_req, res) => {
+  try {
+    const result = await runWalletReconcile()
+    res.json({ ok: true, ...result })
+  } catch (err) {
+    console.error('[superadmin/wallet/reconcile]', err)
+    res.status(500).json({ error: 'Reconciliation failed.' })
   }
 })
 

@@ -1,5 +1,9 @@
+import { v4 as uuid } from 'uuid'
+import Expo from 'expo-server-sdk'
 import { globalQuery, tenantQuery } from '../db/client.js'
 import { subscriptionQueue } from './index.js'
+
+const expo = new Expo()
 
 /**
  * Subscription lifecycle cron — runs periodically to transition statuses:
@@ -41,7 +45,92 @@ export async function runSubscriptionCron() {
         }).catch(() => {})
       }
 
-      // 2. Expiring Soon → Grace Period (past expiry date)
+      // 2a. Wallet auto-renew — try to renew expired subscriptions from wallet BEFORE
+      //     transitioning them to grace_period. If the wallet has sufficient balance
+      //     the debit succeeds and the subscription stays active (bypassing grace).
+      const { rows: aboutToGrace } = await tenantQuery<{ id: string; member_id: string; plan_id: string }>(
+        tenant.slug,
+        `SELECT id, member_id, plan_id FROM subscriptions
+         WHERE status IN ('active', 'expiring_soon')
+           AND expires_at <= NOW()
+           AND (grace_expires_at IS NULL OR grace_expires_at > NOW())`,
+      )
+      const autoRenewed = new Set<string>()
+      for (const sub of aboutToGrace) {
+        try {
+          const { rows: planRows } = await tenantQuery<{ price: string; duration_days: number; name: string }>(
+            tenant.slug,
+            `SELECT price, duration_days, name FROM membership_plans WHERE id = $1`,
+            [sub.plan_id],
+          )
+          if (!planRows[0]) continue
+          const price = parseFloat(planRows[0].price)
+          if (price <= 0) continue
+
+          // Atomic debit — only succeeds when balance >= price
+          const { rows: debitRows } = await tenantQuery<{ balance: string }>(
+            tenant.slug,
+            `UPDATE wallet_accounts SET balance = balance - $1
+             WHERE member_id = $2 AND balance >= $1
+             RETURNING balance`,
+            [price, sub.member_id],
+          )
+          if (!debitRows[0]) continue // insufficient balance → will enter grace_period
+
+          const newExpiry = new Date()
+          newExpiry.setDate(newExpiry.getDate() + (planRows[0].duration_days ?? 30))
+
+          await Promise.all([
+            tenantQuery(
+              tenant.slug,
+              `UPDATE subscriptions
+               SET status = 'active', started_at = NOW(), expires_at = $1,
+                   grace_expires_at = NULL, updated_at = NOW()
+               WHERE id = $2`,
+              [newExpiry.toISOString(), sub.id],
+            ),
+            tenantQuery(
+              tenant.slug,
+              `UPDATE members SET status = 'active', updated_at = NOW() WHERE id = $1`,
+              [sub.member_id],
+            ),
+            tenantQuery(
+              tenant.slug,
+              `INSERT INTO wallet_transactions (id, member_id, type, amount, description, status)
+               VALUES ($1, $2, 'debit', $3, $4, 'completed')`,
+              [uuid(), sub.member_id, price, `Auto-renewal — ${planRows[0].name}`],
+            ),
+          ])
+
+          autoRenewed.add(sub.id)
+          console.log(
+            `[subscription-cron] ${tenant.slug}: auto-renewed member=${sub.member_id}` +
+            ` plan="${planRows[0].name}" via wallet (${price}) → expires ${newExpiry.toDateString()}`,
+          )
+
+          // Push notification — fire and forget
+          tenantQuery<{ push_token: string | null }>(
+            tenant.slug,
+            `SELECT push_token FROM members WHERE id = $1 LIMIT 1`,
+            [sub.member_id],
+          ).then(({ rows }) => {
+            const token = rows[0]?.push_token
+            if (token && Expo.isExpoPushToken(token)) {
+              expo.sendPushNotificationsAsync([{
+                to: token,
+                sound: 'default',
+                title: 'Membership auto-renewed',
+                body: `Your ${planRows[0].name} was renewed via your wallet. Valid until ${newExpiry.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}.`,
+                data: { type: 'wallet_auto_renewal' },
+              }]).catch(() => {})
+            }
+          }).catch(() => {})
+        } catch (e) {
+          console.error(`[subscription-cron] wallet auto-renew error for sub=${sub.id}:`, e)
+        }
+      }
+
+      // 2b. Expiring Soon → Grace Period (past expiry date, not auto-renewed)
       const { rows: graced } = await tenantQuery<{ id: string; member_id: string }>(
         tenant.slug,
         `UPDATE subscriptions
@@ -51,7 +140,9 @@ export async function runSubscriptionCron() {
            AND (grace_expires_at IS NULL OR grace_expires_at > NOW())
          RETURNING id, member_id`,
       )
-      for (const sub of graced) {
+      // Exclude any subscription that was just auto-renewed (status is now 'active')
+      const gracedFiltered = graced.filter(s => !autoRenewed.has(s.id))
+      for (const sub of gracedFiltered) {
         await subscriptionQueue.add('send-grace-alert', {
           tenantSlug: tenant.slug,
           tenantId: tenant.id,
@@ -91,9 +182,9 @@ export async function runSubscriptionCron() {
         )
       }
 
-      const count = expiring.length + graced.length + suspended.length
+      const count = expiring.length + gracedFiltered.length + suspended.length + autoRenewed.size
       if (count > 0) {
-        console.log(`[subscription-cron] ${tenant.slug}: ${expiring.length} expiring, ${graced.length} grace, ${suspended.length} suspended`)
+        console.log(`[subscription-cron] ${tenant.slug}: ${expiring.length} expiring, ${gracedFiltered.length} grace, ${suspended.length} suspended, ${autoRenewed.size} wallet-auto-renewed`)
       }
       totalTransitions += count
     } catch (err) {

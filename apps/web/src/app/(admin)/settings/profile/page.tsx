@@ -61,9 +61,9 @@ export default function GymProfilePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<{ profile: Record<string, unknown> }>('/api/settings/profile')
+    api.get<Record<string, unknown>>('/api/settings/profile')
       .then(data => {
-        const p = data.profile ?? {}
+        const p = data
         setForm({
           name:      (p.gym_name as string)  ?? '',
           address:   (p.address as string)   ?? '',

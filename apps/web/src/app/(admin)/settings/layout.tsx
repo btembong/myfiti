@@ -14,6 +14,8 @@ import {
   Alert01Icon,
   ArrowRight01Icon,
   Medal01Icon,
+  Tv01Icon,
+  SaleTag01Icon,
 } from 'hugeicons-react'
 
 const NAV = [
@@ -24,6 +26,8 @@ const NAV = [
   { label: 'Notifications',  href: '/settings/notifications',    icon: Notification01Icon },
   { label: 'Staff & Access', href: '/settings/staff',            icon: UserGroupIcon },
   { label: 'Integrations',   href: '/settings/integrations',     icon: Plug01Icon },
+  { label: 'Kiosk',          href: '/settings/kiosk',            icon: Tv01Icon },
+  { label: 'Day Pass Prices',href: '/settings/day-passes',       icon: SaleTag01Icon },
 ]
 
 const DANGER = { label: 'Danger zone', href: '/settings/danger', icon: Alert01Icon }
@@ -64,7 +68,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
                       style={{ background: '#6366f1' }}
                       transition={{ type: 'spring', stiffness: 400, damping: 34 }} />
                   )}
-                  <Icon size={14} />
+                  <Icon size={17} />
                   <span className="flex-1">{item.label}</span>
                   {active && <ArrowRight01Icon size={12} style={{ color: '#a5b4fc' }} />}
                 </Link>
@@ -81,7 +85,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
             onMouseEnter={e => (e.currentTarget.style.background = '#fff1f2')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
-            <DANGER.icon size={14} />
+            <DANGER.icon size={17} />
             {DANGER.label}
           </Link>
         </div>

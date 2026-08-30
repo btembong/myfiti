@@ -16,6 +16,10 @@ export function validateEnv() {
     'TRANZAK_APP_KEY',
     'AT_API_KEY',
     'BULLMQ_REDIS_HOST',
+    // 64-char hex (32 bytes) — used to encrypt webhook secrets at rest (M1)
+    // Generate: openssl rand -hex 32
+    'SECRET_ENCRYPTION_KEY',
+    'TRANZAK_WEBHOOK_SECRET',
   ]
 
   const missing = required.filter(k => !process.env[k])

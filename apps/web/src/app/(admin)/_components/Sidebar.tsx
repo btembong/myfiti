@@ -77,13 +77,24 @@ const WORKSPACES = [
   { id: '1', name: 'My Gym', plan: 'Starter', initial: 'M', color: '#6366f1' },
 ]
 
+const PLAN_LABEL: Record<string, string> = {
+  starter: 'Starter', growth: 'Growth', growth_plus: 'Growth+', enterprise: 'Enterprise',
+}
+const PLAN_BADGE: Record<string, string> = {
+  starter: 'Free', growth: 'Growth', growth_plus: 'Growth+', enterprise: 'Enterprise',
+}
+const PLAN_BADGE_COLOR: Record<string, string> = {
+  starter: 'gray', growth: 'indigo', growth_plus: 'yellow', enterprise: 'violet',
+}
+
 interface Props {
   gymName?: string
   ownerName?: string
   ownerInitial?: string
+  plan?: string
 }
 
-export function Sidebar({ gymName = 'My Gym', ownerName = 'Owner', ownerInitial = 'O' }: Props) {
+export function Sidebar({ gymName = 'My Gym', ownerName = 'Owner', ownerInitial = 'O', plan = 'starter' }: Props) {
   const { collapsed, toggle } = useSidebar()
   const path = usePathname()
   const router = useRouter()
@@ -119,7 +130,7 @@ export function Sidebar({ gymName = 'My Gym', ownerName = 'Owner', ownerInitial 
         <Menu shadow="lg" radius="lg" width={220} position="bottom-start" offset={8}>
           <Menu.Target>
             {collapsed ? (
-              <Tooltip label={`${gymName} · Starter`} position="right" withArrow fz="xs">
+              <Tooltip label={`${gymName} · ${PLAN_LABEL[plan] ?? 'Starter'}`} position="right" withArrow fz="xs">
                 <UnstyledButton
                   style={{
                     width: 32, height: 32, borderRadius: 10, flexShrink: 0,
@@ -168,7 +179,7 @@ export function Sidebar({ gymName = 'My Gym', ownerName = 'Owner', ownerInitial 
                   <Text size="xs" fw={800} truncate style={{ color: '#111827', lineHeight: 1.2 }}>
                     {gymName}
                   </Text>
-                  <Text size="xs" style={{ color: '#9ca3af', lineHeight: 1.2 }}>Starter plan</Text>
+                  <Text size="xs" style={{ color: '#9ca3af', lineHeight: 1.2 }}>{PLAN_LABEL[plan] ?? 'Starter'} plan</Text>
                 </div>
 
                 {/* Chevron */}
@@ -202,10 +213,10 @@ export function Sidebar({ gymName = 'My Gym', ownerName = 'Owner', ownerInitial 
                 <Stack gap={1}>
                   <Text size="xs" fw={700} style={{ color: '#111827' }}>{gymName}</Text>
                   <Group gap={4}>
-                    <Badge size="xs" color="gray" variant="light" style={{ fontSize: 9 }}>
-                      Free
+                    <Badge size="xs" color={PLAN_BADGE_COLOR[plan] ?? 'gray'} variant="light" style={{ fontSize: 9 }}>
+                      {PLAN_BADGE[plan] ?? 'Free'}
                     </Badge>
-                    <Text size="xs" c="dimmed">Starter</Text>
+                    <Text size="xs" c="dimmed">{PLAN_LABEL[plan] ?? 'Starter'}</Text>
                   </Group>
                 </Stack>
               </Menu.Item>
@@ -370,7 +381,7 @@ export function Sidebar({ gymName = 'My Gym', ownerName = 'Owner', ownerInitial 
                           />
                         )}
 
-                        <Icon size={15} style={{ flexShrink: 0 }} />
+                        <Icon size={18} style={{ flexShrink: 0 }} />
 
                         <AnimatePresence>
                           {!collapsed && (
@@ -410,10 +421,13 @@ export function Sidebar({ gymName = 'My Gym', ownerName = 'Owner', ownerInitial 
             >
               <Paper radius="lg" p="sm" withBorder style={{ borderColor: '#edeef4', background: '#fafafa' }}>
                 <Group justify="space-between" mb={4}>
-                  <Text size="xs" fw={700} style={{ color: '#374151' }}>Starter plan</Text>
-                  <Badge size="xs" color="gray" variant="light">Free</Badge>
+                  <Text size="xs" fw={700} style={{ color: '#374151' }}>{PLAN_LABEL[plan] ?? 'Starter'} plan</Text>
+                  <Badge size="xs" color={PLAN_BADGE_COLOR[plan] ?? 'gray'} variant="light">{PLAN_BADGE[plan] ?? 'Free'}</Badge>
                 </Group>
-                <Text size="xs" c="dimmed" mb="sm">Unlock classes, SMS &amp; more</Text>
+                <Text size="xs" c="dimmed" mb="sm">
+                  {plan === 'starter' ? 'Unlock classes, SMS & more' : plan === 'enterprise' ? 'Enterprise plan active' : 'Plan active'}
+                </Text>
+                {plan === 'starter' && (
                 <Button
                   component={Link}
                   href="/settings/billing"
@@ -426,6 +440,7 @@ export function Sidebar({ gymName = 'My Gym', ownerName = 'Owner', ownerInitial 
                 >
                   Upgrade plan
                 </Button>
+                )}
               </Paper>
             </motion.div>
           )}

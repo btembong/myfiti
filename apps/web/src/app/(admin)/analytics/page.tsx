@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Paper, Text, Title, Group, Stack, Badge,
@@ -18,6 +18,7 @@ import {
   QrCode01Icon,
   CreditCardIcon,
   Target01Icon,
+  Ticket01Icon,
 } from 'hugeicons-react'
 import { api } from '@/lib/api'
 import { catchToast } from '@/lib/notifications'
@@ -124,6 +125,17 @@ interface CheckinRow { day: string; count: string }
 interface PlanRow { plan: string; count: string }
 interface RevenueRow { date: string; total: string; count: string }
 interface CohortRow { month: string; total: number; active: number; pct: number }
+interface ReferralStats {
+  total: number; converted: number; pending: number
+  total_rewards: number; conversion_rate: number
+  monthly: Array<{ month: string; count: string }>
+}
+interface WalletStats {
+  totalFloat: number; accounts: number
+  byType: Array<{ type: string; total: number; count: number }>
+  topBalances: Array<{ memberId: string; name: string; balance: number; currency: string }>
+  dailyTopups: Array<{ day: string; total: number }>
+}
 
 export default function AnalyticsPage() {
   const [period, setPeriod] = useState('30d')
@@ -134,6 +146,8 @@ export default function AnalyticsPage() {
   const [revenueDaily, setRevenueDaily] = useState<RevenueRow[]>([])
   const [churnRate, setChurnRate]       = useState(0)
   const [cohorts, setCohorts]           = useState<CohortRow[]>([])
+  const [referrals, setReferrals]       = useState<ReferralStats | null>(null)
+  const [wallet, setWallet]             = useState<WalletStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -149,6 +163,8 @@ export default function AnalyticsPage() {
       api.get<{ daily: CheckinRow[] }>(`/api/analytics/checkins${q}`).then(d => setDailyCheckins(d.daily ?? [])).catch(catchToast('Failed to load check-in data')),
       api.get<{ daily: RevenueRow[] }>(`/api/analytics/revenue${q}`).then(d => setRevenueDaily(d.daily ?? [])).catch(catchToast('Failed to load revenue data')),
       api.get<{ cohorts: CohortRow[] }>('/api/analytics/retention').then(d => setCohorts(d.cohorts ?? [])).catch(() => {}),
+      api.get<ReferralStats>('/api/analytics/referrals').then(d => setReferrals(d)).catch(() => {}),
+      api.get<WalletStats>('/api/analytics/wallet').then(d => setWallet(d)).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [period])
 
@@ -340,24 +356,188 @@ export default function AnalyticsPage() {
                 ))}
                 {/* Rows */}
                 {cohorts.map(c => (
-                  <>
-                    <Text key={`m-${c.month}`} size="xs" fw={600} style={{ color: '#374151', padding: '8px 8px', borderBottom: '1px solid #f9fafb' }}>
+                  <React.Fragment key={c.month}>
+                    <Text size="xs" fw={600} style={{ color: '#374151', padding: '8px 8px', borderBottom: '1px solid #f9fafb' }}>
                       {new Date(c.month + '-01').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
                     </Text>
-                    <Text key={`t-${c.month}`} size="xs" style={{ color: '#6b7280', padding: '8px 8px', borderBottom: '1px solid #f9fafb' }}>{c.total}</Text>
-                    <Text key={`a-${c.month}`} size="xs" style={{ color: '#6b7280', padding: '8px 8px', borderBottom: '1px solid #f9fafb' }}>{c.active}</Text>
-                    <Box key={`p-${c.month}`} style={{ padding: '8px 8px', borderBottom: '1px solid #f9fafb', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Text size="xs" style={{ color: '#6b7280', padding: '8px 8px', borderBottom: '1px solid #f9fafb' }}>{c.total}</Text>
+                    <Text size="xs" style={{ color: '#6b7280', padding: '8px 8px', borderBottom: '1px solid #f9fafb' }}>{c.active}</Text>
+                    <Box style={{ padding: '8px 8px', borderBottom: '1px solid #f9fafb', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <Box style={{ flex: 1, height: 6, borderRadius: 3, background: '#f4f5f9' }}>
                         <Box style={{ width: `${c.pct}%`, height: '100%', borderRadius: 3, background: c.pct >= 70 ? '#10b981' : c.pct >= 40 ? '#f59e0b' : '#ef4444' }} />
                       </Box>
                       <Text size="xs" fw={700} style={{ color: '#374151', width: 32, textAlign: 'right' }}>{c.pct}%</Text>
                     </Box>
-                  </>
+                  </React.Fragment>
                 ))}
               </Box>
             </Box>
           ) : (
             <EmptyChart label="Retention data builds as members renew their subscriptions over time." />
+          )}
+        </Paper>
+      </motion.div>
+
+      {/* Referral stats */}
+      <motion.div variants={fade} custom={5} initial="hidden" animate="show">
+        <Paper radius="xl" p="xl" withBorder style={{ borderColor: '#edeef4' }}>
+          <Group justify="space-between" mb="lg">
+            <Stack gap={1}>
+              <Text size="sm" fw={700} style={{ color: '#111827' }}>Referrals</Text>
+              <Text size="xs" c="dimmed">Member referral programme performance</Text>
+            </Stack>
+            <ThemeIcon size={32} radius="lg" color="pink" variant="light">
+              <Ticket01Icon size={16} />
+            </ThemeIcon>
+          </Group>
+
+          {referrals ? (
+            <Stack gap="md">
+              {/* KPI mini-row */}
+              <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
+                {[
+                  { label: 'Total referrals',   value: referrals.total,         color: '#6366f1' },
+                  { label: 'Converted',          value: referrals.converted,     color: '#10b981' },
+                  { label: 'Pending',            value: referrals.pending,       color: '#f59e0b' },
+                  { label: 'Conversion rate',    value: `${referrals.conversion_rate}%`, color: '#3b82f6' },
+                ].map(stat => (
+                  <Box key={stat.label} style={{ background: '#f9fafb', borderRadius: 12, padding: '12px 16px' }}>
+                    <Text style={{ fontSize: '1.6rem', fontWeight: 900, lineHeight: 1, color: stat.color, letterSpacing: '-0.02em' }}>
+                      {stat.value}
+                    </Text>
+                    <Text size="xs" c="dimmed" mt={4}>{stat.label}</Text>
+                  </Box>
+                ))}
+              </SimpleGrid>
+
+              {/* Conversion progress bar */}
+              <Box>
+                <Group justify="space-between" mb={6}>
+                  <Text size="xs" fw={600} style={{ color: '#374151' }}>Conversion progress</Text>
+                  <Text size="xs" c="dimmed">{referrals.converted} of {referrals.total} converted</Text>
+                </Group>
+                <Progress value={referrals.conversion_rate} color="indigo" size="sm" radius="xl" />
+              </Box>
+
+              {/* Rewards issued */}
+              <Group gap="xs">
+                <Wallet01Icon size={13} style={{ color: '#9ca3af' }} />
+                <Text size="xs" c="dimmed">
+                  Total rewards issued:{' '}
+                  <Text span fw={700} style={{ color: '#111827' }}>
+                    XAF {referrals.total_rewards.toLocaleString('fr-CM')}
+                  </Text>
+                </Text>
+              </Group>
+
+              {/* Monthly spark */}
+              {referrals.monthly.length > 0 && (
+                <Box>
+                  <Text size="xs" fw={600} style={{ color: '#374151' }} mb="xs">Monthly referrals (6 months)</Text>
+                  <SparkBar
+                    data={referrals.monthly.map(r => ({ label: r.month, value: parseInt(r.count ?? '0') }))}
+                    max={Math.max(...referrals.monthly.map(r => parseInt(r.count ?? '0')), 1)}
+                    color="#ec4899"
+                  />
+                </Box>
+              )}
+            </Stack>
+          ) : (
+            <EmptyChart label="Referral data will appear once members start using referral codes." />
+          )}
+        </Paper>
+      </motion.div>
+
+      {/* Wallet stats */}
+      <motion.div variants={fade} custom={6} initial="hidden" animate="show">
+        <Paper radius="xl" p="xl" withBorder style={{ borderColor: '#edeef4' }}>
+          <Group justify="space-between" mb="lg">
+            <Stack gap={1}>
+              <Text size="sm" fw={700} style={{ color: '#111827' }}>Member Wallets</Text>
+              <Text size="xs" c="dimmed">Digital wallet float and transaction breakdown</Text>
+            </Stack>
+            <ThemeIcon size={32} radius="lg" color="violet" variant="light">
+              <Wallet01Icon size={16} />
+            </ThemeIcon>
+          </Group>
+
+          {wallet ? (
+            <Stack gap="md">
+              {/* Float KPIs */}
+              <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="md">
+                {[
+                  { label: 'Total float', value: `₣${wallet.totalFloat.toLocaleString('fr-CM')}`, color: '#7c3aed' },
+                  { label: 'Wallet accounts', value: wallet.accounts.toLocaleString(), color: '#6366f1' },
+                  { label: 'Topup volume (30d)', value: `₣${wallet.dailyTopups.reduce((s, d) => s + d.total, 0).toLocaleString('fr-CM')}`, color: '#10b981' },
+                ].map(stat => (
+                  <Box key={stat.label} style={{ background: '#f9fafb', borderRadius: 12, padding: '12px 16px' }}>
+                    <Text style={{ fontSize: '1.4rem', fontWeight: 900, lineHeight: 1, color: stat.color, letterSpacing: '-0.02em' }}>
+                      {stat.value}
+                    </Text>
+                    <Text size="xs" c="dimmed" mt={4}>{stat.label}</Text>
+                  </Box>
+                ))}
+              </SimpleGrid>
+
+              {/* Transaction type breakdown */}
+              {wallet.byType.length > 0 && (
+                <Box>
+                  <Text size="xs" fw={600} style={{ color: '#374151' }} mb="xs">By transaction type</Text>
+                  <Stack gap={6}>
+                    {wallet.byType.map(t => {
+                      const labels: Record<string, string> = {
+                        topup: 'Top-ups', debit: 'Debits', credit: 'Credits',
+                        referral_credit: 'Referral credits', cashout: 'Cashouts', transfer: 'Transfers',
+                      }
+                      const colors: Record<string, string> = {
+                        topup: '#10b981', debit: '#ef4444', credit: '#6366f1',
+                        referral_credit: '#ec4899', cashout: '#f59e0b', transfer: '#3b82f6',
+                      }
+                      const color = colors[t.type] ?? '#9ca3af'
+                      return (
+                        <Group key={t.type} justify="space-between" style={{ fontSize: '0.8rem' }}>
+                          <Group gap={6}>
+                            <Box style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
+                            <Text size="xs" fw={600} style={{ color: '#374151' }}>{labels[t.type] ?? t.type}</Text>
+                            <Text size="xs" c="dimmed">{t.count}×</Text>
+                          </Group>
+                          <Text size="xs" fw={700} style={{ color }}>₣{t.total.toLocaleString('fr-CM')}</Text>
+                        </Group>
+                      )
+                    })}
+                  </Stack>
+                </Box>
+              )}
+
+              {/* Top balances */}
+              {wallet.topBalances.length > 0 && (
+                <Box>
+                  <Text size="xs" fw={600} style={{ color: '#374151' }} mb="xs">Top balances</Text>
+                  <Stack gap={4}>
+                    {wallet.topBalances.map((m, i) => (
+                      <Group key={m.memberId} justify="space-between" style={{ padding: '6px 10px', background: i === 0 ? '#faf5ff' : '#f9fafb', borderRadius: 8 }}>
+                        <Text size="xs" fw={600} style={{ color: '#374151' }}>{m.name}</Text>
+                        <Text size="xs" fw={800} style={{ color: '#7c3aed' }}>{m.currency} {m.balance.toLocaleString('fr-CM')}</Text>
+                      </Group>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+
+              {/* Daily topup sparkbar */}
+              {wallet.dailyTopups.length > 0 && (
+                <Box>
+                  <Text size="xs" fw={600} style={{ color: '#374151' }} mb="xs">Daily top-ups (30 days)</Text>
+                  <SparkBar
+                    data={wallet.dailyTopups.map(d => ({ label: d.day.slice(5), value: d.total }))}
+                    max={Math.max(...wallet.dailyTopups.map(d => d.total), 1)}
+                    color="#7c3aed"
+                  />
+                </Box>
+              )}
+            </Stack>
+          ) : (
+            <EmptyChart label="Wallet data will appear once members start using the wallet feature." />
           )}
         </Paper>
       </motion.div>

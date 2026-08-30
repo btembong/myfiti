@@ -162,6 +162,49 @@ export async function chargeMobileWallet({
   return { requestId: body.data.requestId, status: body.data.status }
 }
 
+// ─── Disburse to mobile wallet (payout — sends money TO a phone number) ──────
+// Used for cashout: merchant → member's MoMo account.
+// Tranzak endpoint: POST /xp021/v1/request/create-mobile-wallet-payout
+export async function disburseMobile({
+  amount,
+  currency,
+  phone,
+  reference,
+  description,
+  callbackUrl,
+}: {
+  amount: number
+  currency: string
+  phone: string
+  reference: string
+  description?: string
+  callbackUrl?: string
+}): Promise<{ requestId: string; status: string }> {
+  const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+
+  const body = await tranzakFetch<{
+    data: { requestId: string; status: string }
+    success: boolean
+    errorMsg?: string
+  }>(
+    '/xp021/v1/request/create-mobile-wallet-payout',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        amount,
+        currencyCode:       currency,
+        description:        description ?? `Wallet cashout — ref: ${reference}`,
+        mchTransactionRef:  reference,
+        mobileWalletNumber: phone,
+        callbackUrl:        callbackUrl ?? `${APP_URL}/api/webhooks/tranzak`,
+      }),
+    },
+  )
+
+  if (!body.success) throw new Error(`Tranzak disbursement failed: ${body.errorMsg ?? 'unknown'}`)
+  return { requestId: body.data.requestId, status: body.data.status }
+}
+
 // ─── Low-level helper for tenant-specific credentials ────────────────────────
 // Used by day-passes route which has per-tenant Tranzak credentials.
 export { getAuthToken, tranzakFetch, BASE_URL }

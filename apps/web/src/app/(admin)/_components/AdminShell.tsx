@@ -29,6 +29,8 @@ function useSpotlightActions() {
     { id: 'staff',         label: 'Staff & Access',  description: 'Invite and manage staff members',   onClick: () => router.push('/settings/staff') },
     { id: 'integrations',  label: 'Integrations',    description: 'Connect third-party services',      onClick: () => router.push('/settings/integrations') },
     { id: 'help',          label: 'Help & Docs',     description: 'Guides, FAQs, and support',        onClick: () => router.push('/help') },
+    { id: 'kiosk',         label: 'Kiosk Setup',     description: 'Get the kiosk URL and QR code',    onClick: () => router.push('/settings/kiosk') },
+    { id: 'day-passes',    label: 'Day Pass Prices', description: 'Configure day pass pricing',        onClick: () => router.push('/settings/day-passes') },
   ]
 }
 
@@ -43,16 +45,17 @@ interface Props {
   gymName?: string
   ownerName?: string
   ownerInitial?: string
+  plan?: string
 }
 
-function Shell({ children, gymName, ownerName, ownerInitial }: Props) {
+function Shell({ children, gymName, ownerName, ownerInitial, plan }: Props) {
   const { collapsed } = useSidebar()
   const { isOpen, content, title, close } = useRightPanel()
   const actions = useSpotlightActions()
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: '#f4f5f9' }}>
-      <Sidebar gymName={gymName} ownerName={ownerName} ownerInitial={ownerInitial} />
+      <Sidebar gymName={gymName} ownerName={ownerName} ownerInitial={ownerInitial} plan={plan} />
 
       {/* ── Main column ── */}
       <motion.div
@@ -125,6 +128,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [ownerName,    setOwnerName]    = useState('Owner')
   const [ownerInitial, setOwnerInitial] = useState('O')
   const [gymName,      setGymName]      = useState('My Gym')
+  const [plan,         setPlan]         = useState('starter')
 
   useEffect(() => {
     const token = getToken()
@@ -150,16 +154,19 @@ export function AdminShell({ children }: { children: ReactNode }) {
     }
     if (!slug) { router.replace('/onboarding'); return }
 
-    // Fetch gym name from settings
-    api.get<{ gym_name?: string }>('/api/settings')
-      .then(d => { if (d.gym_name) setGymName(d.gym_name) })
+    // Fetch gym name + plan from settings
+    api.get<{ gym_name?: string; plan?: string }>('/api/settings')
+      .then(d => {
+        if (d.gym_name) setGymName(d.gym_name)
+        if (d.plan) setPlan(d.plan)
+      })
       .catch(() => {})
   }, [router])
 
   return (
     <SidebarProvider>
       <RightPanelProvider>
-        <Shell gymName={gymName} ownerName={ownerName} ownerInitial={ownerInitial}>
+        <Shell gymName={gymName} ownerName={ownerName} ownerInitial={ownerInitial} plan={plan}>
           {children}
         </Shell>
       </RightPanelProvider>

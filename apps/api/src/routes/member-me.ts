@@ -285,6 +285,70 @@ memberMeRouter.patch('/notifications/read-all', async (req, res) => {
   }
 })
 
+// ─── GET /api/member/me/referral ─────────────────────────────────────────────
+
+memberMeRouter.get('/referral', async (req, res) => {
+  try {
+    const { sub: memberId, tenant_slug: tenantSlug } = req.auth as unknown as MemberAuth
+
+    // Ensure member has a referral code
+    const { rows: memberRows } = await tenantQuery<{ referral_code: string | null; name: string }>(
+      tenantSlug,
+      `SELECT referral_code, name FROM members WHERE id = $1 LIMIT 1`,
+      [memberId],
+    )
+    let referralCode = memberRows[0]?.referral_code
+
+    if (!referralCode) {
+      const name = memberRows[0]?.name ?? 'MEMBER'
+      const prefix = name.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 4).padEnd(2, 'X')
+      referralCode = `${prefix}${Math.floor(1000 + Math.random() * 9000)}`
+      await tenantQuery(tenantSlug, `UPDATE members SET referral_code = $1 WHERE id = $2`, [referralCode, memberId])
+    }
+
+    // Stats
+    const { rows: statsRows } = await tenantQuery<{ total: string; converted: string; total_earned: string }>(
+      tenantSlug,
+      `SELECT
+         COUNT(*)::TEXT                                          AS total,
+         COUNT(*) FILTER (WHERE status = 'converted')::TEXT     AS converted,
+         COALESCE(SUM(reward_amount) FILTER (WHERE reward_applied_at IS NOT NULL), 0)::TEXT AS total_earned
+       FROM referrals
+       WHERE referrer_id = $1`,
+      [memberId],
+    )
+
+    // Recent referred members (masked — initials only)
+    const { rows: referredRows } = await tenantQuery<{ name: string; status: string; created_at: string }>(
+      tenantSlug,
+      `SELECT m.name, r.status, r.created_at
+       FROM referrals r
+       JOIN members m ON m.id = r.referred_id
+       WHERE r.referrer_id = $1
+       ORDER BY r.created_at DESC
+       LIMIT 10`,
+      [memberId],
+    )
+
+    const referred = referredRows.map(r => ({
+      initials: r.name.split(' ').slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? '').join(''),
+      status: r.status,
+      created_at: r.created_at,
+    }))
+
+    res.json({
+      referral_code: referralCode,
+      total_referred: parseInt(statsRows[0]?.total ?? '0'),
+      converted: parseInt(statsRows[0]?.converted ?? '0'),
+      total_earned: parseFloat(statsRows[0]?.total_earned ?? '0'),
+      referred,
+    })
+  } catch (err) {
+    console.error('[member-me/referral]', err)
+    res.status(500).json({ error: 'Failed to load referral data.' })
+  }
+})
+
 // ─── POST /api/member/me/push-token ──────────────────────────────────────────
 
 memberMeRouter.post('/push-token', async (req, res) => {
@@ -304,6 +368,23 @@ memberMeRouter.post('/push-token', async (req, res) => {
   } catch (err) {
     // Column might not exist yet — non-fatal
     console.warn('[member-me/push-token]', err)
+    return res.json({ ok: true })
+  }
+})
+
+// ─── DELETE /api/member/me/push-token ────────────────────────────────────────
+
+memberMeRouter.delete('/push-token', async (req, res) => {
+  try {
+    const { sub: memberId, tenant_slug: tenantSlug } = req.auth as unknown as MemberAuth
+    await tenantQuery(
+      tenantSlug,
+      `UPDATE members SET push_token = NULL, updated_at = NOW() WHERE id = $1`,
+      [memberId],
+    )
+    return res.json({ ok: true })
+  } catch (err) {
+    console.warn('[member-me/push-token DELETE]', err)
     return res.json({ ok: true })
   }
 })
@@ -572,6 +653,33 @@ memberMeRouter.post('/checkin', async (req, res) => {
   }
 })
 
+// ─── GET /api/member/me/checkin-history ──────────────────────────────────────
+
+memberMeRouter.get('/checkin-history', async (req, res) => {
+  try {
+    const { sub: memberId, tenant_slug: tenantSlug } = req.auth as unknown as MemberAuth
+
+    const limit = Math.min(Number(req.query.limit) || 60, 200)
+
+    const { rows } = await tenantQuery<{
+      id: string; method: string; checked_in_at: string
+    }>(
+      tenantSlug,
+      `SELECT id, method, checked_in_at
+       FROM check_ins
+       WHERE member_id = $1
+       ORDER BY checked_in_at DESC
+       LIMIT $2`,
+      [memberId, limit],
+    )
+
+    return res.json({ checkins: rows })
+  } catch (err) {
+    console.error('[member-me/checkin-history GET]', err)
+    return res.status(500).json({ error: 'Failed to load check-in history.' })
+  }
+})
+
 // ─── GET /api/member/me/sessions ─────────────────────────────────────────────
 
 memberMeRouter.get('/sessions', async (req, res) => {
@@ -647,6 +755,107 @@ memberMeRouter.delete('/sessions/:id', async (req, res) => {
   } catch (err) {
     console.error('[member-me/sessions/:id DELETE]', err)
     return res.status(500).json({ error: 'Failed to revoke session.' })
+  }
+})
+
+// ─── GET /api/member/me/plans ─────────────────────────────────────────────────
+// Returns the gym's active membership plans so the mobile Plans screen can
+// display real prices and enable wallet payment.
+
+memberMeRouter.get('/plans', async (req, res) => {
+  try {
+    const { tenant_slug: tenantSlug } = req.auth as unknown as MemberAuth
+    const { rows } = await tenantQuery<{
+      id: string; name: string; description: string | null
+      price: string; currency: string; duration_days: number
+      cycle: string; features: string | null
+    }>(
+      tenantSlug,
+      `SELECT id, name, description, price, currency, duration_days, cycle, features
+       FROM membership_plans
+       WHERE is_active = TRUE
+       ORDER BY price ASC`,
+    )
+    res.json({
+      plans: rows.map(p => ({
+        ...p,
+        price: parseFloat(p.price),
+        features: p.features ? (Array.isArray(p.features) ? p.features : JSON.parse(p.features)) : null,
+      })),
+    })
+  } catch (err) {
+    console.error('[member-me/plans]', err)
+    res.status(500).json({ error: 'Failed to load plans.' })
+  }
+})
+
+// ─── POST /api/member/me/redeem-voucher ───────────────────────────────────────
+// Redeem a voucher code — credits the member's wallet with the voucher value.
+
+memberMeRouter.post('/redeem-voucher', async (req, res) => {
+  try {
+    const { sub: memberId, tenant_slug: tenantSlug } = req.auth as unknown as MemberAuth
+    const { code } = req.body as { code: string }
+
+    if (!code?.trim()) return res.status(400).json({ error: 'Voucher code is required.' })
+
+    const normalised = code.trim().toUpperCase()
+
+    // Load voucher
+    const { rows: vRows } = await tenantQuery<{
+      id: string; value: string; currency: string; status: string; expires_at: string | null
+    }>(
+      tenantSlug,
+      `SELECT id, value, currency, status, expires_at FROM vouchers WHERE code = $1 LIMIT 1`,
+      [normalised],
+    )
+    const voucher = vRows[0]
+    if (!voucher)                       return res.status(404).json({ error: 'Voucher code not found.' })
+    if (voucher.status !== 'active')    return res.status(400).json({ error: `This voucher has already been ${voucher.status}.` })
+    if (voucher.expires_at && new Date(voucher.expires_at) < new Date()) {
+      await tenantQuery(tenantSlug, `UPDATE vouchers SET status = 'expired' WHERE id = $1`, [voucher.id])
+      return res.status(400).json({ error: 'This voucher has expired.' })
+    }
+
+    const credit = parseFloat(voucher.value)
+
+    // Ensure wallet account exists
+    await tenantQuery(
+      tenantSlug,
+      `INSERT INTO wallet_accounts (id, member_id, balance, currency)
+       VALUES ($1, $2, 0, $3)
+       ON CONFLICT (member_id) DO NOTHING`,
+      [uuid(), memberId, voucher.currency],
+    )
+
+    // Credit wallet
+    const { rows: walletRows } = await tenantQuery<{ balance: string }>(
+      tenantSlug,
+      `UPDATE wallet_accounts SET balance = balance + $1, updated_at = NOW()
+       WHERE member_id = $2 RETURNING balance`,
+      [credit, memberId],
+    )
+
+    // Record transaction
+    await tenantQuery(
+      tenantSlug,
+      `INSERT INTO wallet_transactions (id, member_id, type, amount, description, status)
+       VALUES ($1, $2, 'credit', $3, $4, 'completed')`,
+      [uuid(), memberId, credit, `Voucher redemption — ${normalised}`],
+    )
+
+    // Mark voucher redeemed
+    await tenantQuery(
+      tenantSlug,
+      `UPDATE vouchers SET status = 'redeemed', redeemed_by = $1, redeemed_at = NOW() WHERE id = $2`,
+      [memberId, voucher.id],
+    )
+
+    const newBalance = parseFloat(walletRows[0]?.balance ?? '0')
+    res.json({ ok: true, credit, newBalance, currency: voucher.currency })
+  } catch (err) {
+    console.error('[member-me/redeem-voucher]', err)
+    res.status(500).json({ error: 'Failed to redeem voucher.' })
   }
 })
 

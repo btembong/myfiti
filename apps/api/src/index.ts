@@ -16,7 +16,9 @@ import { globalQuery } from './db/client.js'
 import './jobs/index.js'
 import { startSubscriptionCron } from './jobs/subscription-cron.js'
 import { startBillingCron } from './jobs/billing-cron.js'
-import { migrateAllTenants } from './db/provision.js'
+import { startMotivationCron } from './jobs/motivation-cron.js'
+import { startWalletReconcileCron } from './jobs/wallet-reconcile-cron.js'
+import { migrateAllTenants, migrateGlobalSchema } from './db/provision.js'
 
 const app = express()
 app.set('etag', false) // disable 304 caching — mobile clients always need fresh data
@@ -60,19 +62,21 @@ app.use(errorHandler)
 
 app.listen(PORT, () => {
   console.log(`GymFlow API running on port ${PORT}`)
-  migrateAllTenants().then(() => {
-    startSubscriptionCron()
-    startBillingCron()
-  })
+  migrateGlobalSchema()
+    .then(() => migrateAllTenants())
+    .then(() => {
+      startSubscriptionCron()
+      startBillingCron()
+      startMotivationCron()
+      startWalletReconcileCron()
+    })
 
   // Keep Neon DB alive — free tier pauses after ~5 min of inactivity
   // Pings every 4 minutes so the kiosk never hits a cold-start timeout
-  if (process.env.NODE_ENV === 'development') {
-    setInterval(async () => {
-      try { await globalQuery('SELECT 1') }
-      catch { /* ignore — just a keepalive */ }
-    }, 4 * 60 * 1000)
-  }
+  setInterval(async () => {
+    try { await globalQuery('SELECT 1') }
+    catch { /* ignore — just a keepalive */ }
+  }, 4 * 60 * 1000)
 })
 
 export default app

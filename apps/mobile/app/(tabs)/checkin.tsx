@@ -1,11 +1,12 @@
+import { useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Dimensions, Share, Image,
+  Dimensions, Share, Image, ScrollView, RefreshControl,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useQuery } from '@tanstack/react-query'
-import { X, HelpCircle, Download, ScanLine, QrCode } from 'lucide-react-native'
+import { X, HelpCircle, Download, ScanLine, QrCode, History, CheckCircle2 } from 'lucide-react-native'
 import Svg, { Rect } from 'react-native-svg'
 import { MotiView } from 'moti'
 import { StyledQRCode } from '../../src/components/ui/StyledQRCode'
@@ -17,10 +18,12 @@ import { F } from '../../src/theme'
 import { useRouter } from 'expo-router'
 
 const { width } = Dimensions.get('window')
-const CARD_W  = width - 66        // 33px each side — matches Figma left:33 width:337
+const CARD_W  = width - 66
 const QR_SIZE = Math.min(CARD_W - 64, 220)
 const BAR_W   = CARD_W - 48
 const BAR_H   = 72
+
+type Tab = 'qr' | 'history'
 
 /** Mix hex toward 0 (black) or 255 (white) by `amount` 0–1 */
 function mixHex(hex: string, target: 0 | 255, amount: number): string {
@@ -66,18 +69,65 @@ function fmtNumber(id?: string | number): string {
   return `${s.slice(0, 4)} ${s.slice(4, 8)} ${s.slice(8, 12)} ${s.slice(12, 16)}`
 }
 
+function fmtCheckinDate(iso: string) {
+  const d = new Date(iso)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today.getTime() - 86400_000)
+  const itemDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+
+  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  if (itemDay.getTime() === today.getTime()) return `Today · ${time}`
+  if (itemDay.getTime() === yesterday.getTime()) return `Yesterday · ${time}`
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ` · ${time}`
+}
+
+function getWeekLabel(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const startOfThisWeek = new Date(now)
+  startOfThisWeek.setDate(now.getDate() - now.getDay())
+  startOfThisWeek.setHours(0, 0, 0, 0)
+  const startOfLastWeek = new Date(startOfThisWeek.getTime() - 7 * 86400_000)
+
+  if (d >= startOfThisWeek) return 'This week'
+  if (d >= startOfLastWeek) return 'Last week'
+  return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+}
+
+function methodLabel(method: string): string {
+  if (method === 'member_qr_scan') return 'QR scan'
+  if (method === 'staff_qr_scan')  return 'Staff scan'
+  if (method === 'pin')            return 'PIN'
+  if (method === 'manual')         return 'Manual'
+  return method.replace(/_/g, ' ')
+}
+
 export default function CheckInScreen() {
   const { branding }    = useTenant()
   const { accessToken } = useAuth()
   const router          = useRouter()
+  const insets          = useSafeAreaInsets()
   const accent          = branding?.primary_color ?? '#14B946'
   const slug            = branding?.slug ?? ''
+  const gymName         = branding?.name ?? 'Gym'
+
+  const [tab, setTab] = useState<Tab>('qr')
 
   const { data, isLoading } = useQuery({
     queryKey: ['member-profile', slug],
     queryFn:  () => memberApi.getProfile(slug),
     enabled:  !!slug && !!accessToken,
     staleTime: 30_000,
+  })
+
+  const {
+    data: histData, isLoading: histLoading, isRefetching: histRefetching, refetch: histRefetch,
+  } = useQuery({
+    queryKey: ['checkin-history', slug],
+    queryFn:  () => memberApi.getCheckinHistory(slug, 60),
+    enabled:  !!slug && !!accessToken && tab === 'history',
+    staleTime: 60_000,
   })
 
   const profile     = data?.member
@@ -99,151 +149,232 @@ export default function CheckInScreen() {
                     : null
 
   const avatarSeed = String(profile?.name ?? profile?.id ?? 'member')
+  const btnLight   = mixHex(accent, 255, 0.22)
+  const bg         = mixHex(accent, 0, 0.85)
 
-  const btnLight = mixHex(accent, 255, 0.22)
-  const bg       = mixHex(accent, 0, 0.85)   // dark green-black
+  // Group check-ins by week label
+  const checkins = histData?.checkins ?? []
+  const grouped: Array<{ label: string; items: typeof checkins }> = []
+  for (const ci of checkins) {
+    const label = getWeekLabel(ci.checked_in_at)
+    const last = grouped[grouped.length - 1]
+    if (last && last.label === label) {
+      last.items.push(ci)
+    } else {
+      grouped.push({ label, items: [ci] })
+    }
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
 
-        {/* ── Header ── */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerBtn}
-            onPress={() => router.navigate('/(tabs)/home')}
-            activeOpacity={0.7}
-          >
-            <X size={18} color="#FFFFFF" strokeWidth={2.2} />
-          </TouchableOpacity>
+      {/* ── Header ── */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          onPress={() => router.navigate('/(tabs)/home')}
+          activeOpacity={0.7}
+        >
+          <X size={18} color="#FFFFFF" strokeWidth={2.2} />
+        </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>My QR Code</Text>
+        <Text style={styles.headerTitle}>{tab === 'history' ? 'Check-in History' : 'My QR Code'}</Text>
 
-          <TouchableOpacity
-            style={styles.headerBtn}
-            activeOpacity={0.7}
-            onPress={() => router.push('/help')}
-          >
-            <HelpCircle size={18} color="#FFFFFF" strokeWidth={1.8} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.headerBtn}
+          activeOpacity={0.7}
+          onPress={() => router.push('/help')}
+        >
+          <HelpCircle size={18} color="#FFFFFF" strokeWidth={1.8} />
+        </TouchableOpacity>
+      </View>
 
-        {/* ── Card ── */}
-        <View style={styles.card}>
+      {tab === 'qr' ? (
+        /* ── QR View ── */
+        <View style={styles.qrView}>
+          {/* Card */}
+          <View style={styles.card}>
 
-          {/* Member row */}
-          <View style={styles.memberRow}>
-            <DiceBearAvatar
-              seed={avatarSeed}
-              size={44}
-              photoUrl={profile?.avatar_url}
-            />
-            <View style={styles.memberInfo}>
-              <Text style={styles.memberName} numberOfLines={1}>
-                {profile?.name ?? 'Loading…'}
-              </Text>
-              <View style={styles.memberMeta}>
-                <Text style={styles.memberPhone} numberOfLines={1}>
-                  {profile?.phone ?? ''}
+            {/* Member row */}
+            <View style={styles.memberRow}>
+              <DiceBearAvatar seed={avatarSeed} size={44} photoUrl={profile?.avatar_url} />
+              <View style={styles.memberInfo}>
+                <Text style={styles.memberName} numberOfLines={1}>
+                  {profile?.name ?? 'Loading…'}
                 </Text>
-                {chipLabel && chipColor && (
-                  <View style={[styles.statusChip, { backgroundColor: chipColor + '18', borderColor: chipColor + '40' }]}>
-                    <View style={[styles.statusDot, { backgroundColor: chipColor }]} />
-                    <Text style={[styles.statusChipText, { color: chipColor }]}>{chipLabel}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-            {/* Gym logo badge */}
-            {gym?.logo_url ? (
-              <Image source={{ uri: gym.logo_url }} style={styles.gymLogo} resizeMode="contain" />
-            ) : (
-              <View style={[styles.gymLogoFallback, { backgroundColor: accent + '18' }]}>
-                <Text style={[styles.gymLogoInitials, { color: accent }]}>
-                  {gym?.name?.slice(0, 2).toUpperCase() ?? 'GY'}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* QR code — breathing pulse animation */}
-          <View style={styles.qrWrap}>
-            {isLoading ? (
-              <View style={[styles.qrPlaceholder, { backgroundColor: '#F0F2F5' }]} />
-            ) : (
-              <MotiView
-                from={{ scale: 1 }}
-                animate={{ scale: [1, 1.016, 1] }}
-                transition={{ loop: true, type: 'timing', duration: 2800, repeatReverse: false }}
-              >
-                <View style={[styles.qrRing, { borderColor: accent + '30' }]}>
-                  <StyledQRCode
-                    value={qrValue}
-                    size={QR_SIZE}
-                    dotColor="#111111"
-                    finderColor={accent}
-                    backgroundColor="#FFFFFF"
-                    logoUrl={gym?.logo_url ?? undefined}
-                  />
+                <View style={styles.memberMeta}>
+                  <Text style={styles.memberPhone} numberOfLines={1}>
+                    {profile?.phone ?? ''}
+                  </Text>
+                  {chipLabel && chipColor && (
+                    <View style={[styles.statusChip, { backgroundColor: chipColor + '18', borderColor: chipColor + '40' }]}>
+                      <View style={[styles.statusDot, { backgroundColor: chipColor }]} />
+                      <Text style={[styles.statusChipText, { color: chipColor }]}>{chipLabel}</Text>
+                    </View>
+                  )}
                 </View>
-              </MotiView>
-            )}
-          </View>
+              </View>
+              {gym?.logo_url ? (
+                <Image source={{ uri: gym.logo_url }} style={styles.gymLogo} resizeMode="contain" />
+              ) : (
+                <View style={[styles.gymLogoFallback, { backgroundColor: accent + '18' }]}>
+                  <Text style={[styles.gymLogoInitials, { color: accent }]}>
+                    {gym?.name?.slice(0, 2).toUpperCase() ?? 'GY'}
+                  </Text>
+                </View>
+              )}
+            </View>
 
-          {/* Divider */}
-          <View style={styles.divider} />
+            {/* QR code */}
+            <View style={styles.qrWrap}>
+              {isLoading ? (
+                <View style={[styles.qrPlaceholder, { backgroundColor: '#F0F2F5' }]} />
+              ) : (
+                <MotiView
+                  from={{ scale: 1 }}
+                  animate={{ scale: [1, 1.016, 1] }}
+                  transition={{ loop: true, type: 'timing', duration: 2800, repeatReverse: false }}
+                >
+                  <View style={[styles.qrRing, { borderColor: accent + '30' }]}>
+                    <StyledQRCode
+                      value={qrValue}
+                      size={QR_SIZE}
+                      dotColor="#111111"
+                      finderColor={accent}
+                      backgroundColor="#FFFFFF"
+                      logoUrl={gym?.logo_url ?? undefined}
+                    />
+                  </View>
+                </MotiView>
+              )}
+            </View>
 
-          {/* Barcode */}
-          <View style={styles.barcodeWrap}>
-            <BarcodeView seed={qrValue} width={BAR_W} height={BAR_H} />
-            <Text style={styles.barcodeNum}>{barcodeNum}</Text>
-          </View>
+            {/* Divider */}
+            <View style={styles.divider} />
 
-          {/* Download button */}
-          <TouchableOpacity
-            activeOpacity={0.85}
-            style={styles.downloadBtn}
-            onPress={() => Share.share({ message: qrValue }).catch(() => {})}
-          >
-            <LinearGradient
-              colors={[btnLight, accent]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.downloadGrad}
+            {/* Barcode */}
+            <View style={styles.barcodeWrap}>
+              <BarcodeView seed={qrValue} width={BAR_W} height={BAR_H} />
+              <Text style={styles.barcodeNum}>{barcodeNum}</Text>
+            </View>
+
+            {/* Download button */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.downloadBtn}
+              onPress={() => Share.share({ message: qrValue }).catch(() => {})}
             >
-              <Download size={18} color="#FFFFFF" strokeWidth={2.2} />
-              <Text style={styles.downloadText}>Download QR</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+              <LinearGradient
+                colors={[btnLight, accent]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.downloadGrad}
+              >
+                <Download size={18} color="#FFFFFF" strokeWidth={2.2} />
+                <Text style={styles.downloadText}>Download QR</Text>
+              </LinearGradient>
+            </TouchableOpacity>
 
-        </View>
-
-        {/* ── Mode toggle pill ── */}
-        <View style={[styles.togglePill, { backgroundColor: 'rgba(255,255,255,0.10)', borderColor: 'rgba(255,255,255,0.16)' }]}>
-          {/* Active: Show My QR */}
-          <View style={[styles.toggleOption, styles.toggleOptionActive, { backgroundColor: accent }]}>
-            <QrCode size={15} color="#FFF" strokeWidth={2} />
-            <Text style={styles.toggleLabelActive}>My QR Code</Text>
           </View>
-          {/* Inactive: Scan to Enter */}
-          <TouchableOpacity
-            style={styles.toggleOption}
-            onPress={() => router.push('/scan-checkin')}
-            activeOpacity={0.7}
-          >
-            <ScanLine size={15} color="rgba(255,255,255,0.65)" strokeWidth={1.8} />
-            <Text style={styles.toggleLabelInactive}>Scan to Enter</Text>
-          </TouchableOpacity>
         </View>
+      ) : (
+        /* ── History View ── */
+        <ScrollView
+          style={styles.histScroll}
+          contentContainerStyle={[styles.histContent, { paddingBottom: insets.bottom + 100 }]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={histRefetching} onRefresh={histRefetch} tintColor={accent} />
+          }
+        >
+          {histLoading ? (
+            <View style={styles.histEmpty}>
+              <Text style={styles.histEmptyText}>Loading…</Text>
+            </View>
+          ) : grouped.length === 0 ? (
+            <View style={styles.histEmpty}>
+              <CheckCircle2 size={48} color="rgba(255,255,255,0.25)" strokeWidth={1.5} />
+              <Text style={[styles.histEmptyText, { marginTop: 12 }]}>No check-ins yet</Text>
+              <Text style={styles.histEmptySub}>
+                Scan your QR code at the gym entrance to record a visit
+              </Text>
+            </View>
+          ) : (
+            grouped.map((group) => (
+              <View key={group.label}>
+                <Text style={styles.weekLabel}>{group.label}</Text>
+                {group.items.map((ci, i) => (
+                  <MotiView
+                    key={ci.id}
+                    from={{ opacity: 0, translateX: -6 }}
+                    animate={{ opacity: 1, translateX: 0 }}
+                    transition={{ type: 'timing', duration: 220, delay: i * 30 }}
+                  >
+                    <View style={styles.histRow}>
+                      <View style={[styles.histIcon, { backgroundColor: accent + '20' }]}>
+                        <CheckCircle2 size={18} color={accent} strokeWidth={1.8} />
+                      </View>
+                      <View style={styles.histInfo}>
+                        <Text style={styles.histGym}>{gymName}</Text>
+                        <Text style={styles.histMeta}>{fmtCheckinDate(ci.checked_in_at)}</Text>
+                      </View>
+                      <View style={styles.histBadge}>
+                        <Text style={[styles.histBadgeText, { color: accent }]}>
+                          {methodLabel(ci.method)}
+                        </Text>
+                      </View>
+                    </View>
+                  </MotiView>
+                ))}
+              </View>
+            ))
+          )}
+        </ScrollView>
+      )}
 
-      </SafeAreaView>
+      {/* ── Mode toggle pill ── */}
+      <View style={[
+        styles.togglePill,
+        { backgroundColor: 'rgba(255,255,255,0.10)', borderColor: 'rgba(255,255,255,0.16)' },
+        { bottom: insets.bottom + 16 },
+      ]}>
+        {/* My QR */}
+        <TouchableOpacity
+          style={[styles.toggleOption, tab === 'qr' && [styles.toggleOptionActive, { backgroundColor: accent }]]}
+          onPress={() => setTab('qr')}
+          activeOpacity={0.7}
+        >
+          <QrCode size={15} color={tab === 'qr' ? '#FFF' : 'rgba(255,255,255,0.65)'} strokeWidth={tab === 'qr' ? 2 : 1.8} />
+          <Text style={tab === 'qr' ? styles.toggleLabelActive : styles.toggleLabelInactive}>My QR Code</Text>
+        </TouchableOpacity>
+
+        {/* Scan to Enter */}
+        <TouchableOpacity
+          style={styles.toggleOption}
+          onPress={() => router.push('/scan-checkin')}
+          activeOpacity={0.7}
+        >
+          <ScanLine size={15} color="rgba(255,255,255,0.65)" strokeWidth={1.8} />
+          <Text style={styles.toggleLabelInactive}>Scan to Enter</Text>
+        </TouchableOpacity>
+
+        {/* History */}
+        <TouchableOpacity
+          style={[styles.toggleOption, tab === 'history' && [styles.toggleOptionActive, { backgroundColor: accent }]]}
+          onPress={() => setTab('history')}
+          activeOpacity={0.7}
+        >
+          <History size={15} color={tab === 'history' ? '#FFF' : 'rgba(255,255,255,0.65)'} strokeWidth={tab === 'history' ? 2 : 1.8} />
+          <Text style={tab === 'history' ? styles.toggleLabelActive : styles.toggleLabelInactive}>History</Text>
+        </TouchableOpacity>
+      </View>
+
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  safe: { flex: 1, alignItems: 'center' },
 
   /* Header */
   header: {
@@ -252,7 +383,6 @@ const styles = StyleSheet.create({
     alignItems:     'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop:  8,
     paddingBottom: 16,
   },
   headerBtn: {
@@ -264,6 +394,9 @@ const styles = StyleSheet.create({
     fontSize: 18, fontFamily: F.bold, color: '#FFFFFF',
   },
 
+  /* QR view */
+  qrView: { flex: 1, alignItems: 'center', paddingTop: 40 },
+
   /* Card */
   card: {
     width:           CARD_W,
@@ -271,7 +404,6 @@ const styles = StyleSheet.create({
     borderRadius:    24,
     padding:         20,
     gap:             20,
-    marginTop:       60,   // matches Figma ~91px gap header→content
     shadowColor:     '#000',
     shadowOpacity:   0.2,
     shadowRadius:    32,
@@ -288,12 +420,10 @@ const styles = StyleSheet.create({
     borderRadius:    14,
     padding:         12,
   },
-  avatar:         { width: 44, height: 44, borderRadius: 22 },
-  avatarFallback: { alignItems: 'center', justifyContent: 'center' },
-  memberInfo:     { flex: 1 },
-  memberName:     { fontSize: 15, fontFamily: F.bold,    color: '#0D0D18' },
-  memberMeta:     { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  memberPhone:    { fontSize: 13, fontFamily: F.regular, color: '#8A94A6', marginTop: 2 },
+  memberInfo:  { flex: 1 },
+  memberName:  { fontSize: 15, fontFamily: F.bold,    color: '#0D0D18' },
+  memberMeta:  { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  memberPhone: { fontSize: 13, fontFamily: F.regular, color: '#8A94A6', marginTop: 2 },
 
   /* Status chip */
   statusChip:     { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, borderWidth: 1 },
@@ -331,21 +461,44 @@ const styles = StyleSheet.create({
   },
   downloadText: { fontSize: 16, fontFamily: F.bold, color: '#FFFFFF' },
 
-  scanGymBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    marginTop: 16, paddingVertical: 12,
-    borderWidth: 1, borderRadius: 99,
+  /* History */
+  histScroll:  { flex: 1 },
+  histContent: { paddingHorizontal: 20, paddingTop: 8 },
+  histEmpty: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    paddingTop: 80,
   },
-  scanGymText: { fontSize: 13, fontFamily: F.medium, color: 'rgba(255,255,255,0.6)' },
+  histEmptyText: { fontSize: 16, fontFamily: F.semibold, color: 'rgba(255,255,255,0.55)' },
+  histEmptySub:  { fontSize: 13, fontFamily: F.regular, color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginTop: 8, lineHeight: 18, paddingHorizontal: 32 },
+  weekLabel: {
+    fontSize: 11, fontFamily: F.bold, letterSpacing: 0.8,
+    color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase',
+    marginTop: 20, marginBottom: 8,
+  },
+  histRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 16, padding: 14, marginBottom: 8,
+  },
+  histIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  histInfo: { flex: 1 },
+  histGym:  { fontSize: 14, fontFamily: F.semibold, color: '#FFFFFF' },
+  histMeta: { fontSize: 12, fontFamily: F.regular, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
+  histBadge: {
+    paddingHorizontal: 8, paddingVertical: 4,
+    backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8,
+  },
+  histBadgeText: { fontSize: 11, fontFamily: F.semibold },
 
   /* Mode toggle pill */
   togglePill: {
+    position: 'absolute', alignSelf: 'center',
     flexDirection: 'row', borderRadius: 99, borderWidth: 1,
-    padding: 4, marginTop: 16, gap: 2,
+    padding: 4, gap: 2,
   },
   toggleOption: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 18, paddingVertical: 10, borderRadius: 99,
+    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 99,
   },
   toggleOptionActive: {},
   toggleLabelActive:   { fontSize: 13, fontFamily: F.semibold, color: '#FFF' },

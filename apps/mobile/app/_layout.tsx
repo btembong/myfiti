@@ -112,6 +112,8 @@ export default function RootLayout() {
                       <Stack.Screen name="help" />
                       <Stack.Screen name="delete-account" />
                       <Stack.Screen name="scan-checkin" />
+                      <Stack.Screen name="wallet" />
+                      <Stack.Screen name="referral" />
                       <Stack.Screen name="biometrics" options={{ presentation: 'modal' }} />
                     </Stack>
                   </AuthGate>

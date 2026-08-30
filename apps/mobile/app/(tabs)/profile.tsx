@@ -8,10 +8,11 @@ import {
   ChevronRight, Palette, Globe, Bell,
   Fingerprint, Smartphone, Link2,
   FileText, Shield, X, Heart, KeyRound,
+  Gift, Wallet,
 } from 'lucide-react-native'
 import { SvgXml } from 'react-native-svg'
 import { PROFILE_HERO_BG_RAW } from '../../src/assets/profileHeroBg'
-import { Screen } from '../../src/components/ui/Screen'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DiceBearAvatar } from '../../src/components/ui/DiceBearAvatar'
 import { LogoutModal } from '../../src/components/ui/LogoutModal'
 import { memberApi } from '../../src/lib/api'
@@ -189,6 +190,7 @@ export default function ProfileScreen() {
   const accent = branding?.primary_color ?? '#22C55E'
   const slug   = branding?.slug ?? ''
 
+  const insets = useSafeAreaInsets()
   const [logoutVisible, setLogoutVisible]         = useState(false)
   const [appearanceVisible, setAppearanceVisible] = useState(false)
 
@@ -232,7 +234,7 @@ export default function ProfileScreen() {
   // ── Loading / error state ──────────────────────────────────────────────────
   if (isLoading || !profile) {
     return (
-      <Screen>
+      <View style={{ flex: 1, backgroundColor: theme.bg, paddingTop: insets.top }}>
         {isError || (!isLoading && !profile) ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 32 }}>
             <Text style={{ color: theme.textMuted, fontFamily: F.medium, fontSize: 14, textAlign: 'center' }}>
@@ -265,7 +267,7 @@ export default function ProfileScreen() {
             />
           ))
         )}
-      </Screen>
+      </View>
     )
   }
 
@@ -279,14 +281,14 @@ export default function ProfileScreen() {
   )
 
   return (
-    <Screen>
-      <ScrollView showsVerticalScrollIndicator={false} bounces contentContainerStyle={{ paddingBottom: 120 }}>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
+      <ScrollView showsVerticalScrollIndicator={false} bounces contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
 
         {/* ── Hero header ─────────────────────────────────────────────────── */}
         <LinearGradient
           colors={[accent, accentDark]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={styles.hero}
+          style={[styles.hero, { paddingTop: insets.top + 12 }]}
         >
           {/* Decorative background texture */}
           <SvgXml
@@ -368,12 +370,20 @@ export default function ProfileScreen() {
             onPress={() => {}}
           />
           <RowCard
+            icon={Wallet} iconColor="#8B5CF6" label="My Wallet"
+            onPress={() => router.push('/wallet')}
+          />
+          <RowCard
+            icon={Gift} iconColor="#EC4899" label="Refer & Earn"
+            onPress={() => router.push('/referral')}
+          />
+          <RowCard
             icon={Bell} iconColor="#F97316" label="Notifications"
             right={unread > 0
               ? <View style={styles.badge}><Text style={styles.badgeText}>{unread}</Text></View>
               : undefined
             }
-            onPress={() => router.push('/(tabs)/notifications')}
+            onPress={() => router.push('/notification-settings')}
           />
 
           {/* Security */}
@@ -456,7 +466,7 @@ export default function ProfileScreen() {
         onClose={() => setAppearanceVisible(false)}
         accent={accent}
       />
-    </Screen>
+    </View>
   )
 }
 

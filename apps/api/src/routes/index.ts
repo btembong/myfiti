@@ -13,9 +13,11 @@ import { analyticsRouter } from './analytics.js'
 import { settingsRouter } from './settings.js'
 import { dayPassesRouter } from './day-passes.js'
 import { announcementsRouter } from './announcements.js'
+import { vouchersRouter } from './vouchers.js'
 
 // Member-facing
 import { memberMeRouter } from './member-me.js'
+import { walletRouter } from './wallet.js'
 
 // Public (no auth)
 import { publicRouter } from './public.js'
@@ -43,6 +45,7 @@ router.use('/onboarding', onboardingRouter)
 
 // ─── Member self-service ─────────────────────────────────────────────────────
 router.use('/member/me', memberMeRouter)
+router.use('/member/wallet', walletRouter)
 
 // Alias so mobile payments screen URL works too
 router.use('/members/me', memberMeRouter)
@@ -57,6 +60,7 @@ router.use('/analytics', analyticsRouter)
 router.use('/settings', settingsRouter)
 router.use('/day-passes', dayPassesRouter)
 router.use('/announcements', announcementsRouter)
+router.use('/vouchers', vouchersRouter)
 
 // ─── SuperAdmin ───────────────────────────────────────────────────────────────
 router.use('/superadmin', superadminRouter)

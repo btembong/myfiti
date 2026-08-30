@@ -1,0 +1,12 @@
+app.myfiti.fit {
+    reverse_proxy localhost:3000
+}
+
+api.myfiti.fit {
+    # Increase timeout for long-running SSE connections (kiosk live check-in)
+    reverse_proxy localhost:4000 {
+        transport http {
+            read_timeout 5m
+        }
+    }
+}

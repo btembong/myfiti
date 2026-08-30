@@ -1,11 +1,14 @@
 import { Router } from 'express'
 import { v4 as uuid } from 'uuid'
 import bcrypt from 'bcrypt'
+import Expo from 'expo-server-sdk'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 import { tenantQuery, globalQuery, db, globalSchema, eq } from '../db/client.js'
 import { validate } from '../middleware/validate.js'
 import { createStaffSchema } from '../schemas.js'
 import { sendNewTicketEmail, sendAnnouncementEmail, sendStaffInviteEmail } from '../lib/email.js'
+
+const expo = new Expo()
 
 const PLAN_PRICE_XAF: Record<string, number> = {
   starter: 0, growth: 9900, growth_plus: 19900, enterprise: 49900,
@@ -105,8 +108,9 @@ settingsRouter.post('/billing/initiate-payment', async (req, res) => {
     if (!appId || !appKey) {
       return res.status(503).json({ error: 'Payment provider not configured. Please contact support.' })
     }
-    const merchantTransactionId = `ten-${tenantId}`
+    const mchTransactionRef = `ten-${tenantId}-${Date.now()}`
     const BASE_URL = process.env.TRANZAK_ENV === 'live' ? 'https://dsapi.tranzak.me' : 'https://sandbox.dsapi.tranzak.me'
+    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
 
     // Auth
     const authRes = await fetch(`${BASE_URL}/auth/token`, {
@@ -115,7 +119,9 @@ settingsRouter.post('/billing/initiate-payment', async (req, res) => {
       body: JSON.stringify({ appId, appKey }),
     })
     if (!authRes.ok) throw new Error('Tranzak auth failed')
-    const { token } = await authRes.json() as { token: string }
+    const authBody = await authRes.json() as { data?: { token: string }; token?: string }
+    const token = authBody.data?.token ?? authBody.token
+    if (!token) throw new Error('Tranzak auth: no token in response')
 
     // Create payment
     const paymentRes = await fetch(`${BASE_URL}/xp021/v1/request/create`, {
@@ -125,8 +131,9 @@ settingsRouter.post('/billing/initiate-payment', async (req, res) => {
         amount,
         currencyCode: req.tenant.currency ?? 'XAF',
         description: `myfiti ${plan} Plan — ${tenantSlug}`,
-        merchantTransactionId,
-        returnUrl: `${process.env.APP_URL ?? 'https://app.myfiti.app'}/settings/billing?payment=success`,
+        mchTransactionRef,
+        returnUrl: `${APP_URL}/payment/callback`,
+        callbackUrl: `${process.env.API_URL ?? 'https://api.myfiti.app'}/api/webhooks/tranzak?tenant=${tenantSlug}`,
         customData: { tenant_id: tenantId },
       }),
     })
@@ -134,8 +141,8 @@ settingsRouter.post('/billing/initiate-payment', async (req, res) => {
       const errText = await paymentRes.text()
       throw new Error(`Tranzak create error: ${errText}`)
     }
-    const paymentData = await paymentRes.json() as { data?: { paymentUrl: string } }
-    const paymentUrl  = paymentData?.data?.paymentUrl ?? ''
+    const paymentData = await paymentRes.json() as { data?: { links?: { paymentAuthUrl?: string } } }
+    const paymentUrl  = paymentData?.data?.links?.paymentAuthUrl ?? ''
 
     res.json({ ok: true, payment_url: paymentUrl, amount, currency: req.tenant.currency ?? 'XAF' })
   } catch (err) {
@@ -163,7 +170,7 @@ settingsRouter.patch('/billing/plan', requireRole('owner'), async (req, res) => 
 
     // Update tenant plan
     await db.update(globalSchema.tenants)
-      .set({ plan: plan as string, updated_at: new Date() })
+      .set({ plan: plan as 'starter' | 'growth' | 'growth_plus' | 'enterprise', updated_at: new Date() })
       .where(eq(globalSchema.tenants.id, req.tenant.id))
 
     // If upgrading to a paid plan, generate a pending invoice for this month
@@ -505,6 +512,48 @@ settingsRouter.patch('/', async (req, res) => {
   }
 })
 
+// ─── GET/PUT /api/settings/day-pass-pricing ───────────────────────────────────
+// Read and update per-tenant day pass prices stored in gym_settings.features
+
+settingsRouter.get('/day-pass-pricing', async (req, res) => {
+  try {
+    const { rows } = await tenantQuery<{ features: Record<string, unknown> }>(
+      req.tenant.slug,
+      `SELECT features FROM gym_settings WHERE id = 'singleton' LIMIT 1`,
+    )
+    const pricing = (rows[0]?.features?.day_pass_pricing as Record<string, number> | undefined) ?? null
+    res.json({ pricing })
+  } catch (err) {
+    console.error('[settings/day-pass-pricing GET]', err)
+    res.status(500).json({ error: 'Failed to load day pass pricing.' })
+  }
+})
+
+settingsRouter.put('/day-pass-pricing', async (req, res) => {
+  try {
+    const pricing = req.body as Record<string, unknown>
+    // Validate: all values must be positive numbers
+    for (const [k, v] of Object.entries(pricing)) {
+      if (typeof v !== 'number' || v < 0) {
+        return res.status(400).json({ error: `Invalid price for "${k}": must be a non-negative number.` })
+      }
+    }
+    await tenantQuery(
+      req.tenant.slug,
+      `INSERT INTO gym_settings (id, gym_name, slug, country, timezone, currency, features, updated_at)
+       VALUES ('singleton', 'My Gym', $1, 'CM', 'Africa/Douala', 'XAF', $2::jsonb, NOW())
+       ON CONFLICT (id) DO UPDATE SET
+         features   = COALESCE(gym_settings.features, '{}'::jsonb) || jsonb_build_object('day_pass_pricing', $2::jsonb),
+         updated_at = NOW()`,
+      [req.tenant.slug, JSON.stringify(pricing)],
+    )
+    res.json({ ok: true, pricing })
+  } catch (err) {
+    console.error('[settings/day-pass-pricing PUT]', err)
+    res.status(500).json({ error: 'Failed to save day pass pricing.' })
+  }
+})
+
 // ─── GET /api/settings/staff ──────────────────────────────────────────────────
 
 settingsRouter.get('/staff', async (req, res) => {
@@ -692,10 +741,13 @@ settingsRouter.get('/messages', async (req, res) => {
   try {
     const { rows } = await tenantQuery(req.tenant.slug, `
       SELECT
-        m.id, m.name, m.email, m.phone, m.status,
+        m.id AS member_id, m.name AS member_name, m.email AS member_email,
+        m.phone, m.status AS member_status,
         sub.status AS sub_status, sub.expires_at,
         plan.name AS plan_name,
-        n.last_body, n.last_at, n.unread_count
+        n.last_body AS last_message, n.last_at AS last_message_at,
+        n.last_at AS last_channel,
+        n_unread.unread_count AS unread
       FROM members m
       LEFT JOIN LATERAL (
         SELECT s.status, s.expires_at, s.plan_id
@@ -703,10 +755,13 @@ settingsRouter.get('/messages', async (req, res) => {
       ) sub ON true
       LEFT JOIN membership_plans plan ON plan.id = sub.plan_id
       LEFT JOIN LATERAL (
-        SELECT body AS last_body, created_at AS last_at,
-          COUNT(*) FILTER (WHERE read_at IS NULL AND channel = 'in_app') AS unread_count
-        FROM notifications WHERE member_id = m.id
+        SELECT body AS last_body, created_at AS last_at
+        FROM notifications WHERE member_id = m.id ORDER BY created_at DESC LIMIT 1
       ) n ON true
+      LEFT JOIN LATERAL (
+        SELECT COUNT(*) AS unread_count
+        FROM notifications WHERE member_id = m.id AND read_at IS NULL AND channel = 'in_app'
+      ) n_unread ON true
       ORDER BY n.last_at DESC NULLS LAST, m.created_at DESC
       LIMIT 100
     `)
@@ -761,9 +816,9 @@ settingsRouter.post('/messages/:memberId', async (req, res) => {
     if (!body?.trim()) return res.status(400).json({ error: 'Message body required.' })
 
     const { rows: memberRows } = await tenantQuery(
-      req.tenant.slug, `SELECT id, name, email FROM members WHERE id = $1 LIMIT 1`, [memberId],
+      req.tenant.slug, `SELECT id, name, email, push_token FROM members WHERE id = $1 LIMIT 1`, [memberId],
     )
-    const member = memberRows[0] as { id: string; name: string; email: string } | undefined
+    const member = memberRows[0] as { id: string; name: string; email: string; push_token: string | null } | undefined
     if (!member) return res.status(404).json({ error: 'Member not found.' })
 
     const id = uuid()
@@ -772,7 +827,7 @@ settingsRouter.post('/messages/:memberId', async (req, res) => {
     await tenantQuery(
       req.tenant.slug,
       `INSERT INTO notifications (id, member_id, type, channel, title, body, sent_at, created_at)
-       VALUES ($1, $2, 'announcement', $3, $4, $5, NOW(), NOW())`,
+       VALUES ($1, $2, 'in_app', $3, $4, $5, NOW(), NOW())`,
       [id, memberId, channel, title, body.trim()],
     )
 
@@ -783,6 +838,20 @@ settingsRouter.post('/messages/:memberId', async (req, res) => {
         body.trim(),
         req.tenant.name,
       ).catch(err => console.warn('[settings/messages POST] email error:', err))
+    }
+
+    if (channel === 'push' && member.push_token && Expo.isExpoPushToken(member.push_token)) {
+      try {
+        await expo.sendPushNotificationsAsync([{
+          to: member.push_token,
+          sound: 'default',
+          title,
+          body: body.trim(),
+          data: { type: 'in_app' },
+        }])
+      } catch (err) {
+        console.warn('[settings/messages POST] push error:', err)
+      }
     }
 
     res.status(201).json({ id, ok: true })

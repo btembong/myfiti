@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 import { tenantQuery } from '../db/client.js'
+import { addKioskClient, broadcastCheckin } from '../lib/kiosk-events.js'
 
 export const checkinRouter = Router()
 
@@ -74,16 +75,15 @@ checkinRouter.post('/verify-qr', async (req, res) => {
       [checkinId, memberId],
     )
 
-    res.json({
-      ok: true,
-      member: {
-        id: result.id,
-        name: result.name,
-        avatar_url: result.avatar_url,
-        status: result.sub_status ?? result.status,
-        expires_at: result.expires_at,
-      },
-    })
+    const member = {
+      id: result.id,
+      name: result.name,
+      avatar_url: result.avatar_url,
+      status: result.sub_status ?? result.status,
+      expires_at: result.expires_at,
+    }
+    broadcastCheckin(req.tenant.slug, { type: 'checkin', method: 'qr', member })
+    res.json({ ok: true, member })
   } catch (err) {
     console.error('[checkin/verify-qr]', err)
     res.status(500).json({ error: 'Check-in failed.' })
@@ -218,20 +218,36 @@ checkinRouter.post('/verify-pin', async (req, res) => {
       [checkinId, result.id],
     )
 
-    res.json({
-      ok: true,
-      member: {
-        id: result.id,
-        name: result.name,
-        avatar_url: result.avatar_url,
-        status: result.sub_status ?? result.status,
-        expires_at: result.expires_at,
-      },
-    })
+    const member = {
+      id: result.id,
+      name: result.name,
+      avatar_url: result.avatar_url,
+      status: result.sub_status ?? result.status,
+      expires_at: result.expires_at,
+    }
+    broadcastCheckin(req.tenant.slug, { type: 'checkin', method: 'pin', member })
+    res.json({ ok: true, member })
   } catch (err) {
     console.error('[checkin/verify-pin]', err)
     res.status(500).json({ error: 'Check-in failed.' })
   }
+})
+
+// ─── GET /api/checkin/events ──────────────────────────────────────────────────
+// SSE stream — kiosk subscribes here to receive real-time check-in events.
+// Uses ?slug= query param because EventSource cannot send custom headers.
+
+checkinRouter.get('/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no') // disable nginx buffering if behind proxy
+  res.flushHeaders()
+
+  const cleanup = addKioskClient(req.tenant.slug, res)
+  const ping = setInterval(() => { try { res.write(': ping\n\n') } catch { cleanup() } }, 25000)
+
+  req.on('close', () => { cleanup(); clearInterval(ping) })
 })
 
 // ─── GET /api/checkin/live ────────────────────────────────────────────────────
@@ -328,11 +344,17 @@ checkinRouter.post('/manual', async (req, res) => {
     if (!rows[0]) return res.status(404).json({ ok: false, reason: 'not_found' })
 
     const id = uuid()
+    const { rows: mRows } = await tenantQuery<{ name: string; avatar_url: string | null }>(
+      req.tenant.slug,
+      `SELECT name, avatar_url FROM members WHERE id = $1 LIMIT 1`,
+      [member_id],
+    )
     await tenantQuery(
       req.tenant.slug,
       `INSERT INTO check_ins (id, member_id, method, staff_id, checked_in_at) VALUES ($1, $2, 'manual', $3, NOW())`,
       [id, member_id, staff_id ?? null],
     )
+    if (mRows[0]) broadcastCheckin(req.tenant.slug, { type: 'checkin', method: 'manual', member: { id: member_id, ...mRows[0] } })
     res.json({ ok: true, id })
   } catch (err) {
     console.error('[checkin/manual]', err)

@@ -62,6 +62,9 @@ const T = {
     walkinPhoneSkip: 'Skip — no phone', next: 'Continue', walkinBack: 'Back',
     selectPass: 'Select a pass type', paymentMethod: 'Payment method',
     cash: 'Cash', momoMTN: 'MTN MoMo', momoOrange: 'Orange Money', smsLink: 'SMS payment link',
+    memberWallet: 'Member Wallet', walletPhone: 'Member phone number', walletFind: 'Find member',
+    walletBalance: 'Wallet balance', walletConfirm: 'Deduct & issue pass', walletNotFound: 'No member found with that number.',
+    walletInsufficient: 'Insufficient wallet balance.',
     cashAmount: 'Amount to collect:', cashConfirm: 'Cash received — issue pass',
     momoInstruction: 'Ask guest to scan with their phone',
     momoConfirm: 'Payment confirmed — issue pass',
@@ -95,6 +98,9 @@ const T = {
     walkinPhoneSkip: 'Passer — pas de téléphone', next: 'Continuer', walkinBack: 'Retour',
     selectPass: 'Choisir un type de pass', paymentMethod: 'Mode de paiement',
     cash: 'Espèces', momoMTN: 'MTN MoMo', momoOrange: 'Orange Money', smsLink: 'Lien SMS',
+    memberWallet: 'Portefeuille membre', walletPhone: 'Numéro du membre', walletFind: 'Trouver',
+    walletBalance: 'Solde portefeuille', walletConfirm: 'Déduire et émettre', walletNotFound: 'Aucun membre trouvé.',
+    walletInsufficient: 'Solde insuffisant.',
     cashAmount: 'Montant à collecter :', cashConfirm: 'Paiement reçu — émettre le pass',
     momoInstruction: 'Demandez au visiteur de scanner',
     momoConfirm: 'Paiement confirmé — émettre le pass',
@@ -118,7 +124,7 @@ type Screen =
   | 'search'
   | 'confirmed' | 'denied' | 'grace' | 'issue_error' | 'membership' | 'schedule'
   | 'walkin' | 'walkin_phone' | 'passtype' | 'payment'
-  | 'payment_cash' | 'payment_momo' | 'payment_link'
+  | 'payment_cash' | 'payment_momo' | 'payment_link' | 'payment_wallet'
   | 'qr_issued' | 'staffpin' | 'staff'
 
 // ─── Motion ───────────────────────────────────────────────────────────────────
@@ -427,6 +433,88 @@ function ReferralCard() {
 }
 
 // ─── Component: auto-rotating promotional photo card carousel ────────────────
+// ─── Live check-in welcome overlay ───────────────────────────────────────────
+function WelcomeOverlay({
+  checkin, brand, onDismiss,
+}: {
+  checkin: { name: string; avatar_url?: string | null; method: string }
+  brand: string
+  onDismiss: () => void
+}) {
+  const initials = checkin.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
+  const methodLabel = checkin.method === 'qr' ? 'App QR' : checkin.method === 'pin' ? 'PIN' : 'Search'
+
+  return (
+    <motion.div
+      key="welcome-overlay"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      onClick={onDismiss}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(12px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.88, y: 24, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.92, opacity: 0 }}
+        transition={{ type: 'spring', damping: 20, stiffness: 260 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'white', borderRadius: 32, padding: '48px 56px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+          minWidth: 380, maxWidth: 480,
+          boxShadow: `0 32px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08)`,
+        }}
+      >
+        {/* Avatar */}
+        <div style={{
+          width: 96, height: 96, borderRadius: '50%',
+          background: checkin.avatar_url ? 'transparent' : brand,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden', boxShadow: `0 0 0 4px ${brand}30`,
+          marginBottom: 4,
+        }}>
+          {checkin.avatar_url
+            ? <img src={checkin.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <span style={{ fontSize: '2rem', fontWeight: 900, color: 'white' }}>{initials}</span>
+          }
+        </div>
+
+        {/* Greeting */}
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: brand, marginBottom: 6 }}>Check-in confirmed</div>
+          <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#0D0D18', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+            Welcome back,<br />{checkin.name.split(' ')[0]}!
+          </div>
+        </div>
+
+        {/* Method badge */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: `${brand}12`, border: `1px solid ${brand}28`,
+          borderRadius: 99, padding: '6px 14px',
+        }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: brand }} />
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: brand, letterSpacing: '0.08em' }}>via {methodLabel}</span>
+        </div>
+
+        {/* Auto-dismiss progress bar */}
+        <div style={{ width: '100%', height: 3, borderRadius: 99, background: '#f0f0f5', overflow: 'hidden', marginTop: 8 }}>
+          <motion.div
+            initial={{ width: '100%' }} animate={{ width: '0%' }}
+            transition={{ duration: 6, ease: 'linear' }}
+            style={{ height: '100%', background: brand, borderRadius: 99 }}
+          />
+        </div>
+        <div style={{ fontSize: '0.72rem', color: '#aaa', fontWeight: 500 }}>Tap anywhere to dismiss</div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 type _PhotoSlide = { type: 'photo'; photo: string; badge: string; headline: string; sub: string; position: string }
 type _ReferralSlide = { type: 'referral' }
 type _PromoSlide = _PhotoSlide | _ReferralSlide
@@ -1196,7 +1284,11 @@ export default function KioskPage() {
   const [walkinName, setWalkinName] = useState('')
   const [walkinPhone, setWalkinPhone] = useState('')
   const [selectedPass, setSelectedPass] = useState<typeof DAY_PASSES[0] | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mtn' | 'orange' | 'link' | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mtn' | 'orange' | 'link' | 'wallet' | null>(null)
+  const [walletPhone, setWalletPhone] = useState('')
+  const [walletMember, setWalletMember] = useState<{ id: string; name: string; balance: number; currency: string } | null>(null)
+  const [walletLooking, setWalletLooking] = useState(false)
+  const [walletError, setWalletError] = useState('')
   const [offlineQueue, setOfflineQueue] = useState(0)
   const [isOnline, setIsOnline] = useState(true)
   const [logoTaps, setLogoTaps] = useState(0)
@@ -1216,6 +1308,7 @@ export default function KioskPage() {
   const [dayPasses, setDayPasses] = useState(DAY_PASSES)
   const [staffInfo, setStaffInfo] = useState<{ id: string; name: string; role: string } | null>(null)
   const [denialReason, setDenialReason] = useState<string | null>(null)
+  const [liveCheckin, setLiveCheckin] = useState<{ name: string; avatar_url?: string | null; method: string } | null>(null)
   const [gymQrToken, setGymQrToken] = useState<string>('')
   const [linkPaymentData, setLinkPaymentData] = useState<{ payment_url: string; merchant_transaction_id: string; day_pass_id: string; qr_token: string; amount: number; currency: string } | null>(null)
   const [linkPolling, setLinkPolling] = useState(false)
@@ -1423,6 +1516,22 @@ export default function KioskPage() {
     return () => clearInterval(iv)
   }, [linkPolling, linkPaymentData, screen])
 
+  // SSE — receive real-time check-in events from the API and show welcome overlay
+  useEffect(() => {
+    const slug = tenantSlugRef.current
+    if (!slug) return
+    const es = new EventSource(`/api/checkin/events?slug=${encodeURIComponent(slug)}`)
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data)
+        if (data.type === 'checkin' && data.member?.name) {
+          setLiveCheckin({ name: data.member.name, avatar_url: data.member.avatar_url, method: data.method })
+          setTimeout(() => setLiveCheckin(null), 6000)
+        }
+      } catch { /* ignore malformed messages */ }
+    }
+    return () => es.close()
+  }, [])
 
   async function issuePass(method: string, preIssuedData?: { id: string; qr_token: string; amount: number; currency: string }) {
     setCheckinLoading(true)
@@ -1707,6 +1816,17 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
       {screen === 'idle' && (
         <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 50, width: 80, height: 80, cursor: 'default' }} onPointerUp={handleLogoTap} />
       )}
+
+      {/* ─── Live check-in welcome overlay ─── */}
+      <AnimatePresence>
+        {liveCheckin && (
+          <WelcomeOverlay
+            checkin={liveCheckin}
+            brand={brand}
+            onDismiss={() => setLiveCheckin(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
 
@@ -2608,12 +2728,13 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
                   <span style={{ fontSize: '1.35rem', fontWeight: 900, color: brand, fontVariantNumeric: 'tabular-nums' }}>₣{selectedPass.price.toLocaleString('fr-CM')}</span>
                 </div>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
                 {[
-                  { id: 'cash'   as const, icon: Wallet01Icon,     label: t.cash,       sub: 'Physical cash',          accent: S.success },
-                  { id: 'mtn'    as const, icon: SmartPhone01Icon, label: t.momoMTN,    sub: 'USSD push to phone',     accent: '#f59e0b' },
-                  { id: 'orange' as const, icon: SmartPhone01Icon, label: t.momoOrange, sub: 'USSD push to phone',     accent: '#f97316' },
-                  { id: 'link'   as const, icon: LinkSquare01Icon, label: t.smsLink,    sub: 'Tranzak · auto-confirm', accent: brand },
+                  { id: 'cash'   as const, icon: Wallet01Icon,     label: t.cash,         sub: 'Physical cash',            accent: S.success },
+                  { id: 'mtn'    as const, icon: SmartPhone01Icon, label: t.momoMTN,      sub: 'USSD push to phone',       accent: '#f59e0b' },
+                  { id: 'orange' as const, icon: SmartPhone01Icon, label: t.momoOrange,   sub: 'USSD push to phone',       accent: '#f97316' },
+                  { id: 'link'   as const, icon: LinkSquare01Icon, label: t.smsLink,      sub: 'Tranzak · auto-confirm',   accent: brand },
+                  { id: 'wallet' as const, icon: Wallet01Icon,     label: t.memberWallet, sub: 'Deduct from member wallet', accent: '#7c3aed' },
                 ].map(p => {
                   const Icon = p.icon
                   return (
@@ -2621,7 +2742,10 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
                       setPaymentMethod(p.id)
                       if (p.id === 'cash') setScreen('payment_cash')
                       else if (p.id === 'link') { initiatePaymentLink(); setScreen('payment_link') }
-                      else {
+                      else if (p.id === 'wallet') {
+                        setWalletPhone(walkinPhone); setWalletMember(null); setWalletError('')
+                        setScreen('payment_wallet')
+                      } else {
                         // S2S — go to momo screen; phone entry happens there
                         setMomoChargeData(null)
                         setMomoPolling(false)
@@ -2815,6 +2939,97 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
                 styles={{ root: { fontSize: '1.05rem', fontWeight: 800, height: 62, minWidth: 340 } }}
               >
                 {t.linkConfirmManual}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ═══════════ PAYMENT: MEMBER WALLET ═══════════ */}
+        {screen === 'payment_wallet' && (
+          <motion.div key="payment_wallet" {...slide}
+            style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: `${SBH + 40}px 60px 40px`, gap: 20 }}>
+            <BackBtn label={t.back} onClick={() => { setWalletMember(null); setWalletError(''); setScreen('payment') }} />
+            <div style={{ width: '100%', maxWidth: 480 }}>
+              <div style={{ marginBottom: 24, padding: '16px 20px', background: brandAlpha('#7c3aed', 0.07), border: `1px solid ${brandAlpha('#7c3aed', 0.2)}`, borderRadius: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.9rem', color: S.textSub, fontWeight: 600 }}>{selectedPass?.label} · {walkinName}</span>
+                <span style={{ fontSize: '1.35rem', fontWeight: 900, color: '#7c3aed', fontVariantNumeric: 'tabular-nums' }}>₣{selectedPass?.price.toLocaleString('fr-CM')}</span>
+              </div>
+
+              {/* Phone input + lookup */}
+              <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+                <TextInput
+                  size="lg" radius="md"
+                  placeholder={t.walletPhone}
+                  value={walletPhone}
+                  onChange={e => { setWalletPhone(e.currentTarget.value); setWalletMember(null); setWalletError('') }}
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  size="lg" radius="md"
+                  style={{ background: '#7c3aed', color: '#fff', fontWeight: 700 }}
+                  loading={walletLooking}
+                  disabled={!walletPhone.trim()}
+                  onPointerUp={async () => {
+                    setWalletLooking(true); setWalletMember(null); setWalletError('')
+                    try {
+                      const r = await kGet<{ id: string; name: string; balance: number; currency: string }>(
+                        `/api/day-passes/wallet-lookup?phone=${encodeURIComponent(walletPhone.trim())}`,
+                        tenantSlugRef.current,
+                      )
+                      setWalletMember(r)
+                    } catch {
+                      setWalletError(t.walletNotFound)
+                    } finally { setWalletLooking(false) }
+                  }}
+                >
+                  {t.walletFind}
+                </Button>
+              </div>
+
+              {walletError && (
+                <p style={{ color: S.danger, fontSize: '0.85rem', fontWeight: 600, marginBottom: 12 }}>{walletError}</p>
+              )}
+
+              {walletMember && (
+                <div style={{ marginBottom: 20, padding: '16px 20px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 14 }}>
+                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: S.text, marginBottom: 4 }}>{walletMember.name}</div>
+                  <div style={{ fontSize: '0.85rem', color: S.textSub }}>
+                    {t.walletBalance}:{' '}
+                    <strong style={{ color: walletMember.balance >= (selectedPass?.price ?? 0) ? S.success : S.danger }}>
+                      {walletMember.currency} {walletMember.balance.toLocaleString('fr-CM')}
+                    </strong>
+                    {walletMember.balance < (selectedPass?.price ?? 0) && (
+                      <span style={{ color: S.danger, marginLeft: 8 }}>— {t.walletInsufficient}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <Button
+                size="xl" radius="md" fullWidth
+                style={{ background: '#7c3aed', color: '#fff', fontWeight: 800, height: 62, fontSize: '1.05rem' }}
+                disabled={!walletMember || walletMember.balance < (selectedPass?.price ?? 0) || checkinLoading}
+                loading={checkinLoading}
+                leftSection={<CheckmarkCircle01Icon size={22} color="white" />}
+                onPointerUp={async () => {
+                  if (!walletMember || !selectedPass) return
+                  setCheckinLoading(true)
+                  try {
+                    const r = await kPost<{ id: string; qr_token: string; amount: number; currency: string; new_balance: number; valid_until: string }>(
+                      '/api/day-passes/wallet-issue',
+                      { member_id: walletMember.id, pass_type: selectedPass.id, guest_name: walkinName, guest_phone: walkinPhone || null },
+                      tenantSlugRef.current,
+                    )
+                    sounds.passIssued()
+                    setIssuedPass({ id: r.id, qr_token: r.qr_token, amount: r.amount, currency: r.currency })
+                    setShiftCount(c => c + 1)
+                    setScreen('qr_issued')
+                  } catch {
+                    setScreen('issue_error')
+                  } finally { setCheckinLoading(false) }
+                }}
+              >
+                {t.walletConfirm}
               </Button>
             </div>
           </motion.div>

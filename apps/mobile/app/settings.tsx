@@ -1,13 +1,18 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch, Linking } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useState, useEffect } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Screen } from '../src/components/ui/Screen'
 import { AppHeader } from '../src/components/ui/AppHeader'
 import { useTheme } from '../src/context/ThemeContext'
 import { useAuth } from '../src/context/AuthContext'
 import { useTenant } from '../src/context/TenantContext'
-import { ChevronRight, Moon, Sun, Monitor, Globe, Bell, Trash2, Fingerprint } from 'lucide-react-native'
+import { ChevronRight, Moon, Sun, Monitor, Globe, Bell, Trash2, Fingerprint, ExternalLink } from 'lucide-react-native'
+import { registerPushToken, deregisterPushToken } from '../src/lib/notifications'
 import { F } from '../src/theme'
 import type { ThemeMode } from '../src/context/ThemeContext'
+
+const PUSH_PREF_KEY = 'push_notifications_enabled'
 
 function SettingsRow({
   icon: Icon, label, sub, onPress, color, danger = false, right,
@@ -60,7 +65,26 @@ export default function SettingsScreen() {
   const { biometricEnabled, disableBiometrics } = useAuth()
   const { branding } = useTenant()
   const accent = branding?.primary_color ?? '#5B8EF4'
+  const slug = branding?.slug ?? ''
   const router = useRouter()
+
+  const [pushEnabled, setPushEnabled] = useState(true)
+
+  useEffect(() => {
+    AsyncStorage.getItem(PUSH_PREF_KEY).then(val => {
+      if (val !== null) setPushEnabled(val === 'true')
+    })
+  }, [])
+
+  async function handlePushToggle(value: boolean) {
+    setPushEnabled(value)
+    await AsyncStorage.setItem(PUSH_PREF_KEY, String(value))
+    if (value) {
+      await registerPushToken(slug)
+    } else {
+      await deregisterPushToken(slug)
+    }
+  }
 
   async function handleBiometricToggle(value: boolean) {
     if (value) {
@@ -133,9 +157,22 @@ export default function SettingsScreen() {
           />
           <SettingsRow
             icon={Bell}
-            label="Notifications"
-            sub="Push notifications enabled"
-            onPress={() => Alert.alert('Notifications', 'Manage notification preferences in your device settings.')}
+            label="Push notifications"
+            sub={pushEnabled ? 'Announcements & daily motivation' : 'Notifications paused'}
+            right={
+              <Switch
+                value={pushEnabled}
+                onValueChange={handlePushToggle}
+                trackColor={{ false: theme.border, true: accent + '60' }}
+                thumbColor={pushEnabled ? accent : theme.textMuted}
+              />
+            }
+          />
+          <SettingsRow
+            icon={ExternalLink}
+            label="System permissions"
+            sub="Manage OS-level notification access"
+            onPress={() => Linking.openSettings()}
           />
         </Section>
 

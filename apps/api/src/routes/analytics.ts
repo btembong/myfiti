@@ -412,3 +412,111 @@ analyticsRouter.get('/retention', async (req, res) => {
     res.status(500).json({ error: 'Failed to load retention data.' })
   }
 })
+
+// ─── GET /api/analytics/referrals ────────────────────────────────────────────
+
+analyticsRouter.get('/referrals', async (req, res) => {
+  try {
+    const slug = req.tenant.slug
+    const [summary, monthly] = await Promise.all([
+      tenantQuery<{
+        total: string; converted: string; pending: string; total_rewards: string
+      }>(slug, `
+        SELECT
+          COUNT(*) as total,
+          COUNT(CASE WHEN status = 'converted' THEN 1 END) as converted,
+          COUNT(CASE WHEN status = 'pending'   THEN 1 END) as pending,
+          COALESCE(SUM(reward_amount), 0) as total_rewards
+        FROM referrals
+      `),
+      tenantQuery<{ month: string; count: string }>(slug, `
+        SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YY') as month,
+               COUNT(*) as count
+        FROM referrals
+        WHERE created_at >= NOW() - INTERVAL '6 months'
+        GROUP BY DATE_TRUNC('month', created_at)
+        ORDER BY DATE_TRUNC('month', created_at) ASC
+      `),
+    ])
+    const s = summary.rows[0]
+    const total     = parseInt(s?.total     ?? '0')
+    const converted = parseInt(s?.converted ?? '0')
+    res.json({
+      total,
+      converted,
+      pending:      parseInt(s?.pending      ?? '0'),
+      total_rewards: parseFloat(s?.total_rewards ?? '0'),
+      conversion_rate: total > 0 ? Math.round((converted / total) * 100) : 0,
+      monthly: monthly.rows,
+    })
+  } catch (err) {
+    console.error('[analytics/referrals]', err)
+    res.status(500).json({ error: 'Failed to load referral stats.' })
+  }
+})
+
+// ─── GET /api/analytics/wallet ────────────────────────────────────────────────
+
+analyticsRouter.get('/wallet', async (req, res) => {
+  try {
+    const slug = req.tenant.slug
+
+    const [floatResult, byTypeResult, topResult, dailyResult] = await Promise.all([
+      // Total float and account count
+      tenantQuery<{ total_float: string; accounts: string }>(
+        slug,
+        `SELECT COALESCE(SUM(balance), 0) AS total_float, COUNT(*) AS accounts
+         FROM wallet_accounts`,
+      ),
+      // Breakdown by transaction type (completed only)
+      tenantQuery<{ type: string; total: string; count: string }>(
+        slug,
+        `SELECT type, COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count
+         FROM wallet_transactions
+         WHERE status = 'completed'
+         GROUP BY type
+         ORDER BY total DESC`,
+      ),
+      // Top 5 members by balance
+      tenantQuery<{ member_id: string; first_name: string; last_name: string; balance: string; currency: string }>(
+        slug,
+        `SELECT wa.member_id, m.first_name, m.last_name, wa.balance, wa.currency
+         FROM wallet_accounts wa
+         JOIN members m ON m.id = wa.member_id
+         WHERE wa.balance > 0
+         ORDER BY wa.balance DESC
+         LIMIT 5`,
+      ),
+      // Daily top-up volume for the last 30 days
+      tenantQuery<{ day: string; total: string }>(
+        slug,
+        `SELECT DATE(created_at) AS day, COALESCE(SUM(amount), 0) AS total
+         FROM wallet_transactions
+         WHERE type = 'topup' AND status = 'completed'
+           AND created_at >= NOW() - INTERVAL '30 days'
+         GROUP BY day
+         ORDER BY day`,
+      ),
+    ])
+
+    res.json({
+      totalFloat: parseFloat(floatResult.rows[0]?.total_float ?? '0'),
+      accounts: parseInt(floatResult.rows[0]?.accounts ?? '0'),
+      byType: byTypeResult.rows.map(r => ({
+        type: r.type,
+        total: parseFloat(r.total),
+        count: parseInt(r.count),
+      })),
+      topBalances: topResult.rows.map(r => ({
+        memberId: r.member_id,
+        name: `${r.first_name} ${r.last_name}`.trim(),
+        balance: parseFloat(r.balance),
+        currency: r.currency,
+      })),
+      dailyTopups: dailyResult.rows.map(r => ({ day: r.day, total: parseFloat(r.total) })),
+    })
+  } catch (err) {
+    console.error('[analytics/wallet]', err)
+    res.status(500).json({ error: 'Failed to load wallet analytics.' })
+  }
+})

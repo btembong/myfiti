@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "GymFlow",
+    "name": "myfiti",
     "slug": "gymflow",
     "version": "1.0.0",
     "scheme": "gymflow",
@@ -17,7 +17,10 @@
       "bundleIdentifier": "app.gymflow.member",
       "infoPlist": {
         "NSCameraUsageDescription": "Used to scan your membership QR code at check-in."
-      }
+      },
+      "associatedDomains": [
+        "applinks:app.myfiti.app"
+      ]
     },
     "android": {
       "package": "app.gymflow.member",
@@ -25,11 +28,38 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#6C47FF"
       },
-      "permissions": ["android.permission.CAMERA"]
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "*.gymflow.app",
+              "pathPrefix": "/app"
+            },
+            {
+              "scheme": "https",
+              "host": "*.myfiti.app",
+              "pathPrefix": "/member"
+            },
+            {
+              "scheme": "gymflow"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-camera",
       [
         "expo-notifications",
         {
@@ -39,32 +69,12 @@
         }
       ]
     ],
-    "intentFilters": [
-      {
-        "action": "VIEW",
-        "data": [
-          {
-            "scheme": "https",
-            "host": "*.gymflow.app",
-            "pathPrefix": "/app"
-          },
-          {
-            "scheme": "https",
-            "host": "*.myfiti.app",
-            "pathPrefix": "/member"
-          },
-          {
-            "scheme": "gymflow"
-          }
-        ],
-        "category": ["BROWSABLE", "DEFAULT"]
-      }
-    ],
-    "associatedDomains": ["applinks:app.myfiti.app"],
     "extra": {
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
-      }
-    }
+        "projectId": "34f7ed11-2548-4e8e-a517-98fe9a17c3d8"
+      },
+      "router": {}
+    },
+    "owner": "myfiti-team"
   }
 }

@@ -88,6 +88,12 @@ interface Plan {
   duration_days: number
 }
 
+interface WalletData {
+  balance: number
+  currency: string
+  transactions: Array<{ id: string; type: string; amount: number; description: string; status: string; created_at: string }>
+}
+
 interface SubscriptionEvent {
   id: string
   subscription_id: string
@@ -183,6 +189,7 @@ export function MemberDetailPanel({
   const [events, setEvents] = useState<SubscriptionEvent[]>([])
   const [historyLoading, setHistoryLoading] = useState(true)
   const [eventsLoading, setEventsLoading] = useState(true)
+  const [wallet, setWallet] = useState<WalletData | null>(null)
 
   // ── Local member fields ────────────────────────────────────────────────────
   const [localName, setLocalName]   = useState(m.name)
@@ -285,6 +292,9 @@ export function MemberDetailPanel({
       api.get<{ events: SubscriptionEvent[] }>(`/api/members/${m.id}/subscription-events`)
         .then(d => { setEvents(d.events ?? []); setEventsLoading(false) })
         .catch(() => setEventsLoading(false)),
+      api.get<WalletData>(`/api/members/${m.id}/wallet`)
+        .then(d => setWallet(d))
+        .catch(() => {}),
     ]).finally(() => setHistoryLoading(false))
   }, [m.id])
 
@@ -901,6 +911,9 @@ export function MemberDetailPanel({
               <Tabs.Tab value="activity" leftSection={<Notebook01Icon size={12} />}>
                 <Text size="xs" fw={600}>Activity</Text>
               </Tabs.Tab>
+              <Tabs.Tab value="wallet" leftSection={<Wallet01Icon size={12} />}>
+                <Text size="xs" fw={600}>Wallet</Text>
+              </Tabs.Tab>
             </Tabs.List>
 
             {historyLoading ? (
@@ -1027,6 +1040,49 @@ export function MemberDetailPanel({
                     </Stack>
                   ) : (
                     <Text size="xs" c="dimmed" ta="center" py="md">No payments recorded yet.</Text>
+                  )}
+                </Tabs.Panel>
+
+                {/* Wallet tab */}
+                <Tabs.Panel value="wallet" p="sm">
+                  {wallet ? (
+                    <Stack gap={0}>
+                      {/* Balance header */}
+                      <Box py="sm" style={{ borderBottom: '1px solid #f4f5f9' }}>
+                        <Group justify="space-between">
+                          <Group gap="xs">
+                            <Wallet01Icon size={13} style={{ color: '#6366f1' }} />
+                            <Text size="xs" fw={700} style={{ color: '#374151' }}>Balance</Text>
+                          </Group>
+                          <Text size="sm" fw={800} style={{ color: '#111827' }}>
+                            {wallet.currency} {wallet.balance.toLocaleString('fr-CM')}
+                          </Text>
+                        </Group>
+                      </Box>
+                      {/* Transactions */}
+                      {wallet.transactions.length > 0 ? (
+                        wallet.transactions.map(tx => (
+                          <Group key={tx.id} justify="space-between" py={6} style={{ borderBottom: '1px solid #f9fafb' }}>
+                            <Stack gap={1}>
+                              <Text size="xs" fw={600} style={{ color: '#374151' }}>{tx.description}</Text>
+                              <Text size="xs" c="dimmed">{fmt(tx.created_at)}</Text>
+                            </Stack>
+                            <Group gap="xs">
+                              <Text size="xs" fw={700} style={{ color: tx.type === 'debit' || tx.type === 'payment' ? '#ef4444' : '#059669' }}>
+                                {tx.type === 'debit' || tx.type === 'payment' ? '−' : '+'}{wallet.currency} {tx.amount.toLocaleString('fr-CM')}
+                              </Text>
+                              <Badge size="xs" variant="light" color={tx.status === 'completed' ? 'green' : tx.status === 'pending' ? 'yellow' : 'red'}>
+                                {tx.status}
+                              </Badge>
+                            </Group>
+                          </Group>
+                        ))
+                      ) : (
+                        <Text size="xs" c="dimmed" ta="center" py="md">No wallet transactions yet.</Text>
+                      )}
+                    </Stack>
+                  ) : (
+                    <Text size="xs" c="dimmed" ta="center" py="md">No wallet account found.</Text>
                   )}
                 </Tabs.Panel>
 
