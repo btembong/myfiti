@@ -294,7 +294,7 @@ export default function DashboardPage() {
         api.get<{ events: Array<{ type: string; name: string; time: string; amount?: number; currency?: string }> }>('/api/analytics/activity'),
         api.get<{ current: number; max: number }>('/api/analytics/capacity'),
         api.get<{ classes: Array<{ name: string; starts_at: string; capacity: number; trainer_name?: string }> }>('/api/classes?status=scheduled&limit=5').catch(() => ({ classes: [] })),
-        api.get<{ gym_name?: string }>('/api/settings').catch(() => ({})),
+        api.get<{ gym_name?: string }>('/api/settings').catch((): { gym_name?: string } => ({})),
       ])
 
       setStats(dashData)
