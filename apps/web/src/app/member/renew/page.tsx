@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
@@ -24,6 +24,14 @@ interface Plan {
 }
 
 export default function MemberRenewPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#000' }} />}>
+      <MemberRenewContent />
+    </Suspense>
+  )
+}
+
+function MemberRenewContent() {
   const searchParams = useSearchParams()
   const gymSlug = searchParams.get('gym')
 

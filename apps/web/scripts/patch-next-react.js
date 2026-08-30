@@ -44,6 +44,27 @@ const NEXT_BUNDLES = [
   },
 ]
 
+// ── Next.js RSC React (react.react-server.js) — patch useEffectEvent + Activity ─
+// app-page.runtime.prod.js loads this file at runtime (not react.production.js).
+// It has 0 occurrences of useEffectEvent — must be patched here.
+const RSC_BUNDLES = [
+  path.join(NEXT_ROOT, 'compiled/react/react.react-server.js'),
+  path.join(NEXT_ROOT, 'compiled/react/react.react-server.development.js'),
+]
+const RSC_POLYFILL = `
+// ${SENTINEL}
+exports.useEffectEvent = exports.useEffectEvent || function useEffectEvent(fn) { return fn; };
+exports.Activity = exports.Activity || function Activity(props) { return props.children; };
+`
+for (const file of RSC_BUNDLES) {
+  if (!fs.existsSync(file)) continue
+  const src = fs.readFileSync(file, 'utf8')
+  if (src.includes(SENTINEL)) continue
+  fs.writeFileSync(file, src + RSC_POLYFILL)
+  console.log(`  patched ${path.basename(file)}`)
+  totalPatched++
+}
+
 // ── Workspace react — patch Activity + useEffectEvent for webpack ─────────────
 //
 // Webpack detects CJS named exports via STATIC analysis — it only picks up
