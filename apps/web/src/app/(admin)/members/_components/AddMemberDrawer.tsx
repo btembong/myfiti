@@ -72,62 +72,97 @@ export function AddMemberDrawer({ open, onClose, onAdded }: Props) {
     setLoading(true)
     setError('')
     try {
-      // 1. Create member
-      const { id: memberId } = await api.post<{ id: string; qrCode: string }>('/api/members', form)
+      // NEW FLOW: Payment-first member creation
+      // 1. Create member with payment_status='pending_payment' (status='inactive' until payment confirmed)
+      const paymentMethodMap: Record<string, 'momo' | 'cash' | 'bank_transfer'> = {
+        tranzak: 'momo',
+        cash: 'cash',
+        card: 'cash', // treat card as cash for now
+        bank_transfer: 'bank_transfer',
+      }
+      const mappedMethod = paymentMethodMap[paymentMethod] || 'cash'
+      const phoneForPayment = (paymentMethod === 'tranzak' ? tranzakPhone : form.phone).trim()
 
-      // 2. Create subscription if plan selected
+      const memberResponse = await api.post<{
+        id: string; qrCode: string; payment_ref: string
+        requires_confirmation: boolean; message: string
+      }>('/api/members/with-payment', {
+        ...form,
+        payment_method: mappedMethod,
+        phone_for_payment: phoneForPayment || undefined,
+        plan_id: selectedPlanId || undefined,
+      })
+
+      const memberId = memberResponse.id
+      const requiresConfirmation = memberResponse.requires_confirmation
+
+      // 2. Handle payment based on method
       if (selectedPlanId) {
-        const { id: subId } = await api.post<{ id: string }>('/api/subscriptions', {
-          member_id: memberId,
-          plan_id: selectedPlanId,
-        })
-
         const plan = plans.find(p => p.id === selectedPlanId)
         if (plan) {
-          if (paymentMethod === 'tranzak') {
+          if (paymentMethod === 'tranzak' && phoneForPayment) {
             // S2S USSD push — sends a prompt to the member's phone
-            const phone = tranzakPhone.trim() || form.phone.trim()
-            if (!phone) { setError('Enter the member\'s Mobile Money number.'); setLoading(false); return }
-            const result = await api.post<{ ok: boolean; payment_id: string; request_id: string }>('/api/payments/tranzak/charge', {
-              member_id: memberId,
-              subscription_id: subId,
-              amount: plan.price,
-              currency: plan.currency ?? 'XAF',
-              payment_type: 'subscription',
-              phone,
-            })
-            setTranzakPolling(true)
-            onAdded()
-            setLoading(false)
-            // Start polling for confirmation
-            pollingRef.current = setInterval(async () => {
-              try {
-                const status = await api.get<{ status: string }>(`/api/payments/${result.payment_id}`)
-                if (status.status === 'completed') {
-                  clearInterval(pollingRef.current!); pollingRef.current = null
-                  setTranzakPolling(false)
-                  setSuccess(true)
-                  setTimeout(() => { reset(); onClose() }, 1800)
-                } else if (status.status === 'failed') {
-                  clearInterval(pollingRef.current!); pollingRef.current = null
-                  setTranzakPolling(false)
-                  setError('Payment was declined or failed. Please try again.')
-                }
-              } catch { /* keep polling */ }
-            }, 3000)
-            return
+            try {
+              const result = await api.post<{ ok: boolean; payment_id: string; request_id: string }>('/api/payments/tranzak/charge', {
+                member_id: memberId,
+                amount: plan.price,
+                currency: plan.currency ?? 'XAF',
+                payment_type: 'subscription',
+                phone: phoneForPayment,
+              })
+              setTranzakPolling(true)
+              onAdded()
+              setLoading(false)
+
+              // Start polling for payment confirmation
+              pollingRef.current = setInterval(async () => {
+                try {
+                  const status = await api.get<{ status: string }>(`/api/payments/${result.payment_id}`)
+                  if (status.status === 'completed') {
+                    clearInterval(pollingRef.current!); pollingRef.current = null
+                    setTranzakPolling(false)
+                    // Confirm payment and activate member
+                    await api.post(`/api/members/${memberId}/confirm-payment`, {})
+                    setSuccess(true)
+                    setTimeout(() => { reset(); onClose() }, 1800)
+                  } else if (status.status === 'failed') {
+                    clearInterval(pollingRef.current!); pollingRef.current = null
+                    setTranzakPolling(false)
+                    setError('Payment was declined or failed. Member remains pending.')
+                  }
+                } catch { /* keep polling */ }
+              }, 3000)
+              return
+            } catch (err) {
+              setError('Failed to send USSD prompt. Member created pending manual payment.')
+              setLoading(false)
+            }
           } else {
-            // Cash / card / bank transfer — record immediately as completed
-            await api.post('/api/payments', {
-              member_id: memberId,
-              subscription_id: subId,
-              amount: plan.price,
-              currency: plan.currency ?? 'XAF',
-              provider: paymentMethod,
-              provider_ref: paymentRef.trim() || undefined,
-              payment_type: 'subscription',
-            })
+            // Cash / card / bank transfer — needs confirmation
+            if (requiresConfirmation) {
+              setError(`Payment marked as pending. Admin will confirm and activate member.`)
+            }
+            // Record the payment/receipt reference if provided
+            if (paymentRef.trim()) {
+              try {
+                await api.post('/api/payments', {
+                  member_id: memberId,
+                  amount: plan.price,
+                  currency: plan.currency ?? 'XAF',
+                  provider: paymentMethod,
+                  provider_ref: paymentRef.trim(),
+                  payment_type: 'subscription',
+                })
+              } catch (err) {
+                console.warn('Failed to record payment reference:', err)
+              }
+            }
           }
+        }
+      } else {
+        // No plan selected — member created but not yet activated
+        if (mappedMethod !== 'momo') {
+          setError('Member created. No payment/plan assigned.')
         }
       }
 
@@ -163,7 +198,7 @@ export function AddMemberDrawer({ open, onClose, onAdded }: Props) {
             <Stack gap={2}>
               <Text size="sm" fw={700} style={{ color: '#111827' }}>Add new member</Text>
               <Text size="xs" c="dimmed">
-                {step === 'info' ? 'Step 1 of 2 — Member details' : 'Step 2 of 2 — Plan & payment (optional)'}
+                {step === 'info' ? 'Step 1 of 2 — Member details' : 'Step 2 of 2 — Payment & plan (optional)'}
               </Text>
             </Stack>
           </Group>
