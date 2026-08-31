@@ -44,6 +44,10 @@ const NEXT_BUNDLES = [
   },
 ]
 
+// ── Define SENTINEL constant first ─────────────────────────────────────────────
+// Sentinel v2 — bump version to re-apply over old conditional polyfills
+const SENTINEL = 'myfiti-polyfill-v2'
+
 // ── Next.js RSC React (react.react-server.js) — patch useEffectEvent + Activity ─
 // app-page.runtime.prod.js loads this file at runtime (not react.production.js).
 // It has 0 occurrences of useEffectEvent — must be patched here.
@@ -73,9 +77,6 @@ for (const file of RSC_BUNDLES) {
 // The new format uses `exports.X = exports.X || ...` which is detectable.
 //
 // We patch BOTH react/index.js (webpack's entry point) AND all cjs/*.js files.
-
-// Sentinel v2 — bump version to re-apply over old conditional polyfills
-const SENTINEL = 'myfiti-polyfill-v2'
 
 // Polyfill for react/index.js — uses module.exports (entry point form)
 const INDEX_POLYFILL = `
