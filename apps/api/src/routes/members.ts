@@ -579,6 +579,157 @@ membersRouter.post('/import', validate(importMembersSchema), async (req, res) =>
   }
 })
 
+// ─── POST /api/members/with-payment ───────────────────────────────────────────
+// Create member with payment processing (payment-first flow).
+// Returns payment details and requires /confirm-payment after payment succeeds.
+
+membersRouter.post('/with-payment', validate(createMemberSchema), async (req, res) => {
+  try {
+    const { name, email, phone, notes, referredByCode } = req.body
+    const { payment_method, plan_id, phone_for_payment } = req.body as {
+      payment_method?: string
+      plan_id?: string
+      phone_for_payment?: string
+    }
+
+    const id = uuid()
+    const qrCode = `myfiti-${id.slice(0, 8).toUpperCase()}`
+    const [pin, referralCode] = await Promise.all([
+      generateUniquePin(req.tenant.slug),
+      uniqueReferralCode(req.tenant.slug, name),
+    ])
+
+    // Resolve referrer
+    let referredById: string | null = null
+    if (referredByCode?.trim()) {
+      const { rows: refRows } = await tenantQuery<{ id: string }>(
+        req.tenant.slug,
+        `SELECT id FROM members WHERE referral_code = $1 LIMIT 1`,
+        [referredByCode.trim().toUpperCase()],
+      )
+      referredById = refRows[0]?.id ?? null
+    }
+
+    // Fetch plan price if provided
+    let planPrice = 0
+    if (plan_id) {
+      const { rows: planRows } = await tenantQuery<{ price: string }>(
+        req.tenant.slug,
+        `SELECT price FROM membership_plans WHERE id = $1 LIMIT 1`,
+        [plan_id],
+      )
+      planPrice = parseFloat(planRows[0]?.price ?? '0')
+    }
+
+    // Validate payment method
+    const method = payment_method?.toLowerCase() || 'momo'
+    const validMethods = ['momo', 'cash', 'bank_transfer']
+    if (!validMethods.includes(method)) {
+      return res.status(400).json({ error: `Invalid payment method. Choose: ${validMethods.join(', ')}` })
+    }
+
+    // Create member with pending_payment status
+    const paymentRef = uuid()
+    await tenantQuery(
+      req.tenant.slug,
+      `INSERT INTO members
+        (id, name, email, phone, status, qr_code, pin, referral_code, referred_by_id, notes,
+         payment_status, payment_method, payment_ref, joined_at, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, 'inactive', $5, $6, $7, $8, $9, 'pending_payment', $10, $11, NOW(), NOW(), NOW())`,
+      [id, name.trim(), email.toLowerCase().trim(), phone?.trim() ?? null, qrCode, pin, referralCode,
+       referredById, notes?.trim() ?? null, method, paymentRef],
+    )
+
+    // Create referral record if referred
+    if (referredById) {
+      await tenantQuery(
+        req.tenant.slug,
+        `INSERT INTO referrals (id, referrer_id, referred_id, status, created_at)
+         VALUES ($1, $2, $3, 'pending', NOW())`,
+        [uuid(), referredById, id],
+      )
+    }
+
+    // Return payment details based on method
+    const response: Record<string, unknown> = {
+      ok: true,
+      id,
+      qrCode,
+      pin,
+      payment_method: method,
+      payment_ref: paymentRef,
+      requires_confirmation: ['cash', 'bank_transfer'].includes(method),
+      plan_price: planPrice,
+    }
+
+    if (method === 'momo') {
+      if (!phone_for_payment?.trim()) {
+        // Delete the member if no phone provided
+        await tenantQuery(req.tenant.slug, `DELETE FROM members WHERE id = $1`, [id]).catch(() => {})
+        return res.status(400).json({ error: 'Phone number required for Momo payment.' })
+      }
+      response.message = `USSD request will be sent to ${phone_for_payment}. Wait for payment confirmation.`
+    } else if (method === 'cash') {
+      response.message = `Payment marked as pending. Admin will confirm receipt and activate member.`
+    } else if (method === 'bank_transfer') {
+      response.message = `Bank transfer pending. Admin will confirm and activate member once payment is received.`
+    }
+
+    return res.status(201).json(response)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : ''
+    if (msg.includes('unique') || msg.includes('duplicate')) {
+      return res.status(409).json({ error: 'A member with this email already exists.' })
+    }
+    console.error('[members/with-payment]', err)
+    return res.status(500).json({ error: 'Failed to create member.' })
+  }
+})
+
+// ─── POST /api/members/:id/confirm-payment ────────────────────────────────────
+// Confirm payment and activate member. Called after payment succeeds or admin approves.
+
+membersRouter.post('/:id/confirm-payment', async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // Get member
+    const { rows: memberRows } = await tenantQuery<{
+      id: string; status: string; payment_status: string; name: string; email: string; qr_code: string; pin: string
+    }>(
+      req.tenant.slug,
+      `SELECT id, status, payment_status, name, email, qr_code, pin FROM members WHERE id = $1 LIMIT 1`,
+      [id],
+    )
+    const member = memberRows[0]
+    if (!member) return res.status(404).json({ error: 'Member not found.' })
+    if (member.status === 'active') return res.status(400).json({ error: 'Member already active.' })
+
+    // Update member to active status
+    await tenantQuery(
+      req.tenant.slug,
+      `UPDATE members SET status = 'active', payment_status = 'completed', updated_at = NOW()
+       WHERE id = $1`,
+      [id],
+    )
+
+    // Send welcome email
+    sendMemberWelcomeEmail(
+      { email: member.email, name: member.name },
+      req.tenant.name,
+      member.qr_code,
+      undefined,
+      undefined,
+      member.pin,
+    ).catch(err => console.warn('[members/confirm-payment] welcome email failed:', err))
+
+    return res.json({ ok: true, message: 'Member activated successfully.' })
+  } catch (err) {
+    console.error('[members/confirm-payment]', err)
+    return res.status(500).json({ error: 'Failed to confirm payment.' })
+  }
+})
+
 // ─── POST /api/members/:id/email ──────────────────────────────────────────────
 // Send an email to a specific member
 

@@ -50,6 +50,9 @@ export async function provisionTenantSchema(schemaName: string) {
     `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS emergency_contact_phone TEXT`,
     `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS emergency_contact_relation TEXT`,
     `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS push_token TEXT`,
+    `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'paid'`,
+    `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'momo'`,
+    `ALTER TABLE "${schemaName}".members ADD COLUMN IF NOT EXISTS payment_ref TEXT`,
 
     `CREATE TABLE IF NOT EXISTS "${schemaName}".membership_plans (
       id            TEXT PRIMARY KEY,
