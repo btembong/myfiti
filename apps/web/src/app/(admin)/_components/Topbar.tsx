@@ -68,14 +68,15 @@ const NOTIF_STYLE = {
 interface Props {
   ownerName?: string
   ownerInitial?: string
+  gymName?: string
 }
 
-export function Topbar({ ownerName = 'Owner', ownerInitial = 'O' }: Props) {
+export function Topbar({ ownerName = 'Owner', ownerInitial = 'O', gymName = 'Gym' }: Props) {
   const { collapsed } = useSidebar()
   const path = usePathname()
   const [notifications, setNotifications] = useState(INIT_NOTIFICATIONS)
 
-  const crumbs = CRUMBS[path] ?? ['Gymflow']
+  const crumbs = CRUMBS[path] ?? ['Dashboard']
   const unread = notifications.filter(n => !n.read).length
 
   return (
@@ -99,7 +100,7 @@ export function Topbar({ ownerName = 'Owner', ownerInitial = 'O' }: Props) {
         >
           {/* Brand root — always present, grounds the user */}
           <Text size="sm" fw={600} style={{ color: '#c0c5d0' }}>
-            Gymflow
+            {gymName}
           </Text>
           {crumbs.map((c, i) => (
             <Text

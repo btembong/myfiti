@@ -63,7 +63,7 @@ function Shell({ children, gymName, ownerName, ownerInitial, plan }: Props) {
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="flex-1 flex flex-col min-w-0 overflow-hidden"
       >
-        <Topbar ownerName={ownerName} ownerInitial={ownerInitial} />
+        <Topbar ownerName={ownerName} ownerInitial={ownerInitial} gymName={gymName} />
 
         {/* Content row — splits when right panel is open */}
         <div className="flex flex-1 overflow-hidden" style={{ paddingTop: 56 }}>

@@ -491,7 +491,7 @@ export default function NotificationsScreen() {
             <Text style={[styles.emptySub, { color: theme.textMuted }]}>
               {searchText
                 ? 'Try a different search term'
-                : 'You'll be notified about classes, payments, and membership updates.'}
+                : `You'll be notified about classes, payments, and membership updates.`}
             </Text>
           </View>
         ) : (

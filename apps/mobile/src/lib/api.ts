@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store'
 import { Platform } from 'react-native'
 
-const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://api.myfiti.app'
+const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://api.myfiti.fit'
 
 let _onUnauthorized: (() => void) | null = null
 export function setUnauthorizedHandler(fn: () => void) { _onUnauthorized = fn }

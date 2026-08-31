@@ -382,35 +382,36 @@
       <ul>
         <li><a href="#payments"><span class="num">06</span> Payments &amp; Receipts</a></li>
         <li><a href="#mobile-money"><span class="num">07</span> Mobile Money (Tranzak)</a></li>
+        <li><a href="#wallet"><span class="num">08</span> Member Wallet</a></li>
       </ul>
     </div>
 
     <div class="section-group">
       <div class="group-label">Operations</div>
       <ul>
-        <li><a href="#checkin"><span class="num">08</span> Check-In System</a></li>
-        <li><a href="#kiosk"><span class="num">09</span> Self-Service Kiosk</a></li>
-        <li><a href="#day-passes"><span class="num">10</span> Day Passes</a></li>
-        <li><a href="#classes"><span class="num">11</span> Classes &amp; Bookings</a></li>
+        <li><a href="#checkin"><span class="num">09</span> Check-In System</a></li>
+        <li><a href="#kiosk"><span class="num">10</span> Self-Service Kiosk</a></li>
+        <li><a href="#day-passes"><span class="num">11</span> Day Passes</a></li>
+        <li><a href="#classes"><span class="num">12</span> Classes &amp; Bookings</a></li>
       </ul>
     </div>
 
     <div class="section-group">
       <div class="group-label">Tools</div>
       <ul>
-        <li><a href="#analytics"><span class="num">12</span> Analytics &amp; Reports</a></li>
-        <li><a href="#notifications"><span class="num">13</span> Notifications</a></li>
-        <li><a href="#mobile-app"><span class="num">14</span> Member Mobile App</a></li>
-        <li><a href="#staff"><span class="num">15</span> Staff &amp; Roles</a></li>
-        <li><a href="#settings"><span class="num">16</span> Settings &amp; Branding</a></li>
+        <li><a href="#analytics"><span class="num">13</span> Analytics &amp; Reports</a></li>
+        <li><a href="#notifications"><span class="num">14</span> Notifications &amp; Broadcasts</a></li>
+        <li><a href="#mobile-app"><span class="num">15</span> Member Mobile App</a></li>
+        <li><a href="#staff"><span class="num">16</span> Staff &amp; Roles</a></li>
+        <li><a href="#settings"><span class="num">17</span> Settings &amp; Branding</a></li>
       </ul>
     </div>
 
     <div class="section-group">
       <div class="group-label">Automation</div>
       <ul>
-        <li><a href="#crons"><span class="num">17</span> Automated Jobs</a></li>
-        <li><a href="#billing"><span class="num">18</span> Platform Billing</a></li>
+        <li><a href="#crons"><span class="num">18</span> Automated Jobs</a></li>
+        <li><a href="#billing"><span class="num">19</span> Platform Billing</a></li>
       </ul>
     </div>
   </nav>
@@ -574,6 +575,7 @@
           <tr><td>View subscription</td><td>Current plan, status badge, days remaining, expiry date.</td></tr>
           <tr><td>View payment history</td><td>All recorded payments with amounts, dates, and provider.</td></tr>
           <tr><td>View check-in history</td><td>Every visit with timestamp and method (QR, PIN, manual).</td></tr>
+          <tr><td>View wallet</td><td>Member's wallet balance and last 30 transactions — credits (referral rewards, top-ups) and debits (payments from wallet).</td></tr>
           <tr><td>Edit details</td><td>Update name, email, phone, or notes.</td></tr>
           <tr><td>Assign / change plan</td><td>Switch to a different plan; the new expiry is calculated automatically.</td></tr>
           <tr><td>Record payment</td><td>Record a cash, card, or bank transfer payment inline.</td></tr>
@@ -604,7 +606,10 @@
       </table>
 
       <h3>Referral System</h3>
-      <p>Each member gets a unique referral code. When a new member signs up using that code, the referring member is tracked and can receive reward days or discounts — configurable from Settings.</p>
+      <p>Each member gets a unique referral code visible in their mobile app. When a new member signs up using that code, the referrer's wallet is automatically credited with a reward (default: 500 XAF) once the referred member makes their first payment. Referral stats — total referrals, conversion rate, pending vs converted, total rewards issued — are available in <strong>Analytics → Referrals</strong>.</p>
+
+      <h3>Member Wallet</h3>
+      <p>Every member has an internal wallet balance. The wallet is credited automatically when a referral reward is earned, or when the gym manually adds credit. Members can view their balance and transaction history in the mobile app (Wallet screen). Staff can view the wallet balance from the member's profile in the admin panel (Payments → Wallet tab).</p>
     </section>
 
     <hr class="divider" />
@@ -860,9 +865,56 @@
 
     <hr class="divider" />
 
-    <!-- ══════════ 08. CHECK-IN ══════════ -->
+    <!-- ══════════ 08. MEMBER WALLET ══════════ -->
+    <section class="section" id="wallet">
+      <div class="section-label">08 — Payments</div>
+      <h2 class="section-title">Member Wallet</h2>
+      <p class="section-intro">
+        Every member has a built-in digital wallet. Members can top up their balance via Mobile Money,
+        send funds to other members, and pay for subscriptions or day passes directly from their wallet balance.
+      </p>
+
+      <h3>What Members Can Do</h3>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon" style="background:#ede9fe;">&#8593;</div>
+          <h4>Top Up</h4>
+          <p>Add funds via MTN MoMo or Orange Money USSD push. A USSD prompt is sent to the member's phone — they enter their PIN and the balance updates instantly.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background:#dcfce7;">&#8594;</div>
+          <h4>Send to Member</h4>
+          <p>Transfer funds to another gym member by searching their name or phone number. The recipient's balance updates immediately.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background:#dbeafe;">&#8595;</div>
+          <h4>Cash Out</h4>
+          <p>Withdraw the wallet balance to a Mobile Money number via USSD push. Funds arrive within seconds.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background:#fef9c3;">&#10003;</div>
+          <h4>Pay for Services</h4>
+          <p>Members can use their wallet balance to pay for subscriptions and day passes at checkout, without re-entering payment details.</p>
+        </div>
+      </div>
+
+      <h3>Transaction History</h3>
+      <p>Every wallet operation (top-up, send, receive, cashout, payment) is logged with a timestamp, amount, and counterparty. Members can view their full history in the <strong>Wallet</strong> tab of the mobile app.</p>
+
+      <h3>Wallet Reconciliation</h3>
+      <p>A nightly automated job runs at <strong>01:00</strong> to cross-check wallet balances against transaction history and flag any discrepancies.</p>
+
+      <div class="callout tip">
+        <span class="callout-icon">&#10003;</span>
+        <div><strong>Atomic balances.</strong> All wallet operations use database-level atomic transactions — a top-up and a concurrent send can never conflict. The balance is always consistent.</div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ══════════ 09. CHECK-IN ══════════ -->
     <section class="section" id="checkin">
-      <div class="section-label">08 — Operations</div>
+      <div class="section-label">09 — Operations</div>
       <h2 class="section-title">Check-In System</h2>
       <p class="section-intro">
         The check-in system tracks every member visit. Three methods are supported,
@@ -905,9 +957,9 @@
 
     <hr class="divider" />
 
-    <!-- ══════════ 09. KIOSK ══════════ -->
+    <!-- ══════════ 10. KIOSK ══════════ -->
     <section class="section" id="kiosk">
-      <div class="section-label">09 — Operations</div>
+      <div class="section-label">10 — Operations</div>
       <h2 class="section-title">Self-Service Kiosk</h2>
       <p class="section-intro">
         The kiosk is a full-screen, touch-friendly web application designed to run on a tablet or
@@ -973,9 +1025,9 @@
 
     <hr class="divider" />
 
-    <!-- ══════════ 10. DAY PASSES ══════════ -->
+    <!-- ══════════ 11. DAY PASSES ══════════ -->
     <section class="section" id="day-passes">
-      <div class="section-label">10 — Operations</div>
+      <div class="section-label">11 — Operations</div>
       <h2 class="section-title">Day Passes</h2>
       <p class="section-intro">
         Day passes let walk-in guests access your gym for a single day without becoming members.
@@ -1092,9 +1144,9 @@
 
     <hr class="divider" />
 
-    <!-- ══════════ 11. CLASSES ══════════ -->
+    <!-- ══════════ 12. CLASSES ══════════ -->
     <section class="section" id="classes">
-      <div class="section-label">11 — Operations</div>
+      <div class="section-label">12 — Operations</div>
       <h2 class="section-title">Classes &amp; Bookings</h2>
       <p class="section-intro">
         The classes module lets you schedule group fitness sessions, assign trainers, set capacity
@@ -1130,9 +1182,9 @@
 
     <hr class="divider" />
 
-    <!-- ══════════ 12. ANALYTICS ══════════ -->
+    <!-- ══════════ 13. ANALYTICS ══════════ -->
     <section class="section" id="analytics">
-      <div class="section-label">12 — Tools</div>
+      <div class="section-label">13 — Tools</div>
       <h2 class="section-title">Analytics &amp; Reports</h2>
       <p class="section-intro">
         The analytics module gives you deep visibility into your gym's performance across
@@ -1165,6 +1217,10 @@
           <h4>Activity Feed</h4>
           <p>Chronological log of all gym events: check-ins, new members, payments, class bookings.</p>
         </div>
+        <div class="card">
+          <h4>Referral Programme</h4>
+          <p>Total referrals, conversion rate, pending vs converted, total wallet rewards issued, and a 6-month monthly referral bar chart.</p>
+        </div>
       </div>
 
       <h3>Data Export</h3>
@@ -1182,14 +1238,15 @@
 
     <hr class="divider" />
 
-    <!-- ══════════ 13. NOTIFICATIONS ══════════ -->
+    <!-- ══════════ 14. NOTIFICATIONS ══════════ -->
     <section class="section" id="notifications">
-      <div class="section-label">13 — Tools</div>
-      <h2 class="section-title">Notifications</h2>
+      <div class="section-label">14 — Tools</div>
+      <h2 class="section-title">Notifications &amp; Broadcasts</h2>
       <p class="section-intro">
-        myfiti sends automated notifications to members at key lifecycle moments.
+        myfiti sends automated notifications to members at key lifecycle moments, and gives
+        staff a broadcast tool to reach targeted member segments on demand.
         Notifications are delivered by email and, for members using the mobile app,
-        as in-app notifications.
+        as in-app and push notifications.
       </p>
 
       <h3>Automated Email Notifications</h3>
@@ -1209,14 +1266,27 @@
       <p>Members using the mobile app receive in-app notifications for subscription events. Unread notifications appear as a badge on the bell icon. Members can mark individual notifications as read or clear all at once.</p>
 
       <h3>Push Notifications</h3>
-      <p>When a member logs into the mobile app, their device push token is registered. This enables future push notification delivery even when the app is closed.</p>
+      <p>When a member logs into the mobile app, their device push token is registered. This enables push notification delivery even when the app is closed.</p>
+
+      <h3>Broadcast Announcements (Staff)</h3>
+      <p>From the <strong>Communication</strong> page, staff can send a broadcast announcement to a targeted segment of members. Click the megaphone icon to open the broadcast composer:</p>
+      <table>
+        <thead><tr><th>Audience segment</th><th>Who receives it</th></tr></thead>
+        <tbody>
+          <tr><td>Active members</td><td>Members with an active, expiring soon, or grace period subscription. Default.</td></tr>
+          <tr><td>Expiring soon only</td><td>Only members within 7 days of expiry — ideal for targeted renewal pushes.</td></tr>
+          <tr><td>Expired / inactive</td><td>Members whose subscription has lapsed — useful for win-back campaigns.</td></tr>
+          <tr><td>All members</td><td>Every member on record, regardless of subscription status.</td></tr>
+        </tbody>
+      </table>
+      <p>Before sending, the composer shows a live <strong>audience count</strong> for the selected segment. After sending, the last 3 broadcasts appear in the Recent broadcasts strip above the conversation list. Each broadcast is delivered as an in-app notification and a push notification (where push tokens are registered).</p>
     </section>
 
     <hr class="divider" />
 
-    <!-- ══════════ 14. MOBILE APP ══════════ -->
+    <!-- ══════════ 15. MOBILE APP ══════════ -->
     <section class="section" id="mobile-app">
-      <div class="section-label">14 — Tools</div>
+      <div class="section-label">15 — Tools</div>
       <h2 class="section-title">Member Mobile App</h2>
       <p class="section-intro">
         The myfiti member app gives your members a professional, branded experience on their phone.
@@ -1252,13 +1322,15 @@
       <table>
         <thead><tr><th>Screen</th><th>What members can do</th></tr></thead>
         <tbody>
-          <tr><td>Home</td><td>See their name, current plan status, days remaining, last visit, and check-in count.</td></tr>
-          <tr><td>Check-In (QR)</td><td>Display their personal QR code for the kiosk to scan. Branded with gym colors.</td></tr>
-          <tr><td>Membership</td><td>Full subscription details — plan name, price, expiry, auto-renew toggle, recent payments.</td></tr>
-          <tr><td>Renew</td><td>Browse available plans, choose one, enter their phone, and pay via MTN/Orange MoMo USSD push — entirely from the app.</td></tr>
-          <tr><td>Plans</td><td>View all available membership plans with prices and descriptions.</td></tr>
-          <tr><td>Schedule</td><td>See upcoming classes they have booked.</td></tr>
-          <tr><td>Notifications</td><td>In-app notification inbox with read/unread state.</td></tr>
+          <tr><td>Home</td><td>Name, plan status, days remaining, last visit, check-in count, wallet balance strip with quick "Refer &amp; Earn" shortcut. Three-dots button opens a full services sheet grouped into Check-In, Wallet, Membership, and Account sections.</td></tr>
+          <tr><td>Check-In</td><td>Three-way toggle: <strong>My QR Code</strong> (display personal QR for kiosk scan), <strong>Scan to Enter</strong> (camera scans the gym's entrance QR and submits check-in), <strong>History</strong> (pull-to-refresh list of past visits, week-grouped).</td></tr>
+          <tr><td>Membership</td><td>Full subscription details — gradient hero with plan name, price, status pill, days-remaining progress bar, visit stats, wallet balance. Renew CTA, recent payments list.</td></tr>
+          <tr><td>Plans</td><td>Browse available membership plans with prices and descriptions. Tap to start the in-app renewal flow.</td></tr>
+          <tr><td>Wallet</td><td>Current balance, full transaction history. Actions: <strong>Top Up</strong> via Mobile Money (USSD push), <strong>Send</strong> to another member (lookup by name/phone), <strong>Cash Out</strong> to any MoMo number.</td></tr>
+          <tr><td>Progress</td><td>Live step count and estimated calories from the device pedometer. Heart rate card (shows "--" on Expo Go — requires native build with Apple Health / Google Fit). Check-in streak, weekly visit bars, and achievement badges tied to monthly visit counts.</td></tr>
+          <tr><td>Referrals</td><td>Personal referral code with share/copy action, count of people referred, conversion status (pending → converted), total wallet rewards earned.</td></tr>
+          <tr><td>Schedule</td><td>Toggle between <strong>Classes</strong> (full upcoming timetable with booking) and <strong>My Bookings</strong> (only classes the member has reserved). Cancel bookings directly from the list.</td></tr>
+          <tr><td>Notifications</td><td>In-app notification inbox with unread badge, "Mark all read" action, and per-notification routing (tap a subscription alert → goes to Membership screen).</td></tr>
           <tr><td>Profile</td><td>Edit phone number, set or remove PIN, view emergency contact, manage device sessions, delete account.</td></tr>
         </tbody>
       </table>
@@ -1294,9 +1366,9 @@
 
     <hr class="divider" />
 
-    <!-- ══════════ 15. STAFF ══════════ -->
+    <!-- ══════════ 16. STAFF ══════════ -->
     <section class="section" id="staff">
-      <div class="section-label">15 — Tools</div>
+      <div class="section-label">16 — Tools</div>
       <h2 class="section-title">Staff &amp; Roles</h2>
       <p class="section-intro">
         myfiti supports multiple staff members per gym with role-based access control.
@@ -1336,9 +1408,9 @@
 
     <hr class="divider" />
 
-    <!-- ══════════ 16. SETTINGS ══════════ -->
+    <!-- ══════════ 17. SETTINGS ══════════ -->
     <section class="section" id="settings">
-      <div class="section-label">16 — Tools</div>
+      <div class="section-label">17 — Tools</div>
       <h2 class="section-title">Settings &amp; Branding</h2>
       <p class="section-intro">
         All gym-wide configuration lives in the Settings section. Changes here affect
@@ -1374,9 +1446,9 @@
 
     <hr class="divider" />
 
-    <!-- ══════════ 17. CRONS ══════════ -->
+    <!-- ══════════ 18. CRONS ══════════ -->
     <section class="section" id="crons">
-      <div class="section-label">17 — Automation</div>
+      <div class="section-label">18 — Automation</div>
       <h2 class="section-title">Automated Jobs</h2>
       <p class="section-intro">
         Two background processes run continuously on the server, handling all time-sensitive
@@ -1426,15 +1498,26 @@
         </tbody>
       </table>
 
+      <h3>Motivation Cron — Daily at 07:00</h3>
+      <p>Sends a personalised motivational push notification to every member with an active subscription once per day. Messages vary by day of week and are tailored to encourage gym attendance.</p>
+
+      <div class="callout tip">
+        <span class="callout-icon">&#10003;</span>
+        <div>Motivation messages are only sent to members with an <code>active</code> or <code>expiring_soon</code> subscription — suspended or expired members are skipped automatically.</div>
+      </div>
+
+      <h3>Wallet Reconciliation Cron — Daily at 01:00</h3>
+      <p>Runs every night across all tenants and cross-checks each member's stored wallet balance against the sum of their transaction ledger. Any mismatch is flagged in the server log for review. Normal operation logs <strong>"0 discrepancies"</strong>.</p>
+
       <h3>Queue System (BullMQ)</h3>
-      <p>Email notifications are queued through <strong>BullMQ with Redis (Upstash)</strong>. If the queue is temporarily unavailable (e.g. DNS issue), status transitions in the database still happen — only the notification email is delayed. It will be retried automatically.</p>
+      <p>Email and push notifications are queued through <strong>BullMQ with Redis (Upstash)</strong>. If the queue is temporarily unavailable, status transitions in the database still happen — only the notification is delayed. It will be retried automatically.</p>
     </section>
 
     <hr class="divider" />
 
-    <!-- ══════════ 18. BILLING ══════════ -->
+    <!-- ══════════ 19. BILLING ══════════ -->
     <section class="section" id="billing">
-      <div class="section-label">18 — Automation</div>
+      <div class="section-label">19 — Automation</div>
       <h2 class="section-title">Platform Billing</h2>
       <p class="section-intro">
         This section covers your gym's subscription to the myfiti platform itself —
