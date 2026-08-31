@@ -299,22 +299,30 @@ superadminRouter.get('/gyms', async (req, res) => {
       )
     }
 
-    // Enrich with per-tenant member counts (best-effort, silently skip if schema missing)
+    // Enrich with per-tenant member counts and revenue (best-effort, silently skip if schema missing)
     const gyms = await Promise.all(
       tenants.map(async t => {
         try {
-          const result = await tenantQuery<{ total: string; active: string }>(
+          const memberResult = await tenantQuery<{ total: string; active: string }>(
             t.slug,
             `SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'active') as active FROM members`,
           )
-          const m = result.rows[0]
+          const m = memberResult.rows[0]
+
+          const revenueResult = await tenantQuery<{ total: string }>(
+            t.slug,
+            `SELECT COALESCE(SUM(amount), 0) as total FROM wallet_transactions WHERE type = 'payment' AND status = 'completed'`,
+          )
+          const r = revenueResult.rows[0]
+
           return {
             ...t,
             totalMembers: parseInt(m?.total ?? '0'),
             activeMembers: parseInt(m?.active ?? '0'),
+            revenueXAF: parseInt(r?.total ?? '0'),
           }
         } catch {
-          return { ...t, totalMembers: 0, activeMembers: 0 }
+          return { ...t, totalMembers: 0, activeMembers: 0, revenueXAF: 0 }
         }
       }),
     )
