@@ -1,0 +1,106 @@
+import { Router } from 'express'
+import { tenantQuery, globalQuery } from '../db/client.js'
+import { generateStyledQRCode } from '../lib/qr-generator.js'
+
+export const qrCodesRouter = Router()
+
+/**
+ * GET /api/qr-codes/:memberId
+ * Generate or return cached QR code for a member
+ * Returns PNG image with custom styling (rounded corners + brand color)
+ */
+qrCodesRouter.get('/:memberId', async (req, res) => {
+  try {
+    const { memberId } = req.params
+
+    // Determine tenant from member lookup
+    // Try all tenants until we find the member
+    const { rows: tenants } = await globalQuery<{ slug: string }>(
+      `SELECT DISTINCT slug FROM tenants WHERE status != 'suspended' LIMIT 50`,
+    )
+
+    let memberQR: { qr_code: string; id: string } | null = null
+
+    for (const tenant of tenants) {
+      try {
+        const { rows } = await tenantQuery<{ qr_code: string; id: string }>(
+          tenant.slug,
+          `SELECT qr_code, id FROM members WHERE id = $1 LIMIT 1`,
+          [memberId],
+        )
+        if (rows[0]) {
+          memberQR = rows[0]
+          break
+        }
+      } catch {
+        // Continue to next tenant
+      }
+    }
+
+    if (!memberQR) {
+      return res.status(404).json({ error: 'Member not found' })
+    }
+
+    // Generate QR code (pure black & white for maximum scanability)
+    const qrBuffer = await generateStyledQRCode(memberQR.qr_code, {
+      size: 300,
+      filename: `${memberId}.png`,
+    })
+
+    // Return as PNG
+    res.setHeader('Content-Type', 'image/png')
+    res.setHeader('Cache-Control', 'public, max-age=604800, immutable') // Cache for 7 days
+    res.send(qrBuffer)
+  } catch (err) {
+    console.error('[qr-codes GET]', err)
+    res.status(500).json({ error: 'Failed to generate QR code' })
+  }
+})
+
+/**
+ * Optional: GET /api/qr-codes/:memberId/base64
+ * Return QR code as data URL for embedding in emails/PDFs
+ */
+qrCodesRouter.get('/:memberId/base64', async (req, res) => {
+  try {
+    const { memberId } = req.params
+
+    // Determine tenant from member lookup
+    const { rows: tenants } = await globalQuery<{ slug: string }>(
+      `SELECT DISTINCT slug FROM tenants WHERE status != 'suspended' LIMIT 50`,
+    )
+
+    let memberQR: { qr_code: string; id: string } | null = null
+
+    for (const tenant of tenants) {
+      try {
+        const { rows } = await tenantQuery<{ qr_code: string; id: string }>(
+          tenant.slug,
+          `SELECT qr_code, id FROM members WHERE id = $1 LIMIT 1`,
+          [memberId],
+        )
+        if (rows[0]) {
+          memberQR = rows[0]
+          break
+        }
+      } catch {
+        // Continue to next tenant
+      }
+    }
+
+    if (!memberQR) {
+      return res.status(404).json({ error: 'Member not found' })
+    }
+
+    // Generate QR code and return as base64 (pure black & white)
+    const qrBuffer = await generateStyledQRCode(memberQR.qr_code, {
+      size: 300,
+    })
+
+    const dataUrl = `data:image/png;base64,${qrBuffer.toString('base64')}`
+    res.json({ ok: true, data_url: dataUrl })
+  } catch (err) {
+    console.error('[qr-codes/base64 GET]', err)
+    res.status(500).json({ error: 'Failed to generate QR code' })
+  }
+})

@@ -31,11 +31,15 @@ import { onboardingRouter } from './onboarding.js'
 // SuperAdmin
 import { superadminRouter } from './superadmin.js'
 
+// QR Codes
+import { qrCodesRouter } from './qr-codes.js'
+
 export const router = Router()
 
 // ─── Public (no auth, no tenant required for some) ───────────────────────────
 router.use('/public', publicRouter)
 router.use('/webhooks', webhooksRouter)
+router.use('/qr-codes', qrCodesRouter)
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 router.use('/auth', authRouter)
