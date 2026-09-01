@@ -328,7 +328,8 @@ superadminRouter.get('/gyms', async (req, res) => {
             monthlyRevenueXAF: parseInt(mr?.total ?? '0'),
             annualRevenueXAF: parseInt(ar?.total ?? '0'),
           }
-        } catch {
+        } catch (err) {
+          console.error(`[superadmin/gyms] Failed to load stats for ${t.slug}:`, err)
           return { ...t, totalMembers: 0, activeMembers: 0, monthlyRevenueXAF: 0, annualRevenueXAF: 0 }
         }
       }),
@@ -378,7 +379,8 @@ superadminRouter.get('/gyms/:id', async (req, res) => {
         monthlyRevenueXAF: parseInt(mr?.total ?? '0'),
         annualRevenueXAF: parseInt(ar?.total ?? '0'),
       }
-    } catch {
+    } catch (err) {
+      console.error(`[superadmin/gyms/:id] Failed to load stats for ${tenant.slug}:`, err)
       // Tenant schema may not exist yet
     }
 
