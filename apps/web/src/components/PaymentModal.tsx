@@ -6,7 +6,7 @@ import {
   ThemeIcon, Alert, Loader,
 } from '@mantine/core'
 import {
-  Phone01Icon, CreditCardIcon, Building01Icon,
+  SmartPhone01Icon, CreditCardIcon, Building01Icon,
   AlertCircleIcon, CheckmarkCircle01Icon,
 } from 'hugeicons-react'
 
@@ -110,7 +110,7 @@ export function PaymentModal({
                     size="sm"
                   />
                   <ThemeIcon size="sm" radius="xl" color="green" variant="light">
-                    <Phone01Icon size={16} />
+                    <SmartPhone01Icon size={16} />
                   </ThemeIcon>
                   <Stack gap={0}>
                     <Text fw={600} size="sm">
@@ -198,7 +198,7 @@ export function PaymentModal({
               placeholder="e.g. 237123456789"
               value={phone}
               onChange={(e) => setPhone(e.currentTarget.value)}
-              leftSection={<Phone01Icon size={16} />}
+              leftSection={<SmartPhone01Icon size={16} />}
               disabled={loading}
             />
           )}
