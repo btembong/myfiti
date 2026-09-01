@@ -47,9 +47,11 @@ qrCodesRouter.get('/:memberId', async (req, res) => {
       filename: `${memberId}.png`,
     })
 
-    // Return as PNG
+    // Return as PNG — cross-origin headers required for embedding in emails
     res.setHeader('Content-Type', 'image/png')
     res.setHeader('Cache-Control', 'public, max-age=604800, immutable') // Cache for 7 days
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+    res.setHeader('Access-Control-Allow-Origin', '*')
     res.send(qrBuffer)
   } catch (err) {
     console.error('[qr-codes GET]', err)
