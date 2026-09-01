@@ -424,8 +424,12 @@ superadminRouter.patch('/gyms/:id', requireSuperAuth, async (req, res) => {
   }
 })
 
-superadminRouter.get('/revenue', async (_req, res) => {
+superadminRouter.get('/revenue', async (req, res) => {
   try {
+    const period = (req.query.period as string) ?? '30d'
+    const intervalMap: Record<string, string> = { '7d': '7 days', '30d': '30 days', '90d': '90 days', '1y': '1 year' }
+    const interval = intervalMap[period] ?? '30 days'
+
     const tenants = await db.select().from(globalSchema.tenants)
     const mrr = tenants
       .filter(t => t.status === 'active')
@@ -438,25 +442,28 @@ superadminRouter.get('/revenue', async (_req, res) => {
       revenue: tenants.filter(t => t.plan === plan && t.status === 'active').length * price,
     }))
 
-    // Last 6 months from platform_invoices (paid only)
+    // Monthly revenue within the selected period
     const { rows: monthlyRows } = await globalQuery<{ month: string; revenue: string }>(
       `SELECT TO_CHAR(DATE_TRUNC('month', period_start), 'Mon YYYY') AS month,
               COALESCE(SUM(amount_xaf), 0) AS revenue
        FROM platform_invoices
-       WHERE status = 'paid' AND period_start >= NOW() - INTERVAL '6 months'
+       WHERE status = 'paid' AND period_start >= NOW() - INTERVAL $1
        GROUP BY DATE_TRUNC('month', period_start)
        ORDER BY DATE_TRUNC('month', period_start) ASC`,
+      [interval],
     )
     const monthly = monthlyRows.map(r => ({ month: r.month, revenue: parseInt(r.revenue) }))
 
-    // Recent paid invoices as transaction feed
+    // Recent paid invoices within the selected period as transaction feed
     const { rows: txRows } = await globalQuery<{
       id: string; tenant_name: string; amount_xaf: number; status: string; paid_at: string | null; plan: string
     }>(
       `SELECT pi.id, t.name AS tenant_name, pi.amount_xaf, pi.status, pi.paid_at, pi.plan
        FROM platform_invoices pi
        JOIN tenants t ON t.id = pi.tenant_id
+       WHERE pi.created_at >= NOW() - INTERVAL $1
        ORDER BY pi.created_at DESC LIMIT 20`,
+      [interval],
     )
 
     res.json({ mrr, arr: mrr * 12, byPlan, monthly, transactions: txRows })

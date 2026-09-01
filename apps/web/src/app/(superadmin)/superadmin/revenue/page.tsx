@@ -51,15 +51,16 @@ export default function RevenuePage() {
   const [rev, setRev] = useState<RevenueData>({ mrr: 0, arr: 0, byPlan: [], monthly: [], transactions: [] })
 
   useEffect(() => {
-    superApi.get<RevenueData>('/api/superadmin/revenue')
+    superApi.get<RevenueData>(`/api/superadmin/revenue?period=${period}`)
       .then(r => setRev(r))
       .catch(() => {})
-  }, [])
+  }, [period])
 
   const totalPayingGyms = rev.byPlan.filter(p => p.price > 0).reduce((a, p) => a + p.count, 0)
   const maxPlanRev = Math.max(...rev.byPlan.map(p => p.revenue), 1)
   const monthly = rev.monthly.length > 0 ? rev.monthly : [{ month: '—', revenue: 0 }]
   const maxMonthRev = Math.max(...monthly.map(d => d.revenue), 1)
+  const momGrowth = monthly.length >= 2 ? Math.round(((monthly[monthly.length - 1].revenue - monthly[monthly.length - 2].revenue) / (monthly[monthly.length - 2].revenue || 1)) * 100) : 0
   const failedCount = rev.transactions.filter(t => t.status === 'overdue' || t.status === 'failed').length
   const PERIODS = ['7d', '30d', '90d', '1y']
 
@@ -127,8 +128,8 @@ export default function RevenuePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 12, color: T.textSecondary }}>MoM growth</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <ArrowUp01Icon size={11} style={{ color: T.textSecondary }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: T.textPrimary }}>17% this month</span>
+              <ArrowUp01Icon size={11} style={{ color: momGrowth >= 0 ? T.textSecondary : '#e74c3c' }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: T.textPrimary }}>{momGrowth > 0 ? '+' : ''}{momGrowth}% this month</span>
             </div>
           </div>
         </Card>
