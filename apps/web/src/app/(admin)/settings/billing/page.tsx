@@ -407,52 +407,30 @@ export default function BillingPage() {
             })}
           </SimpleGrid>
 
-          {/* Enterprise card — full width below the 3 plan cards */}
-          <Paper radius="xl" p="xl" withBorder style={{
-            borderColor: '#1e1b4b', background: 'linear-gradient(135deg, #0f0c29 0%, #1a1040 50%, #24243e 100%)',
-            marginTop: 4,
+          {/* Enterprise card — compact full-width banner */}
+          <Paper radius="xl" p="md" withBorder style={{
+            borderColor: '#312e81', background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
           }}>
-            <Group justify="space-between" wrap="nowrap" gap="xl">
-              <Group gap="md" wrap="nowrap" style={{ flex: 1 }}>
-                <ThemeIcon size={48} radius="xl" variant="light" style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8', flexShrink: 0 }}>
-                  <CrownIcon size={22} />
-                </ThemeIcon>
-                <Stack gap={4}>
-                  <Group gap="xs">
-                    <Text fw={800} size="md" style={{ color: '#e0e7ff' }}>{ENTERPRISE.name}</Text>
-                    <Badge size="xs" style={{ background: 'rgba(99,102,241,0.25)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)' }} variant="outline">
-                      Custom pricing
-                    </Badge>
-                    {planKey === 'enterprise' && (
-                      <Badge size="xs" color="indigo" variant="filled">Your plan</Badge>
-                    )}
+            <Group justify="space-between" align="center" wrap="nowrap">
+              <Group gap="sm" align="center" wrap="nowrap">
+                <Text fw={800} size="sm" style={{ color: '#ffffff' }}>Enterprise</Text>
+                {planKey === 'enterprise' && <Badge size="xs" color="indigo" variant="filled">Your plan</Badge>}
+                <Text size="xs" style={{ color: '#a5b4fc' }}>·</Text>
+                {['Dedicated account manager', 'Custom SLA', 'Multi-location', 'Priority support'].map(f => (
+                  <Group key={f} gap={4} wrap="nowrap">
+                    <CheckmarkCircle01Icon size={11} style={{ color: '#818cf8', flexShrink: 0 }} />
+                    <Text size="xs" style={{ color: '#c7d2fe' }}>{f}</Text>
                   </Group>
-                  <Text size="xs" style={{ color: '#6366f1' }}>
-                    For gyms that need more — custom contracts, dedicated support, and full white-glove onboarding.
-                  </Text>
-                  <Group gap="lg" mt={6} wrap="wrap">
-                    {ENTERPRISE.features.map(f => (
-                      <Group key={f} gap={6}>
-                        <CheckmarkCircle01Icon size={12} style={{ color: '#818cf8', flexShrink: 0 }} />
-                        <Text size="xs" style={{ color: '#a5b4fc' }}>{f}</Text>
-                      </Group>
-                    ))}
-                  </Group>
-                </Stack>
+                ))}
               </Group>
-              <Stack gap="xs" style={{ flexShrink: 0 }}>
-                <Text style={{ fontSize: '1.5rem', fontWeight: 900, color: '#e0e7ff', lineHeight: 1, textAlign: 'right' }}>Custom</Text>
-                <Text size="xs" style={{ color: '#6366f1', textAlign: 'right' }}>pricing</Text>
-                <Button
-                  component="a"
-                  href={`mailto:sales@myfiti.fit?subject=Enterprise%20Plan%20Enquiry&body=Hi%20myfiti%20team%2C%0A%0AI%20am%20interested%20in%20the%20Enterprise%20plan%20for%20my%20gym.%20Please%20get%20in%20touch.%0A%0AThank%20you.`}
-                  size="sm" radius="md" mt={4}
-                  style={{ background: '#6366f1', color: 'white', fontWeight: 700, textDecoration: 'none' }}
-                  leftSection={<StarsIcon size={13} />}
-                >
-                  Contact sales
-                </Button>
-              </Stack>
+              <Button
+                component="a"
+                href="mailto:sales@myfiti.fit?subject=Enterprise%20Plan%20Enquiry&body=Hi%20myfiti%20team%2C%0A%0AI%20am%20interested%20in%20the%20Enterprise%20plan.%20Please%20get%20in%20touch.%0A%0AThank%20you."
+                size="xs" radius="md" style={{ background: '#6366f1', color: '#ffffff', fontWeight: 700, textDecoration: 'none', flexShrink: 0 }}
+                leftSection={<StarsIcon size={12} />}
+              >
+                Contact sales
+              </Button>
             </Group>
           </Paper>
         </Stack>
