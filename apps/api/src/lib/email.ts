@@ -907,23 +907,70 @@ export async function sendActivationInvoiceEmail(
 
 
 // ─── Member cash receipt email (no PDF — fast, inline) ───────────────────────
-// Sends the member receipt HTML email built from receipt.ts directly.
-// Used for cash payments at desk where speed matters (staff is waiting).
+// Uses the same dark shell() template as all other emails.
 
 export async function sendMemberCashReceiptEmail(opts: {
   to: { email: string; name: string }
   gymName: string
   senderName?: string
-  data: import('./receipt.js').MemberReceiptData
+  memberId?: string | null
+  data: {
+    receiptNo: string
+    planName: string
+    startDate: string
+    expiresDate: string
+    amount: number
+    currency: string
+    provider: string
+    providerRef?: string
+    paidAt: string
+  }
 }) {
-  const { buildMemberReceiptEmail } = await import('./receipt.js')
-  const html = await buildMemberReceiptEmail(opts.data)
+  const { to, gymName, memberId, data } = opts
+  const first    = to.name.split(' ')[0]
+  const amtStr   = `${data.currency} ${data.amount.toLocaleString('en-CM')}`
+  const fmtDate  = (d: string) => { try { return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) } catch { return d } }
+  const providerLabel: Record<string, string> = { cash: 'Cash', momo: 'Mobile Money', bank_transfer: 'Bank Transfer', tranzak: 'Tranzak', card: 'Card' }
+
+  const apiUrl = process.env.API_URL ?? 'https://api.myfiti.fit'
+  const qrCell = memberId
+    ? `<img src="${apiUrl}/qr-codes/${memberId}.png" width="100" height="100" alt="QR" style="display:block;border-radius:6px;"/>`
+    : ''
+
+  const html = shell(`
+    <tr><td style="padding:32px 32px 0;">
+      <p style="margin:0 0 4px;font-size:10px;font-weight:500;color:${C.mut};text-transform:uppercase;letter-spacing:0.1em;">Payment confirmed</p>
+      <p style="margin:0 0 4px;font-size:36px;font-weight:700;color:${C.pri};letter-spacing:-0.03em;line-height:1;">${amtStr}</p>
+      <p style="margin:0;font-size:13px;color:${C.sec};">${gymName} &nbsp;&middot;&nbsp; ${data.planName}</p>
+    </td></tr>
+
+    <tr><td style="padding:24px 32px 0;">
+      <p style="margin:0 0 16px;font-size:13px;color:${C.sec};line-height:1.7;">
+        Hi ${first}, your membership at <span style="color:${C.pri};font-weight:500;">${gymName}</span> is confirmed. Show your QR code at the kiosk to check in.
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${C.border};border-radius:10px;overflow:hidden;margin-bottom:${qrCell ? '20px' : '0'};">
+        ${row('Plan',    data.planName,                            true)}
+        ${row('Valid',   `${fmtDate(data.startDate)} – ${fmtDate(data.expiresDate)}`, false)}
+        ${row('Payment', providerLabel[data.provider] ?? data.provider, true)}
+        ${data.providerRef ? row('Ref', data.providerRef, false) : ''}
+        ${row('Amount',  amtStr,                                  data.providerRef ? true : false)}
+        ${row('Receipt', data.receiptNo,                          data.providerRef ? false : true)}
+        ${row('Date',    fmtDate(data.paidAt),                    data.providerRef ? true : false)}
+      </table>
+      ${qrCell ? callout(`<table cellpadding="0" cellspacing="0"><tr><td style="padding-right:16px;">${qrCell}</td><td><p style="margin:0 0 4px;font-size:12px;font-weight:600;color:${C.sec};">Your check-in QR code</p><p style="margin:0;font-size:11px;color:${C.mut};">Scan at the kiosk entrance to check in.</p></td></tr></table>`) : ''}
+    </td></tr>
+
+    <tr><td style="padding:20px 32px 32px;">
+      <p style="margin:0;font-size:12px;color:${C.mut};line-height:1.6;">Questions? Contact your gym directly.</p>
+    </td></tr>
+  `, { badge: 'Receipt', footer: `&copy; ${YEAR} myfiti &nbsp;&middot;&nbsp; Sent on behalf of ${gymName}` })
+
   await send(
-    opts.to,
-    `Your ${opts.gymName} membership receipt #${opts.data.receiptNo}`,
+    to,
+    `Your ${gymName} receipt — ${data.receiptNo}`,
     html,
     undefined,
-    opts.senderName ?? `${opts.gymName} via myfiti`,
+    opts.senderName ?? `${gymName} via myfiti`,
   )
 }
 

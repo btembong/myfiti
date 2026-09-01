@@ -234,6 +234,7 @@ paymentsRouter.post('/', validate(createPaymentSchema), async (req, res) => {
       sendMemberCashReceiptEmail({
         to:        { email: member.email, name: member.name },
         gymName,
+        memberId:  member_id,
         data:      receiptData,
       }).then(() => { emailSent = true })
         .catch(err => console.warn('[payments POST] receipt email error:', err))
@@ -568,6 +569,7 @@ paymentsRouter.post('/:id/resend-receipt', async (req, res) => {
     await sendMemberCashReceiptEmail({
       to:       { email: member.email, name: member.name },
       gymName,
+      memberId: payment.member_id,
       data:     receiptData,
     })
 
