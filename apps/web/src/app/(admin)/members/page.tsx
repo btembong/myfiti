@@ -32,6 +32,7 @@ import {
   Upload04Icon,
   Link01Icon,
   Delete01Icon,
+  Wallet01Icon,
 } from 'hugeicons-react'
 import { api } from '@/lib/api'
 import { showError, showSuccess } from '@/lib/notifications'
@@ -60,6 +61,8 @@ interface Member {
   plan_price: number | null
   plan_currency: string | null
   pin: string | null
+  payment_status: 'pending_payment' | 'completed' | null
+  payment_method: string | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -169,6 +172,7 @@ const STATUS_TABS = [
   { value: 'all',      label: 'All' },
   { value: 'active',   label: 'Active' },
   { value: 'inactive', label: 'Inactive' },
+  { value: 'pending',  label: 'Pending payment' },
   { value: 'expiring', label: 'Expiring soon' },
 ]
 
@@ -203,6 +207,11 @@ export default function MembersPage() {
   // Bulk email modal
   const [bulkEmailOpen, setBulkEmailOpen] = useState(false)
   const [bulkEmailForm, setBulkEmailForm] = useState({ subject: '', body: '' })
+
+  // Quick payment confirmation modal
+  const [paymentTarget, setPaymentTarget] = useState<Member | null>(null)
+  const [paymentForm, setPaymentForm] = useState({ amount: '', provider: 'cash', notes: '' })
+  const [paymentSaving, setPaymentSaving] = useState(false)
 
   function getJoinLink() {
     const slug = typeof window !== 'undefined' ? localStorage.getItem('myfiti_tenant') : null
@@ -270,6 +279,31 @@ export default function MembersPage() {
     }
   }
 
+  async function confirmPayment() {
+    if (!paymentTarget) return
+    const amount = Number(paymentForm.amount)
+    if (!amount || amount <= 0) { showError('Enter a valid amount'); return }
+    setPaymentSaving(true)
+    try {
+      await api.post('/api/payments', {
+        member_id: paymentTarget.id,
+        amount,
+        currency: paymentTarget.plan_currency ?? 'XAF',
+        provider: paymentForm.provider,
+        notes: paymentForm.notes.trim() || null,
+        payment_type: 'subscription',
+      })
+      showSuccess(`Payment recorded for ${paymentTarget.name}`)
+      setPaymentTarget(null)
+      setPaymentForm({ amount: '', provider: 'cash', notes: '' })
+      fetchMembers()
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to record payment')
+    } finally {
+      setPaymentSaving(false)
+    }
+  }
+
   function bulkRemove() {
     const count = selectedIds.size
     modals.openConfirmModal({
@@ -318,13 +352,16 @@ export default function MembersPage() {
     try {
       const qs = new URLSearchParams()
       if (search) qs.set('search', search)
-      if (statusTab !== 'all' && statusTab !== 'expiring') qs.set('status', statusTab)
+      if (statusTab !== 'all' && statusTab !== 'expiring' && statusTab !== 'pending') qs.set('status', statusTab)
       const res = await fetch(`/api/members?${qs}`)
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Failed to load members.'); return }
       let list: Member[] = data.members ?? []
       if (statusTab === 'expiring') {
         list = list.filter(m => m.expires_at && daysUntil(m.expires_at) <= 7 && m.sub_status === 'active')
+      }
+      if (statusTab === 'pending') {
+        list = list.filter(m => m.payment_status === 'pending_payment')
       }
       setMembers(list)
     } catch {
@@ -342,6 +379,7 @@ export default function MembersPage() {
   const active   = members.filter(m => m.status === 'active')
   const expiring = members.filter(m => m.expires_at && daysUntil(m.expires_at) <= 7 && m.sub_status === 'active')
   const inactive = members.filter(m => m.status !== 'active')
+  const pending = members.filter(m => m.payment_status === 'pending_payment')
 
   const { sorted, sortKey, sortDir, toggleSort } = useSort(members, 'name', 'asc')
   const { paged, page, totalPages, total, perPage, goTo, changePerPage } = usePagination(sorted)
@@ -429,10 +467,11 @@ export default function MembersPage() {
         </motion.div>
 
         {/* ── Stat cards ── */}
-        <SimpleGrid cols={{ base: 2, xl: 4 }} spacing="md">
+        <SimpleGrid cols={{ base: 2, xl: 5 }} spacing="md">
           {[
             { label: 'Total members', value: members.length,  icon: UserGroupIcon },
             { label: 'Active',         value: active.length,   icon: CheckmarkCircle01Icon },
+            { label: 'Pending payment', value: pending.length, icon: Clock01Icon },
             { label: 'Expiring soon',  value: expiring.length, icon: Clock01Icon },
             { label: 'Inactive',       value: inactive.length, icon: UserBlock01Icon },
           ].map((s, i) => (
@@ -624,6 +663,14 @@ export default function MembersPage() {
                         >
                           <Text size="sm" c="dark">View profile</Text>
                         </Menu.Item>
+                        {m.payment_status === 'pending_payment' && (
+                          <Menu.Item
+                            leftSection={<Wallet01Icon size={13} />}
+                            onClick={() => { setPaymentTarget(m); setPaymentForm({ amount: m.plan_price?.toString() ?? '', provider: 'cash', notes: '' }) }}
+                          >
+                            <Text size="sm" c="blue">Record payment</Text>
+                          </Menu.Item>
+                        )}
                         <Menu.Item leftSection={<Mail01Icon size={13} />} onClick={() => { setEmailTarget(m); setEmailForm({ subject: '', body: '' }) }}>
                           <Text size="sm" c="dark">Send email</Text>
                         </Menu.Item>
@@ -830,6 +877,61 @@ export default function MembersPage() {
             <Button size="sm" color="indigo" loading={bulkEmailing} onClick={sendBulkEmail}
               disabled={!bulkEmailForm.subject.trim() || !bulkEmailForm.body.trim()}>
               Send to all
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* ── Quick Payment Confirmation Modal ── */}
+      <Modal
+        opened={!!paymentTarget}
+        onClose={() => { setPaymentTarget(null); setPaymentForm({ amount: '', provider: 'cash', notes: '' }) }}
+        title={<Text fw={700} size="sm">Record payment — {paymentTarget?.name}</Text>}
+        radius="lg" size="sm"
+      >
+        <Stack gap="md">
+          <Alert icon={<Wallet01Icon size={14} />} color="blue" variant="light" radius="md" title="Payment confirmation">
+            <Text size="xs">This will activate the member's subscription and extend it by the plan duration.</Text>
+          </Alert>
+          <TextInput
+            label={`Amount (${paymentTarget?.plan_currency ?? 'XAF'})`}
+            placeholder={`e.g. ${paymentTarget?.plan_price ?? 15000}`}
+            value={paymentForm.amount}
+            onChange={e => setPaymentForm(f => ({ ...f, amount: e.target.value }))}
+            size="sm"
+            type="number"
+            leftSection={<Wallet01Icon size={14} style={{ color: '#9ca3af' }} />}
+          />
+          <Select
+            label="Payment method"
+            value={paymentForm.provider}
+            onChange={v => setPaymentForm(f => ({ ...f, provider: v ?? 'cash' }))}
+            data={[
+              { value: 'cash', label: 'Cash' },
+              { value: 'momo', label: 'Mobile Money' },
+              { value: 'bank_transfer', label: 'Bank transfer' },
+              { value: 'tranzak', label: 'Tranzak' },
+            ]}
+            size="sm"
+          />
+          <TextInput
+            label="Reference / notes"
+            description="Optional — receipt number, transaction ID, etc."
+            placeholder="e.g. CASH-001"
+            value={paymentForm.notes}
+            onChange={e => setPaymentForm(f => ({ ...f, notes: e.target.value }))}
+            size="sm"
+          />
+          <Group justify="flex-end">
+            <Button variant="default" size="sm" onClick={() => { setPaymentTarget(null); setPaymentForm({ amount: '', provider: 'cash', notes: '' }) }}>
+              Cancel
+            </Button>
+            <Button
+              color="green" size="sm" loading={paymentSaving}
+              disabled={!paymentForm.amount || Number(paymentForm.amount) <= 0}
+              onClick={confirmPayment}
+            >
+              Confirm & activate
             </Button>
           </Group>
         </Stack>
