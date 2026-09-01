@@ -468,7 +468,7 @@ superadminRouter.get('/revenue', async (req, res) => {
       `SELECT TO_CHAR(DATE_TRUNC('month', period_start), 'Mon YYYY') AS month,
               COALESCE(SUM(amount_xaf), 0) AS revenue
        FROM platform_invoices
-       WHERE status = 'paid' AND period_start >= NOW() - INTERVAL $1
+       WHERE status = 'paid' AND period_start >= NOW() - $1::interval
        GROUP BY DATE_TRUNC('month', period_start)
        ORDER BY DATE_TRUNC('month', period_start) ASC`,
       [interval],
@@ -482,7 +482,7 @@ superadminRouter.get('/revenue', async (req, res) => {
       `SELECT pi.id, t.name AS tenant_name, pi.amount_xaf, pi.status, pi.paid_at, pi.plan
        FROM platform_invoices pi
        JOIN tenants t ON t.id = pi.tenant_id
-       WHERE pi.created_at >= NOW() - INTERVAL $1
+       WHERE pi.created_at >= NOW() - $1::interval
        ORDER BY pi.created_at DESC LIMIT 20`,
       [interval],
     )
