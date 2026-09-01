@@ -331,6 +331,13 @@ export default function MembersPage() {
     openPanel(m.name, <MemberDetailPanel member={m} />)
   }
 
+  async function resendWelcomeEmail(m: Member) {
+    try {
+      await api.post(`/api/members/${m.id}/resend-welcome`, {})
+      showSuccess(`Welcome email resent to ${m.email}`)
+    } catch (err) { showError(err instanceof Error ? err.message : 'Failed to resend welcome email') }
+  }
+
   function removeMember(m: Member) {
     modals.openConfirmModal({
       title: 'Remove member',
@@ -673,6 +680,9 @@ export default function MembersPage() {
                         )}
                         <Menu.Item leftSection={<Mail01Icon size={13} />} onClick={() => { setEmailTarget(m); setEmailForm({ subject: '', body: '' }) }}>
                           <Text size="sm" c="dark">Send email</Text>
+                        </Menu.Item>
+                        <Menu.Item leftSection={<Refresh01Icon size={13} />} onClick={() => resendWelcomeEmail(m)}>
+                          <Text size="sm" c="dark">Resend welcome email</Text>
                         </Menu.Item>
                         <Menu.Item leftSection={<PencilEdit01Icon size={13} />} onClick={() => { setEditTarget(m); setEditForm({ name: m.name, phone: m.phone ?? '', notes: m.notes ?? '' }) }}>
                           <Text size="sm" c="dark">Edit member</Text>
