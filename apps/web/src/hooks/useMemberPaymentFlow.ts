@@ -11,7 +11,7 @@ export interface MemberPaymentState {
   paymentMethod: PaymentMethod | null
 }
 
-export function useMemberPaymentFlow(tenantSlug?: string) {
+export function useMemberPaymentFlow() {
   const [state, setState] = useState<MemberPaymentState>({
     memberId: null,
     loading: false,
@@ -40,7 +40,7 @@ export function useMemberPaymentFlow(tenantSlug?: string) {
         requires_confirmation: boolean
         message: string
         plan_price: number
-      }>('/api/members/with-payment', memberData, { tenantSlug })
+      }>('/api/members/with-payment', memberData)
 
       setState(prev => ({
         ...prev,
@@ -64,8 +64,7 @@ export function useMemberPaymentFlow(tenantSlug?: string) {
     try {
       await api.post<{ ok: boolean }>(
         `/api/members/${memberId}/confirm-payment`,
-        {},
-        { tenantSlug }
+        {}
       )
       setState(prev => ({ ...prev, success: true, loading: false }))
     } catch (err) {
