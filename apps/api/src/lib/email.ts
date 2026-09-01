@@ -713,7 +713,7 @@ export async function sendMemberWelcomeEmail(
   if (memberId) {
     const apiUrl = process.env.API_URL ?? 'https://api.myfiti.fit'
     const qrUrl = `${apiUrl}/qr-codes/${memberId}?v=2`
-    qrImgTag = `<img src="${qrUrl}" width="160" height="160" alt="QR Code" style="display:block;border-radius:8px;"/>`
+    qrImgTag = `<img src="${qrUrl}" width="220" height="220" alt="QR Code" style="display:block;border-radius:8px;"/>`
   }
 
   const html = shell(`
@@ -934,7 +934,7 @@ export async function sendMemberCashReceiptEmail(opts: {
 
   const apiUrl = process.env.API_URL ?? 'https://api.myfiti.fit'
   const qrCell = memberId
-    ? `<img src="${apiUrl}/qr-codes/${memberId}.png" width="100" height="100" alt="QR" style="display:block;border-radius:6px;"/>`
+    ? `<img src="${apiUrl}/qr-codes/${memberId}?v=2" width="140" height="140" alt="QR" style="display:block;border-radius:6px;"/>`
     : ''
 
   const html = shell(`

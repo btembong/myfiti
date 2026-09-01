@@ -52,7 +52,7 @@ qrCodesRouter.get('/:memberId', async (req, res) => {
 
     // Generate styled QR matching mobile app (rounded dots, branded finder squares, logo)
     const qrBuffer = await generateStyledQRCode(memberQR.qr_code, {
-      size: 300,
+      size: 400,
       logoUrl:     gymLogoUrl,
       finderColor: gymFinderColor,
     })
