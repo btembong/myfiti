@@ -11,7 +11,7 @@ export const qrCodesRouter = Router()
  */
 qrCodesRouter.get('/:memberId', async (req, res) => {
   try {
-    const { memberId } = req.params
+    const memberId = req.params.memberId.replace(/\.png$/i, '')
 
     // Determine tenant from member lookup
     // Try all tenants until we find the member
@@ -65,7 +65,7 @@ qrCodesRouter.get('/:memberId', async (req, res) => {
  */
 qrCodesRouter.get('/:memberId/base64', async (req, res) => {
   try {
-    const { memberId } = req.params
+    const memberId = req.params.memberId.replace(/\.png$/i, '')
 
     // Determine tenant from member lookup
     const { rows: tenants } = await globalQuery<{ slug: string }>(

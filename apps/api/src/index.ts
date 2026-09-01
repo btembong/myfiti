@@ -11,6 +11,7 @@ import { tenantMiddleware } from './middleware/tenant.js'
 import { errorHandler } from './middleware/error.js'
 import { rateLimitApi } from './middleware/rate-limit.js'
 import { router } from './routes/index.js'
+import { qrCodesRouter } from './routes/qr-codes.js'
 import { globalQuery } from './db/client.js'
 // Start BullMQ workers (side-effect import — workers begin listening on load)
 import './jobs/index.js'
@@ -46,6 +47,9 @@ app.use('/api', rateLimitApi)
 
 // ─── Tenant resolution ───────────────────────────────────────────────────────
 app.use('/api', tenantMiddleware)
+
+// ─── Public QR code images (no auth, no tenant middleware) ───────────────────
+app.use('/qr-codes', qrCodesRouter)
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api', router)

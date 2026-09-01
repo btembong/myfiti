@@ -712,7 +712,7 @@ export async function sendMemberWelcomeEmail(
   let qrImgTag = `<span style="font-size:20px;font-weight:700;letter-spacing:0.14em;color:${C.pri};font-family:ui-monospace,Menlo,'Courier New',monospace;">${qrCode}</span>`
   if (memberId) {
     const apiUrl = process.env.API_URL ?? 'https://api.myfiti.fit'
-    const qrUrl = `${apiUrl}/qr-codes/${memberId}.png`
+    const qrUrl = `${apiUrl}/qr-codes/${memberId}`
     qrImgTag = `<img src="${qrUrl}" width="160" height="160" alt="QR Code" style="display:block;border-radius:8px;"/>`
   }
 
