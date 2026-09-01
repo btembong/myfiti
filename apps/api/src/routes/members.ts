@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid'
 import { tenantQuery } from '../db/client.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 import { validate } from '../middleware/validate.js'
-import { createMemberSchema, updateMemberSchema, importMembersSchema } from '../schemas.js'
+import { createMemberSchema, createMemberWithPaymentSchema, updateMemberSchema, importMembersSchema } from '../schemas.js'
 import { sendAnnouncementEmail, sendMemberWelcomeEmail } from '../lib/email.js'
 
 export const membersRouter = Router()
@@ -588,14 +588,9 @@ membersRouter.post('/import', validate(importMembersSchema), async (req, res) =>
 // Create member with payment processing (payment-first flow).
 // Returns payment details and requires /confirm-payment after payment succeeds.
 
-membersRouter.post('/with-payment', validate(createMemberSchema), async (req, res) => {
+membersRouter.post('/with-payment', validate(createMemberWithPaymentSchema), async (req, res) => {
   try {
-    const { name, email, phone, notes, referredByCode } = req.body
-    const { payment_method, plan_id, phone_for_payment } = req.body as {
-      payment_method?: string
-      plan_id?: string
-      phone_for_payment?: string
-    }
+    const { name, email, phone, notes, referredByCode, payment_method, plan_id, phone_for_payment } = req.body
 
     const id = uuid()
     const qrCode = `myfiti-${id.slice(0, 8).toUpperCase()}`

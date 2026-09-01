@@ -9,6 +9,17 @@ export const createMemberSchema = z.object({
   notes: z.string().max(2000).optional().nullable(),
 })
 
+export const createMemberWithPaymentSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(200),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().max(30).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+  payment_method: z.enum(['momo', 'cash', 'bank_transfer']).default('cash'),
+  plan_id: z.string().uuid().optional().nullable(),
+  phone_for_payment: z.string().max(30).optional().nullable(),
+  referredByCode: z.string().max(20).optional().nullable(),
+})
+
 export const updateMemberSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   phone: z.string().max(30).optional().nullable(),

@@ -63,7 +63,7 @@ export function AddMemberDrawer({ open, onClose, onAdded }: Props) {
 
   function goToPlan() {
     if (!form.name.trim()) { setError('Full name is required.'); return }
-    if (!form.email.includes('@')) { setError('Please enter a valid email address.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError('Please enter a valid email address.'); return }
     setError('')
     setStep('plan')
   }
