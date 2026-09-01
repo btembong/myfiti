@@ -657,7 +657,7 @@ export default function SubscriptionsPage() {
             label="Restrict access to time window"
             description="Members on this plan can only check in during the set hours."
             checked={newPlan.access_type === 'time_slot'}
-            onChange={e => setNewPlan(p => ({ ...p, access_type: e.currentTarget.checked ? 'time_slot' : 'open' }))}
+            onChange={e => { const v = e.currentTarget.checked; setNewPlan(p => ({ ...p, access_type: v ? 'time_slot' : 'open' })) }}
             size="sm"
           />
           {newPlan.access_type === 'time_slot' && (
@@ -721,7 +721,7 @@ export default function SubscriptionsPage() {
             label="Restrict access to time window"
             description="Members on this plan can only check in during the set hours."
             checked={editForm.access_type === 'time_slot'}
-            onChange={e => setEditForm(f => ({ ...f, access_type: e.currentTarget.checked ? 'time_slot' : 'open' }))}
+            onChange={e => { const v = e.currentTarget.checked; setEditForm(f => ({ ...f, access_type: v ? 'time_slot' : 'open' })) }}
             size="sm"
           />
           {editForm.access_type === 'time_slot' && (
