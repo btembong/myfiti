@@ -1,0 +1,2679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Partnership Agreement — myfiti × ROA Fitness</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green:        #16a34a;
+      --green-bright: #22c55e;
+      --green-dim:    #15803d;
+      --green-glow2:  rgba(34,197,94,0.07);
+      --dark-2:       #0d0d0d;
+      --dark-4:       #181818;
+      --dark-5:       #222222;
+      --border-dark:  #1f1f1f;
+      --border-dark2: #2a2a2a;
+      --text-primary: #f4f4f5;
+      --text-2:       #a1a1aa;
+      --text-3:       #71717a;
+      --text-4:       #3f3f46;
+      --page-bg:      #fafafa;
+      --page-card:    #ffffff;
+      --page-border:  #e4e4e7;
+      --page-border2: #f0f0f0;
+      --page-surface: #f4f4f5;
+      --page-ink:     #18181b;
+      --page-ink2:    #3f3f46;
+      --page-ink3:    #71717a;
+      --page-ink4:    #a1a1aa;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Exo 2', -apple-system, sans-serif;
+      background: #111;
+      color: var(--text-primary);
+    }
+
+    h1, h2, h3, h4 { font-family: 'Exo 2', sans-serif; }
+
+    /* ─── DARK PAGES ─── */
+    .dark-page {
+      max-width: 900px;
+      margin: 0 auto 2px;
+      background: var(--dark-2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ─── LIGHT PAGES ─── */
+    .light-page {
+      max-width: 900px;
+      margin: 0 auto 2px;
+      background: var(--page-bg);
+      color: var(--page-ink);
+      scroll-margin-top: 0;
+    }
+
+    .light-inner { padding: 52px 64px; display: flex; flex-direction: column; min-height: 920px; }
+
+    /* ═══════════════ COVER ═══════════════ */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cover-nav {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 28px 48px;
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    .nav-brand {
+      font-size: 15pt;
+      font-weight: 800;
+      color: var(--green-bright);
+      letter-spacing: -0.03em;
+    }
+
+    .nav-badge {
+      font-size: 7.5pt;
+      font-weight: 500;
+      color: var(--text-3);
+      background: var(--dark-4);
+      border: 1px solid var(--border-dark2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .cover-hero {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 48px;
+      text-align: center;
+    }
+
+    .cover-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--green-glow2);
+      border: 1px solid rgba(34,197,94,0.22);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 8pt;
+      font-weight: 600;
+      color: var(--green-bright);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .cover-pill-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green-bright);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.75); }
+    }
+
+    .cover-title {
+      font-size: 44pt;
+      font-weight: 900;
+      letter-spacing: -0.045em;
+      line-height: 1.0;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .cover-title span { color: var(--green-bright); }
+
+    .cover-client-name {
+      font-size: 12pt;
+      font-weight: 500;
+      color: var(--text-3);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .cover-client-name::before,
+    .cover-client-name::after {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 1px;
+      background: var(--border-dark2);
+    }
+
+    .cover-subtitle {
+      font-size: 10.5pt;
+      color: var(--text-3);
+      font-weight: 400;
+      margin-bottom: 52px;
+      max-width: 400px;
+      line-height: 1.7;
+    }
+
+    .cover-parties {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      gap: 0;
+      width: 100%;
+      max-width: 600px;
+      border: 1px solid var(--border-dark2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .cover-party {
+      background: var(--dark-4);
+      padding: 22px 26px;
+      text-align: left;
+    }
+
+    .cover-party-sep {
+      background: var(--border-dark2);
+    }
+
+    .cover-party-role {
+      font-size: 7pt;
+      font-weight: 700;
+      color: var(--green-bright);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 8px;
+    }
+
+    .cover-party-name {
+      font-size: 13.5pt;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .cover-party-detail {
+      font-size: 8.5pt;
+      color: var(--text-3);
+      line-height: 1.9;
+    }
+
+    .cover-footer {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 48px;
+      border-top: 1px solid var(--border-dark);
+    }
+
+    .cover-footer-meta {
+      font-size: 8.5pt;
+      color: var(--text-4);
+      line-height: 1.9;
+    }
+
+    .cover-footer-meta strong { color: var(--text-3); font-weight: 500; display: block; }
+
+    .cover-ref {
+      font-size: 8pt;
+      color: var(--text-4);
+      text-align: right;
+      line-height: 1.7;
+    }
+
+    /* ═══════════════ TABLE OF CONTENTS ═══════════════ */
+    .toc-page { padding: 52px 64px; }
+
+    .toc-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 40px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--border-dark2);
+    }
+
+    .toc-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: var(--green-glow2);
+      border: 1px solid rgba(34,197,94,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .toc-icon svg { width: 20px; height: 20px; color: var(--green-bright); }
+
+    .toc-title {
+      font-size: 20pt;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+    }
+
+    .toc-list { list-style: none; }
+
+    /* Each TOC item is now an anchor link */
+    .toc-list li { display: block; }
+
+    a.toc-row {
+      display: flex;
+      align-items: center;
+      padding: 13px 10px;
+      margin: 0 -10px;
+      border-bottom: 1px solid var(--border-dark);
+      text-decoration: none;
+      border-radius: 7px;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .toc-list li:last-child a.toc-row { border-bottom: none; }
+
+    a.toc-row:hover { background: rgba(34,197,94,0.06); }
+    a.toc-row:hover .toc-name { color: var(--green-bright); }
+    a.toc-row:hover .toc-num { color: var(--green-bright); }
+
+    .toc-num {
+      width: 44px;
+      font-size: 9pt;
+      font-weight: 700;
+      color: rgba(34,197,94,0.7);
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+
+    .toc-section-icon {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      background: var(--dark-5);
+      border: 1px solid var(--border-dark2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 14px;
+      flex-shrink: 0;
+    }
+
+    .toc-section-icon svg { width: 13px; height: 13px; color: var(--text-3); }
+
+    .toc-name {
+      flex: 1;
+      font-size: 11pt;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      transition: color 0.15s;
+    }
+
+    .toc-dots {
+      flex: 1;
+      height: 1px;
+      border-bottom: 1px dashed var(--border-dark2);
+      margin: 0 16px;
+    }
+
+    .toc-page-num {
+      font-size: 9pt;
+      color: var(--text-4);
+      font-weight: 500;
+      min-width: 24px;
+      text-align: right;
+    }
+
+    /* ═══════════════ SECTION HEADER ═══════════════ */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 32px;
+      padding-bottom: 22px;
+      border-bottom: 1.5px solid var(--page-border);
+    }
+
+    .section-icon-wrap {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .section-icon-wrap svg { width: 20px; height: 20px; color: var(--green); }
+
+    .section-meta { flex: 1; }
+
+    .section-num-tag {
+      display: inline-block;
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 2px;
+    }
+
+    .section-title {
+      font-size: 18pt;
+      font-weight: 700;
+      color: var(--page-ink);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+
+    h2.sub {
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--page-ink);
+      margin: 30px 0 12px;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    h2.sub::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 13px;
+      background: var(--green);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    p.body-text {
+      font-size: 10pt;
+      line-height: 1.75;
+      color: var(--page-ink2);
+      margin-bottom: 12px;
+      text-align: justify;
+    }
+
+    /* ─── Clause lists ─── */
+    ol.clauses {
+      list-style: none;
+      counter-reset: clause;
+      margin: 0 0 16px;
+    }
+
+    ol.clauses > li {
+      counter-increment: clause;
+      padding: 8px 0 8px 30px;
+      position: relative;
+      font-size: 10pt;
+      color: var(--page-ink2);
+      line-height: 1.65;
+      border-bottom: 1px solid var(--page-border2);
+    }
+
+    ol.clauses > li:last-child { border-bottom: none; }
+
+    ol.clauses > li::before {
+      content: counter(clause) ".";
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    ol.clauses.sub-list { counter-reset: subclause; margin: 8px 0 0; }
+
+    ol.clauses.sub-list > li {
+      counter-increment: subclause;
+      padding-left: 28px;
+      border-bottom: none;
+      font-size: 9.5pt;
+    }
+
+    ol.clauses.sub-list > li::before {
+      content: "(" counter(subclause, lower-alpha) ")";
+      font-weight: 500;
+      color: var(--page-ink3);
+    }
+
+    /* ═══════════════ PLAN CARDS ═══════════════ */
+    .plans-section { margin: 24px 0; }
+
+    .plans-label {
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 4px;
+    }
+
+    .plans-sub {
+      font-size: 9.5pt;
+      color: var(--page-ink3);
+      margin-bottom: 20px;
+    }
+
+    .plan-group-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .plan-group-label-text {
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    .plan-group-line { flex: 1; height: 1px; background: #bbf7d0; }
+
+    .plan-group-label.std .plan-group-label-text { color: var(--page-ink3); }
+    .plan-group-label.std .plan-group-line { background: var(--page-border); }
+
+    .plan-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .plan-cards-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .plan-card {
+      border: 1px solid var(--page-border);
+      border-radius: 12px;
+      padding: 20px 22px;
+      background: var(--page-card);
+      position: relative;
+    }
+
+    .plan-card.featured {
+      border-color: var(--green);
+      background: #f0fdf4;
+    }
+
+    .plan-card-badge {
+      position: absolute;
+      top: -10px; left: 18px;
+      background: var(--green);
+      color: #fff;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 11px;
+      border-radius: 10px;
+    }
+
+    .plan-card-name {
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--page-ink);
+      margin-bottom: 3px;
+    }
+
+    .plan-card-duration {
+      font-size: 8.5pt;
+      color: var(--page-ink3);
+      margin-bottom: 14px;
+    }
+
+    .plan-card-price {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .plan-card-currency { font-size: 12pt; font-weight: 600; color: var(--page-ink2); }
+
+    .plan-card-amount {
+      font-size: 24pt;
+      font-weight: 800;
+      color: var(--page-ink);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .plan-card-period { font-size: 9pt; color: var(--page-ink3); }
+
+    .plan-card-total {
+      font-size: 9pt;
+      color: var(--page-ink3);
+      margin-bottom: 14px;
+    }
+
+    .plan-card-saving {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #dcfce7;
+      border: 1px solid #bbf7d0;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 8pt;
+      font-weight: 600;
+      color: var(--green-dim);
+    }
+
+    .plan-notice {
+      background: #f0fdf4;
+      border: 1.5px solid var(--green);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 9.5pt;
+    }
+
+    .plan-notice-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .plan-notice-head svg { width: 14px; height: 14px; color: var(--green); }
+
+    .plan-notice-head strong {
+      font-size: 8pt;
+      font-weight: 700;
+      color: var(--green-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .plan-notice-body { color: var(--page-ink2); line-height: 1.85; }
+
+    /* ═══════════════ BENEFITS ═══════════════ */
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .benefit-card {
+      border: 1px solid var(--page-border);
+      border-radius: 12px;
+      background: var(--page-card);
+      overflow: hidden;
+    }
+
+    .benefit-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 18px;
+      background: var(--page-surface);
+      border-bottom: 1px solid var(--page-border);
+    }
+
+    .benefit-card-icon {
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .benefit-card-icon svg { width: 13px; height: 13px; color: var(--green); }
+
+    .benefit-card-title { font-size: 9pt; font-weight: 700; color: var(--page-ink); }
+
+    .benefit-body { padding: 12px 18px; }
+
+    .benefit-item {
+      display: flex;
+      gap: 9px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--page-border2);
+      align-items: flex-start;
+    }
+
+    .benefit-item:last-child { border-bottom: none; }
+
+    .benefit-check { width: 13px; height: 13px; margin-top: 2px; flex-shrink: 0; color: var(--green); }
+
+    .benefit-item-text { font-size: 9pt; color: var(--page-ink2); line-height: 1.5; }
+
+    /* ═══════════════ RESP BLOCKS ═══════════════ */
+    .resp-block {
+      border: 1px solid var(--page-border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .resp-block-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--page-surface);
+      border-bottom: 1px solid var(--page-border);
+    }
+
+    .resp-block-head svg { width: 13px; height: 13px; color: var(--green); flex-shrink: 0; }
+    .resp-block.client .resp-block-head svg { color: #3b82f6; }
+
+    .resp-block-head-label {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--page-ink2);
+      letter-spacing: 0.03em;
+    }
+
+    .resp-block ul { list-style: none; }
+
+    .resp-block ul li {
+      padding: 7px 16px 7px 32px;
+      position: relative;
+      font-size: 9.5pt;
+      color: var(--page-ink2);
+      line-height: 1.55;
+      border-bottom: 1px solid var(--page-border2);
+    }
+
+    .resp-block ul li:last-child { border-bottom: none; }
+
+    .resp-block ul li::before {
+      content: "–";
+      position: absolute;
+      left: 16px;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .resp-block.client ul li::before { color: #3b82f6; }
+
+    /* ═══════════════ DATA TABLE ═══════════════ */
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--page-border);
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 9.5pt;
+      margin: 16px 0;
+    }
+
+    table.data-table thead tr { background: var(--green); color: #fff; }
+
+    table.data-table thead th {
+      padding: 11px 16px;
+      text-align: left;
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    table.data-table tbody tr { border-bottom: 1px solid var(--page-border2); }
+    table.data-table tbody tr:last-child { border-bottom: none; }
+    table.data-table tbody tr:nth-child(even) { background: #f9fafb; }
+
+    table.data-table tbody td { padding: 10px 16px; color: var(--page-ink2); }
+
+    .cell-green { color: var(--green); font-weight: 600; }
+    .cell-bold { font-weight: 700; color: var(--page-ink); }
+
+    /* ═══════════════ SIGNATURES (no boxes — law firm style) ═══════════════ */
+    .sig-preamble {
+      font-size: 9.5pt;
+      color: var(--page-ink3);
+      line-height: 1.85;
+      text-align: justify;
+      margin-bottom: 48px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--page-border);
+    }
+
+    .sig-columns {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      gap: 0;
+      margin-bottom: 56px;
+    }
+
+    .sig-col { padding: 0 36px 0 0; }
+    .sig-col:last-child { padding: 0 0 0 36px; }
+
+    .sig-col-sep {
+      background: var(--page-border);
+    }
+
+    .sig-party-name {
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--page-ink);
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .sig-party-role {
+      font-size: 7.5pt;
+      font-weight: 600;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 24px;
+    }
+
+    .sig-field { margin-bottom: 22px; }
+
+    .sig-field label {
+      display: block;
+      font-size: 7.5pt;
+      font-weight: 600;
+      color: var(--page-ink4);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .sig-line {
+      width: 100%;
+      height: 26px;
+      border-bottom: 1px solid var(--page-border);
+    }
+
+    .sig-line.tall { height: 56px; }
+
+    .sig-stamp {
+      border: 1px dashed var(--page-border);
+      border-radius: 4px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7pt;
+      color: var(--page-ink4);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* Witness */
+    .witness-section {
+      padding-top: 32px;
+      border-top: 1px solid var(--page-border);
+    }
+
+    .witness-label {
+      font-size: 9pt;
+      font-weight: 700;
+      color: var(--page-ink3);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 24px;
+    }
+
+    .witness-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+    }
+
+    /* ═══════════════ SCHEDULE TABLE ═══════════════ */
+    table.schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--page-border);
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 9.5pt;
+      margin: 16px 0;
+    }
+
+    table.schedule-table tbody tr { border-bottom: 1px solid var(--page-border2); }
+    table.schedule-table tbody tr:last-child { border-bottom: none; }
+    table.schedule-table tbody tr:nth-child(odd) { background: var(--page-surface); }
+
+    table.schedule-table tbody td { padding: 10px 16px; color: var(--page-ink2); }
+
+    table.schedule-table tbody td:first-child {
+      font-weight: 600;
+      color: var(--page-ink);
+      width: 42%;
+    }
+
+    /* ═══════════════ PAGE FOOTER ═══════════════ */
+    .page-footer {
+      margin-top: auto;
+      padding-top: 20px;
+      border-top: 1px solid var(--page-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      color: var(--page-ink4);
+    }
+
+    .page-footer-brand { display: flex; align-items: center; gap: 6px; }
+
+    .page-footer-dot {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    /* ═══════════════ PRODUCT PAGE ═══════════════ */
+    .product-page-inner {
+      padding: 52px 64px;
+      display: flex;
+      flex-direction: column;
+      min-height: 920px;
+    }
+
+    .product-page-label {
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: var(--green-bright);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 10px;
+    }
+
+    .product-page-title {
+      font-size: 26pt;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .product-page-title span { color: var(--green-bright); }
+
+    .product-page-sub {
+      font-size: 11pt;
+      color: var(--text-3);
+      font-weight: 400;
+      line-height: 1.7;
+      max-width: 520px;
+      margin-bottom: 40px;
+    }
+
+    .product-feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .product-feature-card {
+      background: var(--dark-4);
+      border: 1px solid var(--border-dark2);
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+
+    .product-feature-icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: var(--green-glow2);
+      border: 1px solid rgba(34,197,94,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .product-feature-icon svg { width: 14px; height: 14px; color: var(--green-bright); }
+
+    .product-feature-name {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 5px;
+      letter-spacing: -0.01em;
+    }
+
+    .product-feature-desc {
+      font-size: 8.5pt;
+      color: var(--text-3);
+      line-height: 1.65;
+    }
+
+    .product-stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 32px;
+      padding: 20px 24px;
+      background: var(--dark-4);
+      border: 1px solid var(--border-dark2);
+      border-radius: 12px;
+    }
+
+    .product-stat { text-align: center; }
+
+    .product-stat-val {
+      font-size: 18pt;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .product-stat-val span { color: var(--green-bright); }
+
+    .product-stat-label {
+      font-size: 8pt;
+      color: var(--text-3);
+      font-weight: 500;
+    }
+
+    .product-platform-row {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr 1px 1fr;
+      gap: 0;
+      border: 1px solid var(--border-dark2);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .product-platform-item {
+      background: var(--dark-4);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .product-platform-sep { background: var(--border-dark2); }
+
+    .product-platform-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: rgba(34,197,94,0.07);
+      border: 1px solid rgba(34,197,94,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .product-platform-icon svg { width: 15px; height: 15px; color: var(--green-bright); }
+
+    .product-platform-name {
+      font-size: 10pt;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+      letter-spacing: -0.01em;
+    }
+
+    .product-platform-desc {
+      font-size: 8pt;
+      color: var(--text-3);
+      line-height: 1.5;
+    }
+
+    /* ═══════════════ COVER IMAGE PANEL ═══════════════ */
+    .cover-image-panel {
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 44%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+    .cover-image-panel img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 18%;
+      opacity: 0.52;
+    }
+    .cover-image-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, var(--dark-2) 0%, rgba(10,10,10,0.72) 38%, transparent 80%);
+      z-index: 2;
+    }
+
+    /* ═══════════════ PHOTO STRIPS (product page) ═══════════════ */
+    .photo-strip {
+      position: relative;
+      height: 144px;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px 0;
+      flex-shrink: 0;
+    }
+    .photo-strip img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 30%;
+    }
+    .photo-strip::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.5) 55%, transparent 85%);
+    }
+    .photo-strip-text {
+      position: absolute;
+      left: 26px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+    }
+    .photo-strip-quote {
+      font-size: 14pt;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 5px;
+    }
+    .photo-strip-sub {
+      font-size: 8.5pt;
+      color: rgba(255,255,255,0.5);
+      font-weight: 500;
+    }
+
+    .photo-strip.no-overlay::after { display: none; }
+
+
+    /* ═══════════════ TOC ON LIGHT PAGE OVERRIDES ═══════════════ */
+    .light-page .toc-header { border-bottom-color: var(--page-border); }
+    .light-page .toc-title { color: var(--page-ink); }
+    .light-page .toc-icon { background: #f0fdf4; border-color: #bbf7d0; }
+    .light-page a.toc-row { border-bottom-color: var(--page-border); }
+    .light-page .toc-section-icon { background: var(--page-surface); border-color: var(--page-border); }
+    .light-page .toc-section-icon svg { color: var(--page-ink3); }
+    .light-page .toc-name { color: var(--page-ink); }
+    .light-page .toc-dots { border-bottom-color: var(--page-border2); }
+    .light-page .toc-page-num { color: var(--page-ink4); }
+    .light-page a.toc-row:hover { background: rgba(34,197,94,0.05); }
+
+    /* ═══════════════ PDF BUTTON ═══════════════ */
+    .pdf-btn-wrap {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 200;
+    }
+
+    .pdf-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: #18181b;
+      color: #f4f4f5;
+      border: 1px solid #3f3f46;
+      border-radius: 10px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 11pt;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+      transition: all 0.15s;
+      letter-spacing: -0.01em;
+    }
+
+    .pdf-btn:hover { background: #27272a; border-color: #71717a; }
+    .pdf-btn svg { flex-shrink: 0; }
+
+    /* ═══════════════ PRINT ═══════════════ */
+    @page { size: A4 portrait; margin: 14mm 18mm; }
+
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+      html, body { margin: 0; background: #fff !important; }
+
+      .pdf-btn-wrap { display: none !important; }
+
+      /* Each section starts on its own PDF page */
+      .dark-page, .light-page {
+        max-width: none !important;
+        width: 100% !important;
+        margin: 0 !important;
+        break-after: page;
+      }
+      .light-page:last-child, .dark-page:last-of-type { break-after: avoid; }
+
+      /* Cover fills A4 height */
+      .cover { min-height: 245mm !important; }
+
+      /* Section content — natural height, no forced min */
+      .light-inner { min-height: 0 !important; display: block !important; }
+      .toc-page    { min-height: 0 !important; }
+      .product-page-inner { min-height: 0 !important; display: block !important; }
+
+      /* Footer follows content, not flex-pinned */
+      .page-footer { margin-top: 24pt !important; }
+
+      /* Prevent awkward mid-element breaks */
+      .plan-card, .benefit-card, .resp-block,
+      .sig-columns, .sig-field, .witness-section,
+      table.data-table, table.schedule-table,
+      ol.clauses > li { break-inside: avoid; }
+
+      /* Keep plan card groups together */
+      .plan-cards, .plan-group-label { break-inside: avoid; }
+
+      a.toc-row { text-decoration: none !important; }
+      a.toc-row:hover { background: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SVG sprites -->
+<svg style="display:none">
+  <symbol id="ic-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></symbol>
+  <symbol id="ic-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></symbol>
+  <symbol id="ic-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+  <symbol id="ic-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+  <symbol id="ic-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="ic-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="ic-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="21"/><path d="M3 6l9-3 9 3"/><path d="M3 12h6l-3 6-3-6z"/><path d="M15 12h6l-3 6-3-6z"/></symbol>
+  <symbol id="ic-pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+  <symbol id="ic-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="ic-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
+  <symbol id="ic-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></symbol>
+  <symbol id="ic-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></symbol>
+  <symbol id="ic-handshake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 00-7.65 0l-.77.78-.77-.78a5.4 5.4 0 00-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></symbol>
+  <symbol id="ic-toc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></symbol>
+</svg>
+
+<!-- ═══════════ MYFITI BRAND COVER ═══════════ -->
+<div class="dark-page">
+  <div class="cover">
+
+    <div class="cover-image-panel">
+      <img src="apps/web/public/pushup.png" alt="" />
+    </div>
+
+    <div class="cover-nav">
+      <div>
+        <span class="nav-brand">myfiti</span>
+        <span style="font-size:7.5pt;font-weight:500;color:var(--text-3);margin-left:10px;letter-spacing:0.04em;">Run smarter. Grow faster.</span>
+      </div>
+      <span class="nav-badge">Confidential · 2026</span>
+    </div>
+
+    <div class="cover-hero" style="position:relative;z-index:2;align-items:flex-start;text-align:left;padding-left:72px;padding-right:48px;">
+
+      <div style="font-size:7.5pt;font-weight:700;color:var(--green-bright);text-transform:uppercase;letter-spacing:0.16em;margin-bottom:22px;">
+        Gym Management Platform
+      </div>
+
+      <div style="font-size:68pt;font-weight:900;color:var(--text-primary);letter-spacing:-0.05em;line-height:0.9;margin-bottom:20px;">
+        my<span style="color:var(--green-bright);">fiti</span>
+      </div>
+
+      <div style="height:2px;width:52px;background:var(--green);border-radius:2px;margin-bottom:26px;"></div>
+
+      <div style="font-size:17pt;font-weight:700;color:var(--text-primary);letter-spacing:-0.025em;line-height:1.3;margin-bottom:16px;">
+        Run smarter.<br />Grow faster.
+      </div>
+
+      <p style="font-size:10.5pt;color:var(--text-3);font-weight:400;line-height:1.8;max-width:400px;margin-bottom:44px;">
+        The complete gym management platform built for African fitness businesses —
+        member management, check-ins, billing, and analytics in one place.
+      </p>
+
+      <div style="display:flex;gap:20px;align-items:center;">
+        <div style="display:flex;align-items:center;gap:7px;font-size:8.5pt;color:var(--text-3);">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green-bright)"><polyline points="20 6 9 17 4 12"/></svg>
+          Member Management
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:8.5pt;color:var(--text-3);">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green-bright)"><polyline points="20 6 9 17 4 12"/></svg>
+          QR Check-ins
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:8.5pt;color:var(--text-3);">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green-bright)"><polyline points="20 6 9 17 4 12"/></svg>
+          Billing &amp; Analytics
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:8.5pt;color:var(--text-3);">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green-bright)"><polyline points="20 6 9 17 4 12"/></svg>
+          Kiosk Mode
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cover-footer" style="position:relative;z-index:2;">
+      <div class="cover-footer-meta">
+        <strong>app.myfiti.fit</strong>
+        billing@myfiti.fit<br />
+        Mayor Street, Molyko, Buea, Cameroon
+      </div>
+      <div class="cover-ref">
+        Confidential document · 2026<br />
+        Prepared exclusively for ROA Fitness<br />
+        by myfiti — Doh Eugene Ndah, Co-founder &amp; COO
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ COVER PAGE ═══════════ -->
+<div class="dark-page">
+  <div class="cover">
+
+    <!-- Pushup image panel — right side, kiosk banner style -->
+    <div class="cover-image-panel">
+      <img src="apps/web/public/pushup.png" alt="" />
+    </div>
+
+    <div class="cover-nav">
+      <div>
+        <span class="nav-brand">myfiti</span>
+        <span style="font-size:7.5pt;font-weight:500;color:var(--text-3);margin-left:10px;letter-spacing:0.04em;">Run smarter. Grow faster.</span>
+      </div>
+      <span class="nav-badge">Confidential · Legal Document</span>
+    </div>
+
+    <div class="cover-hero" style="position:relative;z-index:2;">
+      <div class="cover-pill">
+        <span class="cover-pill-dot"></span>
+        Software Services &amp; Subscription Contract
+      </div>
+
+      <div class="cover-title">
+        Partnership<br /><span>Agreement</span>
+      </div>
+
+      <div class="cover-client-name">ROA Fitness</div>
+
+      <div class="cover-subtitle">
+        This agreement governs platform access, subscription terms, and mutual
+        obligations between myfiti and the above-named client partner.
+      </div>
+
+      <div class="cover-parties">
+        <div class="cover-party">
+          <div class="cover-party-role">Service Provider</div>
+          <div class="cover-party-name">myfiti</div>
+          <div class="cover-party-detail">
+            Mayor Street, Molyko, Buea<br />
+            app.myfiti.fit<br />
+            billing@myfiti.fit
+          </div>
+        </div>
+        <div class="cover-party-sep"></div>
+        <div class="cover-party">
+          <div class="cover-party-role">Client Partner</div>
+          <div class="cover-party-name">ROA Fitness</div>
+          <div class="cover-party-detail">
+            Malingo, Molyko, Buea<br />
+            Cameroon<br />
+            [Email]
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cover-footer">
+      <div class="cover-footer-meta">
+        <strong>Effective Date</strong>
+        _____ / _____ / 2026<br />
+        <strong>Reference No.</strong>
+        MYF-ROA-2026-001
+      </div>
+      <div class="cover-ref">
+        This agreement is entered into between the two<br />
+        parties named above and governed by the terms<br />
+        set forth in the following pages.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PRODUCT PAGE ═══════════ -->
+<div class="dark-page">
+  <div class="product-page-inner">
+
+    <div class="product-page-label">Platform Overview</div>
+    <div class="product-page-title">Everything your gym needs,<br /><span>in one platform.</span></div>
+    <p class="product-page-sub">
+      myfiti is a complete gym management platform built for African fitness businesses —
+      from member check-ins and billing to analytics and staff management, all in one place.
+    </p>
+
+    <!-- Feature cards -->
+    <div class="product-feature-grid">
+      <div class="product-feature-card">
+        <div class="product-feature-icon"><svg><use href="#ic-users"/></svg></div>
+        <div class="product-feature-name">Member Management</div>
+        <div class="product-feature-desc">Full member profiles, subscription tracking, QR card generation, and bulk CSV import.</div>
+      </div>
+      <div class="product-feature-card">
+        <div class="product-feature-icon"><svg><use href="#ic-check"/></svg></div>
+        <div class="product-feature-name">Check-in System</div>
+        <div class="product-feature-desc">QR code scanning at reception, kiosk self-check-in mode for tablets, and real-time attendance logs.</div>
+      </div>
+      <div class="product-feature-card">
+        <div class="product-feature-icon"><svg><use href="#ic-tag"/></svg></div>
+        <div class="product-feature-name">Subscription &amp; Billing</div>
+        <div class="product-feature-desc">Flexible membership plans, automated invoicing, Mobile Money (Tranzak), cash, and bank transfer support.</div>
+      </div>
+      <div class="product-feature-card">
+        <div class="product-feature-icon"><svg><use href="#ic-zap"/></svg></div>
+        <div class="product-feature-name">Revenue Analytics</div>
+        <div class="product-feature-desc">Real-time financial dashboards — MRR, churn rate, member growth, and payment tracking.</div>
+      </div>
+      <div class="product-feature-card">
+        <div class="product-feature-icon"><svg><use href="#ic-shield"/></svg></div>
+        <div class="product-feature-name">Staff &amp; Roles</div>
+        <div class="product-feature-desc">Multi-account access with role-based permissions. Separate staff and admin views with PIN login.</div>
+      </div>
+      <div class="product-feature-card">
+        <div class="product-feature-icon"><svg><use href="#ic-handshake"/></svg></div>
+        <div class="product-feature-name">Member Self-Service</div>
+        <div class="product-feature-desc">Public join page, member portal, welcome emails with QR card, and renewal notifications.</div>
+      </div>
+    </div>
+
+    <!-- Photo strip 1 — gym-fitness -->
+    <div class="photo-strip">
+      <img src="apps/web/public/gym-fitness.png" alt="" />
+      <div class="photo-strip-text">
+        <div class="photo-strip-quote">Run your gym smarter.<br />Grow your members faster.</div>
+        <div class="photo-strip-sub">myfiti — The fitness management platform built for Africa.</div>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="product-stat-row">
+      <div class="product-stat">
+        <div class="product-stat-val"><span>3</span></div>
+        <div class="product-stat-label">Platforms — Web, Mobile &amp; Kiosk</div>
+      </div>
+      <div class="product-stat">
+        <div class="product-stat-val">99<span>%</span></div>
+        <div class="product-stat-label">Guaranteed uptime SLA</div>
+      </div>
+      <div class="product-stat">
+        <div class="product-stat-val"><span>∞</span></div>
+        <div class="product-stat-label">Members — no per-seat limits</div>
+      </div>
+      <div class="product-stat">
+        <div class="product-stat-val">24<span>h</span></div>
+        <div class="product-stat-label">Partner support response time</div>
+      </div>
+    </div>
+
+    <!-- Photo strip 2 — gym-models -->
+    <div class="photo-strip no-overlay" style="margin-bottom:16px;height:190px;background-image:url('apps/web/public/pushup.png');background-size:55% auto;background-position:left center;background-repeat:no-repeat;background-color:#0d0d0d;">
+      <span style="display:none;"></span>
+      <div class="photo-strip-text" style="left:auto;right:26px;text-align:right;">
+        <div class="photo-strip-quote" style="font-size:17pt;">Your members deserve<br />the best experience.</div>
+        <div class="photo-strip-sub" style="font-size:10pt;color:rgba(255,255,255,0.65);">Digital check-ins · QR cards · Automated billing</div>
+      </div>
+    </div>
+
+    <!-- Platform strip -->
+    <div class="product-platform-row">
+      <div class="product-platform-item">
+        <div class="product-platform-icon"><svg><use href="#ic-book"/></svg></div>
+        <div>
+          <div class="product-platform-name">Admin Dashboard</div>
+          <div class="product-platform-desc">Full gym management from any browser at app.myfiti.fit</div>
+        </div>
+      </div>
+      <div class="product-platform-sep"></div>
+      <div class="product-platform-item">
+        <div class="product-platform-icon"><svg><use href="#ic-users"/></svg></div>
+        <div>
+          <div class="product-platform-name">Mobile App</div>
+          <div class="product-platform-desc">Member check-in and account management on iOS &amp; Android</div>
+        </div>
+      </div>
+      <div class="product-platform-sep"></div>
+      <div class="product-platform-item">
+        <div class="product-platform-icon"><svg><use href="#ic-check"/></svg></div>
+        <div>
+          <div class="product-platform-name">Kiosk Mode</div>
+          <div class="product-platform-desc">Tablet-based self-check-in interface for your gym reception</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer" style="border-top-color:var(--border-dark2);color:var(--text-4);">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green-bright)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span style="color:var(--text-4)">Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span style="color:var(--text-4)">MYF-ROA-2026-001</span>
+      </div>
+      <span>Platform Overview · Page 3 of 14</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ ONBOARDING TIMELINE ═══════════ -->
+<div class="dark-page">
+  <div class="product-page-inner">
+
+    <div class="product-page-label">What Happens Next</div>
+    <div class="product-page-title">From signature to<br /><span>go-live in 2 weeks.</span></div>
+    <p class="product-page-sub">
+      After signing, myfiti handles all setup. Here's exactly what to expect — no guesswork,
+      no delays. Your team will be operational within days.
+    </p>
+
+    <!-- Timeline -->
+    <div style="display:flex;flex-direction:column;gap:0;margin:28px 0 32px;position:relative;">
+
+      <!-- Vertical line -->
+      <div style="position:absolute;left:22px;top:22px;bottom:22px;width:2px;background:linear-gradient(to bottom,var(--green),var(--border-dark2));border-radius:2px;"></div>
+
+      <!-- Step 1 -->
+      <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:22px;position:relative;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;">
+          <span style="font-size:12pt;font-weight:800;color:#fff;">1</span>
+        </div>
+        <div style="padding-top:10px;flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+            <div style="font-size:11pt;font-weight:700;color:var(--text-primary);">Agreement Signed</div>
+            <span style="font-size:8pt;font-weight:600;color:var(--green-bright);background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:2px 10px;border-radius:10px;">Day 1</span>
+          </div>
+          <p style="font-size:9.5pt;color:var(--text-3);line-height:1.7;max-width:560px;">Both parties sign the agreement. myfiti provisions your gym account immediately — login credentials delivered to your email within 2 hours.</p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:22px;position:relative;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--dark-5);border:2px solid var(--green-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;">
+          <span style="font-size:12pt;font-weight:800;color:var(--green-bright);">2</span>
+        </div>
+        <div style="padding-top:10px;flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+            <div style="font-size:11pt;font-weight:700;color:var(--text-primary);">Onboarding Call</div>
+            <span style="font-size:8pt;font-weight:600;color:var(--text-3);background:var(--dark-5);border:1px solid var(--border-dark2);padding:2px 10px;border-radius:10px;">Day 2 – 3</span>
+          </div>
+          <p style="font-size:9.5pt;color:var(--text-3);line-height:1.7;max-width:560px;">A myfiti team member schedules a 45-minute onboarding screen-share. We walk your admin team through the dashboard, settings, plan configuration, and key workflows.</p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:22px;position:relative;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--dark-5);border:2px solid var(--border-dark2);display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;">
+          <span style="font-size:12pt;font-weight:800;color:var(--text-2);">3</span>
+        </div>
+        <div style="padding-top:10px;flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+            <div style="font-size:11pt;font-weight:700;color:var(--text-primary);">Member Data Imported</div>
+            <span style="font-size:8pt;font-weight:600;color:var(--text-3);background:var(--dark-5);border:1px solid var(--border-dark2);padding:2px 10px;border-radius:10px;">Week 1</span>
+          </div>
+          <p style="font-size:9.5pt;color:var(--text-3);line-height:1.7;max-width:560px;">Existing members are imported via CSV bulk upload. Each member receives a welcome email containing their digital QR membership card. Plans and renewal dates are configured.</p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:22px;position:relative;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--dark-5);border:2px solid var(--border-dark2);display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;">
+          <span style="font-size:12pt;font-weight:800;color:var(--text-2);">4</span>
+        </div>
+        <div style="padding-top:10px;flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+            <div style="font-size:11pt;font-weight:700;color:var(--text-primary);">Staff Accounts &amp; Kiosk Setup</div>
+            <span style="font-size:8pt;font-weight:600;color:var(--text-3);background:var(--dark-5);border:1px solid var(--border-dark2);padding:2px 10px;border-radius:10px;">Week 1 – 2</span>
+          </div>
+          <p style="font-size:9.5pt;color:var(--text-3);line-height:1.7;max-width:560px;">Staff login accounts are created with appropriate role-based permissions. Kiosk tablet mode is configured at your reception desk for self-check-in. First test check-in performed.</p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div style="display:flex;gap:20px;align-items:flex-start;position:relative;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--dark-5);border:2px solid var(--border-dark2);display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;">
+          <span style="font-size:12pt;font-weight:800;color:var(--text-2);">5</span>
+        </div>
+        <div style="padding-top:10px;flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+            <div style="font-size:11pt;font-weight:700;color:var(--text-primary);">Go Live</div>
+            <span style="font-size:8pt;font-weight:600;color:var(--green-bright);background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:2px 10px;border-radius:10px;">Week 2</span>
+          </div>
+          <p style="font-size:9.5pt;color:var(--text-3);line-height:1.7;max-width:560px;">ROA Fitness is fully live on myfiti. Public join page shared with new members. Automated billing active. myfiti support available via WhatsApp and email for any questions.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Support strip -->
+    <div style="background:var(--dark-4);border:1px solid var(--border-dark2);border-radius:12px;padding:20px 28px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:10pt;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Dedicated Partner Support</div>
+        <p style="font-size:9pt;color:var(--text-3);line-height:1.6;">Available via WhatsApp, email, and video call throughout onboarding and beyond.</p>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:9pt;color:var(--text-3);margin-bottom:3px;">billing@myfiti.fit</div>
+        <div style="font-size:9pt;color:var(--green-bright);font-weight:600;">24h response guarantee</div>
+      </div>
+    </div>
+
+    <div class="page-footer" style="border-top-color:var(--border-dark2);color:var(--text-4);">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green-bright)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span style="color:var(--text-4)">Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span style="color:var(--text-4)">MYF-ROA-2026-001</span>
+      </div>
+      <span>Onboarding · Page 4 of 14</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ TABLE OF CONTENTS ═══════════ -->
+<div class="light-page">
+  <div class="toc-page">
+    <div class="toc-header">
+      <div class="toc-icon"><svg><use href="#ic-toc"/></svg></div>
+      <div class="toc-title">Table of Contents</div>
+    </div>
+
+    <ul class="toc-list">
+      <li>
+        <a class="toc-row" href="#sec-1">
+          <span class="toc-num">§1</span>
+          <div class="toc-section-icon"><svg><use href="#ic-book"/></svg></div>
+          <span class="toc-name">Recitals &amp; Definitions</span>
+          <div class="toc-dots"></div>
+          <span class="toc-page-num">6</span>
+        </a>
+      </li>
+      <li>
+        <a class="toc-row" href="#sec-2">
+          <span class="toc-num">§2</span>
+          <div class="toc-section-icon"><svg><use href="#ic-tag"/></svg></div>
+          <span class="toc-name">Subscription Plans &amp; Pricing</span>
+          <div class="toc-dots"></div>
+          <span class="toc-page-num">7</span>
+        </a>
+      </li>
+      <li>
+        <a class="toc-row" href="#sec-3">
+          <span class="toc-num">§3</span>
+          <div class="toc-section-icon"><svg><use href="#ic-star"/></svg></div>
+          <span class="toc-name">Benefits &amp; Entitlements</span>
+          <div class="toc-dots"></div>
+          <span class="toc-page-num">8</span>
+        </a>
+      </li>
+      <li>
+        <a class="toc-row" href="#sec-4">
+          <span class="toc-num">§4</span>
+          <div class="toc-section-icon"><svg><use href="#ic-list"/></svg></div>
+          <span class="toc-name">Obligations &amp; Responsibilities</span>
+          <div class="toc-dots"></div>
+          <span class="toc-page-num">9</span>
+        </a>
+      </li>
+      <li>
+        <a class="toc-row" href="#sec-5">
+          <span class="toc-num">§5</span>
+          <div class="toc-section-icon"><svg><use href="#ic-zap"/></svg></div>
+          <span class="toc-name">Service Level Agreement (SLA)</span>
+          <div class="toc-dots"></div>
+          <span class="toc-page-num">10</span>
+        </a>
+      </li>
+      <li>
+        <a class="toc-row" href="#sec-6">
+          <span class="toc-num">§6</span>
+          <div class="toc-section-icon"><svg><use href="#ic-scale"/></svg></div>
+          <span class="toc-name">Legal Clauses &amp; General Provisions</span>
+          <div class="toc-dots"></div>
+          <span class="toc-page-num">11</span>
+        </a>
+      </li>
+      <li>
+        <a class="toc-row" href="#sec-7">
+          <span class="toc-num">§7</span>
+          <div class="toc-section-icon"><svg><use href="#ic-pen"/></svg></div>
+          <span class="toc-name">Execution &amp; Signatures</span>
+          <div class="toc-dots"></div>
+          <span class="toc-page-num">12</span>
+        </a>
+      </li>
+      <li>
+        <a class="toc-row" href="#sec-a">
+          <span class="toc-num">Sch. A</span>
+          <div class="toc-section-icon"><svg><use href="#ic-calendar"/></svg></div>
+          <span class="toc-name">Schedule A — Plan Election &amp; Payment Schedule</span>
+          <div class="toc-dots"></div>
+          <span class="toc-page-num">13</span>
+        </a>
+      </li>
+      <li>
+        <a class="toc-row" href="#sec-b">
+          <span class="toc-num">Sch. B</span>
+          <div class="toc-section-icon"><svg><use href="#ic-list"/></svg></div>
+          <span class="toc-name">Schedule B — Platform Features &amp; Getting Started</span>
+          <div class="toc-dots"></div>
+          <span class="toc-page-num">14</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 1 ═══════════ -->
+<div id="sec-1" class="light-page">
+  <div class="light-inner">
+    <div class="section-header">
+      <div class="section-icon-wrap"><svg><use href="#ic-book"/></svg></div>
+      <div class="section-meta">
+        <span class="section-num-tag">Section 1</span>
+        <div class="section-title">Recitals &amp; Definitions</div>
+      </div>
+    </div>
+
+    <h2 class="sub">Background</h2>
+    <p class="body-text">
+      <strong>myfiti</strong> (hereinafter "the Platform" or "Service Provider") is a gym and fitness centre
+      management software platform offering digital tools for member management, check-in systems,
+      subscription billing, analytics, and communication services.
+    </p>
+    <p class="body-text">
+      <strong>ROA Fitness</strong> (hereinafter "the Client" or "Partner") is a fitness centre seeking to
+      adopt a professional digital management solution to improve operational efficiency, member experience,
+      and revenue tracking.
+    </p>
+    <p class="body-text">
+      Both parties have agreed to enter into this agreement to formalise the terms under which myfiti
+      will provide its platform services to ROA Fitness for the duration specified herein.
+    </p>
+
+    <h2 class="sub">Definitions</h2>
+    <ol class="clauses">
+      <li><strong>"Agreement"</strong> means this Partnership Agreement including all schedules and annexures.</li>
+      <li><strong>"Subscription Term"</strong> means the duration of the chosen plan as elected by the Client.</li>
+      <li><strong>"Monthly Fee"</strong> means the recurring payment due by the Client to myfiti each calendar month.</li>
+      <li><strong>"Partner Plan"</strong> means a discounted long-term plan offered exclusively to early-adopter and strategic partner clients.</li>
+      <li><strong>"Regular Plan"</strong> means the standard subscription plan available to all clients on the platform.</li>
+      <li><strong>"Platform"</strong> means the myfiti web application, mobile application, API, and all associated services hosted at app.myfiti.fit.</li>
+      <li><strong>"Data"</strong> means all information, records, and content inputted, uploaded, or generated through use of the Platform by the Client or its members.</li>
+      <li><strong>"Commencement Date"</strong> means the date on which the Client's subscription is activated on the Platform.</li>
+    </ol>
+
+    <div class="page-footer">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span>Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span>MYF-ROA-2026-001</span>
+      </div>
+      <span>Page 6 of 14</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 2 ═══════════ -->
+<div id="sec-2" class="light-page">
+  <div class="light-inner">
+    <div class="section-header">
+      <div class="section-icon-wrap"><svg><use href="#ic-tag"/></svg></div>
+      <div class="section-meta">
+        <span class="section-num-tag">Section 2</span>
+        <div class="section-title">Subscription Plans &amp; Pricing</div>
+      </div>
+    </div>
+
+    <p class="body-text">
+      The following plans are available to ROA Fitness. The Client shall elect one plan at the time of
+      signing. The selected plan, pricing, and term are binding for the full Subscription Term unless
+      otherwise agreed in writing by both parties.
+    </p>
+
+    <div class="plans-section">
+      <div class="plans-label">Available Plans</div>
+      <p class="plans-sub">Early adopter &amp; strategic discount rates — available to ROA Fitness as a founding partner.</p>
+
+      <div class="plan-group-label">
+        <span class="plan-group-label-text">Partner Rates</span>
+        <div class="plan-group-line"></div>
+      </div>
+
+      <div class="plan-cards">
+        <div class="plan-card featured">
+          <div class="plan-card-badge">Best Value</div>
+          <div class="plan-card-name">Partner — 2 Year</div>
+          <div class="plan-card-duration">24-month commitment</div>
+          <div class="plan-card-price">
+            <span class="plan-card-currency">₣</span>
+            <span class="plan-card-amount">15,000</span>
+            <span class="plan-card-period">&nbsp;/ month</span>
+          </div>
+          <div class="plan-card-total">Total contract value: ₣360,000</div>
+          <div class="plan-card-saving">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Save ₣480,000 · 57% off
+          </div>
+        </div>
+        <div class="plan-card">
+          <div class="plan-card-name">Partner — 1 Year</div>
+          <div class="plan-card-duration">12-month commitment</div>
+          <div class="plan-card-price">
+            <span class="plan-card-currency">₣</span>
+            <span class="plan-card-amount">20,000</span>
+            <span class="plan-card-period">&nbsp;/ month</span>
+          </div>
+          <div class="plan-card-total">Total contract value: ₣240,000</div>
+          <div class="plan-card-saving">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Save ₣180,000 · 43% off
+          </div>
+        </div>
+      </div>
+
+      <div class="plan-group-label std" style="margin-top:22px;">
+        <span class="plan-group-label-text">Standard Rates</span>
+        <div class="plan-group-line"></div>
+      </div>
+
+      <div class="plan-cards plan-cards-3">
+        <div class="plan-card">
+          <div class="plan-card-name">Regular — 2 Year</div>
+          <div class="plan-card-duration">24-month commitment</div>
+          <div class="plan-card-price">
+            <span class="plan-card-currency">₣</span>
+            <span class="plan-card-amount">25,000</span>
+            <span class="plan-card-period">&nbsp;/ month</span>
+          </div>
+          <div class="plan-card-total">Total: ₣600,000</div>
+          <div class="plan-card-saving">Save ₣240,000 · 29% off</div>
+        </div>
+        <div class="plan-card">
+          <div class="plan-card-name">Regular — 1 Year</div>
+          <div class="plan-card-duration">12-month commitment</div>
+          <div class="plan-card-price">
+            <span class="plan-card-currency">₣</span>
+            <span class="plan-card-amount">30,000</span>
+            <span class="plan-card-period">&nbsp;/ month</span>
+          </div>
+          <div class="plan-card-total">Total: ₣360,000</div>
+          <div class="plan-card-saving">Save ₣60,000 · 14% off</div>
+        </div>
+        <div class="plan-card">
+          <div class="plan-card-name">Regular — 6 Month</div>
+          <div class="plan-card-duration">6-month commitment</div>
+          <div class="plan-card-price">
+            <span class="plan-card-currency">₣</span>
+            <span class="plan-card-amount">35,000</span>
+            <span class="plan-card-period">&nbsp;/ month</span>
+          </div>
+          <div class="plan-card-total">Total: ₣210,000</div>
+          <div style="font-size:8.5pt;color:var(--page-ink4)">Standard rate — no discount</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="plan-notice">
+      <div class="plan-notice-head">
+        <svg><use href="#ic-info"/></svg>
+        <strong>Selected Plan</strong>
+      </div>
+      <div class="plan-notice-body">
+        ROA Fitness has elected: &nbsp; &#9744; Partner 2Y &nbsp;&nbsp; &#9744; Partner 1Y &nbsp;&nbsp;
+        &#9744; Regular 2Y &nbsp;&nbsp; &#9744; Regular 1Y &nbsp;&nbsp; &#9744; Regular 6M<br />
+        Monthly Fee: ₣ _______________ &nbsp;&nbsp; Start Date: _______________ &nbsp;&nbsp; End Date: _______________
+      </div>
+    </div>
+
+    <h2 class="sub">Payment Terms</h2>
+    <ol class="clauses">
+      <li>Monthly fees are due and payable on the <strong>1st day of each calendar month</strong>.</li>
+      <li>Accepted methods: Mobile Money (MTN/Orange), Bank Transfer, Cash. Reference must include the client account number.</li>
+      <li>A grace period of <strong>7 calendar days</strong> is granted before service suspension.</li>
+      <li>Late payments attract a penalty of <strong>5% per month</strong> on the outstanding balance.</li>
+      <li>Payments are non-refundable once the monthly billing cycle has commenced.</li>
+      <li>myfiti may suspend access after 14 days of non-payment. Reinstatement requires settlement of all outstanding balances.</li>
+    </ol>
+
+    <h2 class="sub">Price Adjustments</h2>
+    <p class="body-text">
+      The agreed monthly rate is locked for the full Subscription Term. Renewal pricing will be communicated
+      no less than <strong>30 days</strong> prior to the end of the term. Any renewal rate increase shall
+      not exceed <strong>10% above the rate applicable in the final month of the preceding term</strong>,
+      unless agreed otherwise in writing by both parties.
+    </p>
+
+    <div class="page-footer">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span>Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span>MYF-ROA-2026-001</span>
+      </div>
+      <span>Page 7 of 14</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 3 ═══════════ -->
+<div id="sec-3" class="light-page">
+  <div class="light-inner">
+    <div class="section-header">
+      <div class="section-icon-wrap"><svg><use href="#ic-star"/></svg></div>
+      <div class="section-meta">
+        <span class="section-num-tag">Section 3</span>
+        <div class="section-title">Benefits &amp; Entitlements</div>
+      </div>
+    </div>
+
+    <p class="body-text">
+      Both parties shall derive the following guaranteed benefits for the duration of the Subscription Term.
+      These form part of the binding offer.
+    </p>
+
+    <div class="benefit-grid">
+      <div class="benefit-card">
+        <div class="benefit-card-header">
+          <div class="benefit-card-icon"><svg><use href="#ic-users"/></svg></div>
+          <span class="benefit-card-title">What ROA Fitness Receives</span>
+        </div>
+        <div class="benefit-body">
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Full Platform Access</strong> — Member management, subscriptions, check-ins, and reporting.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Custom QR Member Cards</strong> — Unique QR codes per member sent via email automatically.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Member Self-Registration</strong> — Public join page at app.myfiti.fit/join/[slug].</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Mobile App Access</strong> — myfiti app for member check-ins and account management.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Kiosk Mode</strong> — Tablet-friendly self-check-in interface for the gym reception.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>PDF Invoices &amp; Receipts</strong> — Automated invoice generation for all member payments.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Revenue Analytics</strong> — Real-time financial reports, growth and retention charts.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Email Notifications</strong> — Welcome, payment confirmation, and expiry alerts.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Bulk CSV Import</strong> — Import existing member data in bulk at onboarding.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Staff Accounts</strong> — Multiple accounts with role-based access control.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Priority Support</strong> — 24-hour response for all Partner plan clients.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Free Onboarding Session</strong> — Setup, branding, and data import at no extra cost.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Feature Previews</strong> — Early access to new features before general release.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Locked Pricing</strong> — Agreed rate guaranteed for the full subscription term.</span></div>
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-card-header">
+          <div class="benefit-card-icon"><svg><use href="#ic-handshake"/></svg></div>
+          <span class="benefit-card-title">What myfiti Receives</span>
+        </div>
+        <div class="benefit-body">
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Monthly Revenue</strong> — Recurring income at the agreed plan rate for the full term.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Reference Client Status</strong> — ROA Fitness may be mentioned in marketing materials with consent.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Product Feedback</strong> — Periodic feedback on platform performance to inform development.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Case Study Participation</strong> — Participation in platform success story upon request.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Logo Usage Rights</strong> — Display of ROA Fitness logo on website and pitches with prior approval.</span></div>
+          <div class="benefit-item"><svg class="benefit-check"><use href="#ic-check"/></svg><span class="benefit-item-text"><strong>Market Insight</strong> — Anonymised usage data to improve features for the broader gym market.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span>Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span>MYF-ROA-2026-001</span>
+      </div>
+      <span>Page 8 of 14</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 4 ═══════════ -->
+<div id="sec-4" class="light-page">
+  <div class="light-inner">
+    <div class="section-header">
+      <div class="section-icon-wrap"><svg><use href="#ic-list"/></svg></div>
+      <div class="section-meta">
+        <span class="section-num-tag">Section 4</span>
+        <div class="section-title">Obligations &amp; Responsibilities</div>
+      </div>
+    </div>
+
+    <h2 class="sub">Obligations of myfiti (Service Provider)</h2>
+
+    <div class="resp-block">
+      <div class="resp-block-head"><svg><use href="#ic-zap"/></svg><span class="resp-block-head-label">Service Delivery</span></div>
+      <ul>
+        <li>Maintain platform uptime of no less than 99% per month, excluding scheduled maintenance.</li>
+        <li>Provide at least 24 hours advance notice for any scheduled maintenance causing downtime.</li>
+        <li>Ensure all Client data is stored securely and backed up daily on encrypted servers.</li>
+        <li>Respond to support requests within 24 hours (Partner) / 48 hours (Regular) of receipt.</li>
+        <li>Deliver a functioning onboarding session within 5 business days of the Commencement Date.</li>
+      </ul>
+    </div>
+
+    <div class="resp-block">
+      <div class="resp-block-head"><svg><use href="#ic-shield"/></svg><span class="resp-block-head-label">Data &amp; Privacy</span></div>
+      <ul>
+        <li>Never sell, share, or disclose the Client's member or business data to any third party without explicit written consent.</li>
+        <li>Ensure all data transmission is encrypted using HTTPS/TLS.</li>
+        <li>Provide data export functionality at any time during the active term.</li>
+        <li>Delete all Client data within 60 days of contract termination upon written request.</li>
+      </ul>
+    </div>
+
+    <div class="resp-block">
+      <div class="resp-block-head"><svg><use href="#ic-lock"/></svg><span class="resp-block-head-label">Third-Party Sub-Processor</span></div>
+      <ul>
+        <li>myfiti uses <strong>Tranzak</strong> as its sole authorised payment aggregator for processing Mobile Money and digital payment transactions initiated through the platform.</li>
+        <li>Tranzak processes only the payment data strictly necessary to complete a transaction (amount, phone number, reference). No member personal data beyond this is shared.</li>
+        <li>myfiti remains fully responsible for ensuring Tranzak's handling of payment data complies with the obligations set out in this agreement.</li>
+        <li>The Client acknowledges and consents to the use of Tranzak as a sub-processor by entering into this agreement. No further written consent is required for this disclosed sub-processor.</li>
+        <li>myfiti shall notify the Client in writing at least 30 days before engaging any additional payment sub-processor not listed herein.</li>
+      </ul>
+    </div>
+
+    <div class="resp-block">
+      <div class="resp-block-head"><svg><use href="#ic-zap"/></svg><span class="resp-block-head-label">Platform Development</span></div>
+      <ul>
+        <li>Continue active development and improvement of the platform throughout the agreement term.</li>
+        <li>Notify the Client of major feature updates or changes that may affect their workflow.</li>
+        <li>Not remove core features without a minimum 30-day notice and reasonable alternative.</li>
+      </ul>
+    </div>
+
+    <h2 class="sub">Obligations of ROA Fitness (Client)</h2>
+
+    <div class="resp-block client">
+      <div class="resp-block-head"><svg><use href="#ic-calendar"/></svg><span class="resp-block-head-label">Payment</span></div>
+      <ul>
+        <li>Pay the agreed monthly fee on or before the 1st of each calendar month.</li>
+        <li>Notify myfiti of any payment issues at least 5 business days before the due date.</li>
+        <li>Ensure all payments include the correct account reference number.</li>
+      </ul>
+    </div>
+
+    <div class="resp-block client">
+      <div class="resp-block-head"><svg><use href="#ic-lock"/></svg><span class="resp-block-head-label">Platform Use</span></div>
+      <ul>
+        <li>Use the platform only for lawful purposes in accordance with the acceptable use policy.</li>
+        <li>Not share admin credentials with unauthorised personnel outside registered staff accounts.</li>
+        <li>Not attempt to reverse-engineer, copy, or replicate any part of the myfiti platform or codebase.</li>
+        <li>Promptly report bugs, errors, or security concerns via official support channels.</li>
+      </ul>
+    </div>
+
+    <div class="resp-block client">
+      <div class="resp-block-head"><svg><use href="#ic-shield"/></svg><span class="resp-block-head-label">Member Data Compliance</span></div>
+      <ul>
+        <li>Collect and enter member data with members' informed consent.</li>
+        <li>Comply with applicable local data protection laws.</li>
+        <li>Not upload any unlawful, defamatory, or harmful content to the platform.</li>
+      </ul>
+    </div>
+
+    <div class="resp-block client">
+      <div class="resp-block-head"><svg><use href="#ic-handshake"/></svg><span class="resp-block-head-label">Partnership Conduct</span></div>
+      <ul>
+        <li>Designate a primary contact responsible for platform management and myfiti communications.</li>
+        <li>Participate in at least one feedback session per quarter upon request from myfiti.</li>
+        <li>Not disparage myfiti, its platform, or its team in public communications during the active term.</li>
+      </ul>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span>Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span>MYF-ROA-2026-001</span>
+      </div>
+      <span>Page 9 of 14</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 5 ═══════════ -->
+<div id="sec-5" class="light-page">
+  <div class="light-inner">
+    <div class="section-header">
+      <div class="section-icon-wrap"><svg><use href="#ic-zap"/></svg></div>
+      <div class="section-meta">
+        <span class="section-num-tag">Section 5</span>
+        <div class="section-title">Service Level Agreement (SLA)</div>
+      </div>
+    </div>
+
+    <h2 class="sub">Uptime Guarantee</h2>
+    <p class="body-text">
+      myfiti guarantees a platform uptime of <strong>99% per calendar month</strong>. Downtime is measured
+      as any period during which the platform is inaccessible to the Client due to server-side failures,
+      excluding scheduled maintenance windows.
+    </p>
+
+    <h2 class="sub">Service Credits</h2>
+    <ol class="clauses">
+      <li>If uptime falls below 99% in any given month, the Client is entitled to a service credit.</li>
+      <li>Credits: 97–99% uptime = 10% monthly fee credit; 95–97% = 20% credit; Below 95% = 30% credit.</li>
+      <li>Credits are applied to the following month's invoice — not paid in cash.</li>
+      <li>Credits must be claimed within 14 days of the end of the affected billing month.</li>
+    </ol>
+
+    <h2 class="sub">Support Response Times</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Description</th>
+          <th>Partner Plan</th>
+          <th>Regular Plan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="cell-bold">Critical</td>
+          <td>Platform fully inaccessible</td>
+          <td class="cell-green">4 hours</td>
+          <td>8 hours</td>
+        </tr>
+        <tr>
+          <td class="cell-bold">High</td>
+          <td>Core feature not working</td>
+          <td class="cell-green">12 hours</td>
+          <td>24 hours</td>
+        </tr>
+        <tr>
+          <td class="cell-bold">Medium</td>
+          <td>Feature partially working</td>
+          <td class="cell-green">24 hours</td>
+          <td>48 hours</td>
+        </tr>
+        <tr>
+          <td class="cell-bold">Low</td>
+          <td>Minor issue / question</td>
+          <td class="cell-green">48 hours</td>
+          <td>5 business days</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="page-footer">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span>Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span>MYF-ROA-2026-001</span>
+      </div>
+      <span>Page 10 of 14</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 6 ═══════════ -->
+<div id="sec-6" class="light-page">
+  <div class="light-inner">
+    <div class="section-header">
+      <div class="section-icon-wrap"><svg><use href="#ic-scale"/></svg></div>
+      <div class="section-meta">
+        <span class="section-num-tag">Section 6</span>
+        <div class="section-title">Legal Clauses &amp; General Provisions</div>
+      </div>
+    </div>
+
+    <h2 class="sub">Confidentiality</h2>
+    <ol class="clauses">
+      <li>Both parties agree to keep all proprietary, business, technical, and financial information exchanged under this agreement strictly confidential.</li>
+      <li>Confidential information shall not be disclosed to any third party without prior written consent of the disclosing party.</li>
+      <li>This obligation survives termination or expiry for a period of <strong>3 years</strong>.</li>
+    </ol>
+
+    <h2 class="sub">Intellectual Property</h2>
+    <ol class="clauses">
+      <li>All intellectual property in the myfiti platform — including software code, design, logos, and documentation — remains the exclusive property of myfiti.</li>
+      <li>The Client is granted a non-exclusive, non-transferable licence to use the platform solely for the purposes described herein.</li>
+      <li>All data inputted by the Client remains the property of the Client. myfiti claims no ownership over Client or member data.</li>
+    </ol>
+
+    <h2 class="sub">Term &amp; Renewal</h2>
+    <ol class="clauses">
+      <li>This agreement commences on the Commencement Date and continues for the Subscription Term selected in Section 2.</li>
+      <li>At the end of the Subscription Term, the agreement automatically transitions to month-to-month at the current standard rate unless renewed in writing.</li>
+      <li>Either party may renew by providing written notice no later than 30 days before the expiry date.</li>
+    </ol>
+
+    <h2 class="sub">Termination</h2>
+    <ol class="clauses">
+      <li>Either party may terminate this agreement with <strong>30 days' written notice</strong> at the end of the Subscription Term.</li>
+      <li>myfiti may terminate immediately and without penalty if the Client:
+        <ol class="clauses sub-list">
+          <li>Fails to pay outstanding fees after a 14-day grace period;</li>
+          <li>Breaches the platform acceptable use policy;</li>
+          <li>Engages in fraudulent, abusive, or illegal activity through the platform.</li>
+        </ol>
+      </li>
+      <li>The Client may terminate early with written notice; however no refund shall be issued for remaining months of the term.</li>
+      <li>Upon termination, the Client shall receive a full data export within 30 days.</li>
+    </ol>
+
+    <h2 class="sub">Limitation of Liability</h2>
+    <ol class="clauses">
+      <li>myfiti shall not be liable for any indirect, incidental, consequential, or punitive damages arising from use or inability to use the platform.</li>
+      <li>myfiti's total liability shall not exceed total monthly fees paid in the three months preceding the event giving rise to the claim.</li>
+      <li>myfiti shall not be liable for data loss caused by the Client's own actions or failure to maintain independent records.</li>
+    </ol>
+
+    <h2 class="sub">Force Majeure</h2>
+    <p class="body-text">
+      Neither party shall be held in breach for failure to perform obligations resulting from circumstances
+      beyond reasonable control, including acts of God, internet outages, civil unrest, government directives,
+      or natural disasters. The affected party must notify the other within 72 hours of such an event.
+    </p>
+
+    <h2 class="sub">Governing Law &amp; Dispute Resolution</h2>
+    <ol class="clauses">
+      <li>This agreement shall be governed by and construed in accordance with the laws of the Republic of Cameroon, including where applicable the OHADA Uniform Acts as adopted by Cameroon.</li>
+      <li>In the event of a dispute, both parties agree to first attempt resolution through good-faith negotiation within <strong>14 calendar days</strong> of written notice of the dispute.</li>
+      <li>If negotiation fails, the parties agree to pursue formal mediation facilitated by a mutually agreed mediator before commencing any legal proceedings.</li>
+      <li>Should mediation fail, disputes shall be submitted to the exclusive jurisdiction of the competent courts of <strong>Fako Division, South West Region, Cameroon</strong>. Both parties irrevocably submit to the personal jurisdiction of such courts.</li>
+      <li>Notwithstanding the above, either party may seek urgent injunctive or equitable relief from any court of competent jurisdiction to prevent irreparable harm pending resolution of a dispute.</li>
+      <li>The prevailing party in any legal proceeding shall be entitled to recover reasonable legal costs and attorney fees from the non-prevailing party.</li>
+    </ol>
+
+    <h2 class="sub">Data Exit &amp; Offboarding</h2>
+    <ol class="clauses">
+      <li>The Client retains full ownership of all data entered into the platform at all times, including member records, payment history, attendance logs, and all associated files.</li>
+      <li>The Client may request a full data export at any time during the active Subscription Term. myfiti shall provide the export in <strong>CSV format</strong> within <strong>7 business days</strong> of the request at no additional charge.</li>
+      <li>Upon expiry or termination of this agreement, myfiti shall provide a complete final data export to the Client within <strong>30 calendar days</strong> of the termination date.</li>
+      <li>Following delivery of the final data export, myfiti shall retain the Client's data for a further <strong>90 days</strong> as a recovery buffer. After this period, all Client data shall be permanently deleted from myfiti's servers and backups.</li>
+      <li>myfiti shall confirm in writing when deletion is complete upon request from the Client.</li>
+      <li>The Client is responsible for maintaining independent backups of critical data during the Subscription Term. myfiti's platform backups are intended for disaster recovery and do not substitute the Client's own data management obligations.</li>
+    </ol>
+
+    <h2 class="sub">Representations &amp; Warranties</h2>
+    <ol class="clauses">
+      <li>Each party represents and warrants that it has full legal authority to enter into this agreement and to perform its obligations hereunder, and that doing so does not conflict with any other agreement or obligation by which it is bound.</li>
+      <li>myfiti warrants that the platform does not, to its knowledge, infringe any third-party intellectual property rights, and that it will maintain the platform in a functional and professionally operable state throughout the Subscription Term.</li>
+      <li>The Client warrants that all member data entered into the platform has been collected with the informed consent of the individuals concerned, and that the Client is authorised to process and share such data with myfiti for the purposes described herein.</li>
+      <li>Neither party makes any representations or warranties beyond those expressly stated in this agreement.</li>
+    </ol>
+
+    <h2 class="sub">Non-Solicitation</h2>
+    <ol class="clauses">
+      <li>During the Subscription Term and for a period of <strong>12 months</strong> following its expiry or termination, neither party shall directly solicit, recruit, or employ any employee, contractor, or consultant of the other party who was involved in the performance of this agreement, without the prior written consent of that party.</li>
+      <li>This clause does not restrict either party from hiring individuals who respond to general public job advertisements not specifically targeting the other party's staff.</li>
+    </ol>
+
+    <h2 class="sub">Notices</h2>
+    <ol class="clauses">
+      <li>All formal notices, demands, or communications required or permitted under this agreement shall be made in writing and delivered by email (with read receipt or written acknowledgment) or by hand to the addresses below.</li>
+      <li><strong>myfiti (Service Provider):</strong><br />
+        Attn: Doh Eugene Ndah, Co-founder &amp; COO<br />
+        Mayor Street, Molyko, Buea, Cameroon<br />
+        Email: billing@myfiti.fit
+      </li>
+      <li><strong>ROA Fitness (Client):</strong><br />
+        Attn: [Authorised Representative]<br />
+        Malingo, Molyko, Buea, Cameroon<br />
+        Email: [Client Email]
+      </li>
+      <li>A notice sent by email shall be deemed received on the next business day following confirmed delivery, unless the sender receives an automated delivery failure notice.</li>
+    </ol>
+
+    <h2 class="sub">Entire Agreement</h2>
+    <p class="body-text">
+      This document constitutes the entire agreement between the parties and supersedes all prior negotiations,
+      representations, warranties, and understandings. Any amendments must be made in writing and signed by both parties.
+    </p>
+
+    <div class="page-footer">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span>Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span>MYF-ROA-2026-001</span>
+      </div>
+      <span>Page 11 of 14</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 7 — SIGNATURES ═══════════ -->
+<div id="sec-7" class="light-page">
+  <div class="light-inner">
+    <div class="section-header">
+      <div class="section-icon-wrap"><svg><use href="#ic-pen"/></svg></div>
+      <div class="section-meta">
+        <span class="section-num-tag">Section 7</span>
+        <div class="section-title">Execution &amp; Signatures</div>
+      </div>
+    </div>
+
+    <p class="sig-preamble">
+      IN WITNESS WHEREOF, the authorised representatives of both parties have executed this Partnership Agreement
+      as of the date first written above. Each party acknowledges that they have read, understood, and agree to
+      all terms and conditions contained herein, and that they are duly authorised to sign on behalf of their
+      respective organisations.
+    </p>
+
+    <!-- Two-column layout, separated by a thin vertical line — no boxes -->
+    <div class="sig-columns">
+
+      <div class="sig-col">
+        <div class="sig-party-name">myfiti</div>
+        <div class="sig-party-role">Service Provider</div>
+
+        <div class="sig-field">
+          <label>Full Name</label>
+          <div class="sig-line" style="display:flex;align-items:flex-end;padding-bottom:3px;font-size:10.5pt;font-weight:600;color:var(--page-ink);letter-spacing:-0.01em;">DOH EUGENE NDAH</div>
+        </div>
+        <div class="sig-field">
+          <label>Title / Position</label>
+          <div class="sig-line" style="display:flex;align-items:flex-end;padding-bottom:3px;font-size:10pt;color:var(--page-ink2);">Co-founder &amp; COO</div>
+        </div>
+        <div class="sig-field">
+          <label>Signature</label>
+          <div class="sig-line tall"></div>
+        </div>
+        <div class="sig-field">
+          <label>Date</label>
+          <div class="sig-line"></div>
+        </div>
+        <div class="sig-field">
+          <label>Company Stamp / Seal</label>
+          <div class="sig-stamp">Affix Stamp Here</div>
+        </div>
+      </div>
+
+      <div class="sig-col-sep"></div>
+
+      <div class="sig-col">
+        <div class="sig-party-name">ROA Fitness</div>
+        <div class="sig-party-role">Client Partner</div>
+
+        <div class="sig-field">
+          <label>Full Name</label>
+          <div class="sig-line"></div>
+        </div>
+        <div class="sig-field">
+          <label>Title / Position</label>
+          <div class="sig-line"></div>
+        </div>
+        <div class="sig-field">
+          <label>Signature</label>
+          <div class="sig-line tall"></div>
+        </div>
+        <div class="sig-field">
+          <label>Date</label>
+          <div class="sig-line"></div>
+        </div>
+        <div class="sig-field">
+          <label>Company Stamp / Seal</label>
+          <div class="sig-stamp">Affix Stamp Here</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="witness-section">
+      <div class="witness-label">Witnessed By</div>
+      <div class="witness-grid">
+        <div>
+          <div class="sig-field"><label>Witness Full Name</label><div class="sig-line"></div></div>
+          <div class="sig-field"><label>Witness Signature</label><div class="sig-line tall"></div></div>
+          <div class="sig-field"><label>Date</label><div class="sig-line"></div></div>
+        </div>
+        <div>
+          <div class="sig-field"><label>Witness Full Name</label><div class="sig-line"></div></div>
+          <div class="sig-field"><label>Witness Signature</label><div class="sig-line tall"></div></div>
+          <div class="sig-field"><label>Date</label><div class="sig-line"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span>Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span>MYF-ROA-2026-001</span>
+      </div>
+      <span>Page 12 of 14</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SCHEDULE A ═══════════ -->
+<div id="sec-a" class="light-page">
+  <div class="light-inner">
+    <div class="section-header">
+      <div class="section-icon-wrap"><svg><use href="#ic-calendar"/></svg></div>
+      <div class="section-meta">
+        <span class="section-num-tag">Schedule A</span>
+        <div class="section-title">Plan Election &amp; Payment Schedule</div>
+      </div>
+    </div>
+
+    <p class="body-text">
+      To be completed and signed by both parties at the time of agreement. This schedule forms an integral
+      part of the Partnership Agreement.
+    </p>
+
+    <h2 class="sub">Selected Plan Details</h2>
+    <table class="schedule-table">
+      <tbody>
+        <tr><td>Plan Selected</td><td>&#9744; Partner 2Y &nbsp; &#9744; Partner 1Y &nbsp; &#9744; Regular 2Y &nbsp; &#9744; Regular 1Y &nbsp; &#9744; Regular 6M</td></tr>
+        <tr><td>Monthly Rate (₣)</td><td>_______________</td></tr>
+        <tr><td>Total Contract Value (₣)</td><td>_______________</td></tr>
+        <tr><td>Commencement Date</td><td>_______________</td></tr>
+        <tr><td>Expiry Date</td><td>_______________</td></tr>
+        <tr><td>Payment Method</td><td>&#9744; Mobile Money &nbsp; &#9744; Bank Transfer &nbsp; &#9744; Cash</td></tr>
+        <tr><td>Payment Due Each Month</td><td>1st of each calendar month</td></tr>
+        <tr><td>Client Account Number</td><td>_______________</td></tr>
+        <tr><td>myfiti Platform URL</td><td>app.myfiti.fit/join/_______________</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="sub">Contact Details</h2>
+    <table class="data-table">
+      <thead><tr><th>Detail</th><th>myfiti</th><th>ROA Fitness</th></tr></thead>
+      <tbody>
+        <tr><td>Primary Contact Name</td><td>Doh Eugene Ndah</td><td>_______________</td></tr>
+        <tr><td>Email Address</td><td>billing@myfiti.fit</td><td>_______________</td></tr>
+        <tr><td>Phone / WhatsApp</td><td>_______________</td><td>_______________</td></tr>
+        <tr><td>Physical Address</td><td>Mayor Street, Molyko, Buea</td><td>Malingo, Molyko, Buea</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:48px;display:grid;grid-template-columns:1fr 1px 1fr;gap:0;">
+      <div style="padding-right:36px;">
+        <div class="sig-field"><label>Signed for myfiti</label><div class="sig-line"></div></div>
+        <div class="sig-field"><label>Date</label><div class="sig-line"></div></div>
+      </div>
+      <div style="background:var(--page-border);"></div>
+      <div style="padding-left:36px;">
+        <div class="sig-field"><label>Signed for ROA Fitness</label><div class="sig-line"></div></div>
+        <div class="sig-field"><label>Date</label><div class="sig-line"></div></div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span>Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span>MYF-ROA-2026-001</span>
+      </div>
+      <span>Schedule A · Page 13 of 14</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SCHEDULE B ═══════════ -->
+<div id="sec-b" class="light-page">
+  <div class="light-inner">
+    <div class="section-header">
+      <div class="section-icon-wrap"><svg><use href="#ic-list"/></svg></div>
+      <div class="section-meta">
+        <span class="section-num-tag">Schedule B</span>
+        <div class="section-title">Platform Features &amp; Getting Started</div>
+      </div>
+    </div>
+
+    <h2 class="sub">Full Platform Feature Matrix</h2>
+    <p class="body-text">All features listed below are included across all subscription plans (Partner and Regular). There are no per-seat or per-feature charges. Pricing differs only by commitment term as detailed in Section 2.</p>
+
+    <table class="data-table" style="margin-bottom:28px;">
+      <thead>
+        <tr>
+          <th style="width:40%">Feature</th>
+          <th style="width:35%">Description</th>
+          <th style="width:25%;text-align:center;">Included</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Member Profiles</strong></td>
+          <td>Full member records with name, email, phone, photo, notes, plan, and status</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Membership Plans</strong></td>
+          <td>Unlimited custom membership plans with flexible duration and pricing</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>QR Membership Cards</strong></td>
+          <td>Digital QR cards auto-generated and emailed to each member on signup</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>QR Check-in System</strong></td>
+          <td>Staff scan member QR codes at reception to log attendance in real time</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Kiosk Self-Check-in</strong></td>
+          <td>Tablet mode at reception — members scan their own QR code independently</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Attendance Logs</strong></td>
+          <td>Full timestamped history of every member check-in, filterable and exportable</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Subscription Billing</strong></td>
+          <td>Automated invoicing with due-date tracking and payment status per member</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Mobile Money (Tranzak)</strong></td>
+          <td>USSD/MoMo payment collection via Tranzak payment gateway</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Cash &amp; Bank Transfer</strong></td>
+          <td>Offline payment recording with staff confirmation workflow</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>PDF Invoices</strong></td>
+          <td>Auto-generated branded invoices downloadable per member transaction</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Revenue Analytics</strong></td>
+          <td>Dashboard showing MRR, payment trends, overdue accounts, and member growth</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Staff Accounts &amp; Roles</strong></td>
+          <td>Multiple admin/staff logins with role-based access controls and PIN login</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Bulk CSV Import</strong></td>
+          <td>Import existing member database from spreadsheet in one step</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Data Export</strong></td>
+          <td>Full export of members, attendance, and payment data at any time</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Public Join Page</strong></td>
+          <td>Branded signup page for new members at app.myfiti.fit/join/[slug]</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Welcome Emails</strong></td>
+          <td>Automated welcome email with QR card sent to every new member</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Mobile App (iOS &amp; Android)</strong></td>
+          <td>Member-facing app for account viewing, QR display, and check-in history</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+        <tr>
+          <td><strong>Partner Support</strong></td>
+          <td>Dedicated support via email and WhatsApp with 24-hour response guarantee</td>
+          <td style="text-align:center;color:var(--green);font-weight:700;">✓ All Plans</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="sub">Getting Started Checklist</h2>
+    <p class="body-text">To be completed by both parties within the first two weeks of the Commencement Date. Tick each item as completed and retain a signed copy of this schedule.</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:5%"></th>
+          <th style="width:55%">Action Item</th>
+          <th style="width:22%">Responsible Party</th>
+          <th style="width:18%">Target Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>Partnership Agreement signed by both parties</td>
+          <td>Both Parties</td>
+          <td>Day 1</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>myfiti gym account provisioned &amp; admin credentials delivered</td>
+          <td>myfiti</td>
+          <td>Day 1</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>First payment confirmed and subscription activated</td>
+          <td>ROA Fitness</td>
+          <td>Day 1</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>Onboarding call scheduled and completed</td>
+          <td>Both Parties</td>
+          <td>Day 2 – 3</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>Membership plans configured in the dashboard</td>
+          <td>ROA Fitness + myfiti</td>
+          <td>Week 1</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>Existing member data imported via CSV</td>
+          <td>ROA Fitness + myfiti</td>
+          <td>Week 1</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>Welcome emails with QR cards sent to all imported members</td>
+          <td>myfiti (automated)</td>
+          <td>Week 1</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>Staff accounts created and team trained on dashboard</td>
+          <td>ROA Fitness + myfiti</td>
+          <td>Week 1</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>Kiosk tablet configured at reception (if applicable)</td>
+          <td>ROA Fitness + myfiti</td>
+          <td>Week 1 – 2</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>First live QR check-in tested and confirmed working</td>
+          <td>Both Parties</td>
+          <td>Week 2</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>Public join page shared with new prospective members</td>
+          <td>ROA Fitness</td>
+          <td>Week 2</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;">&#9744;</td>
+          <td>Go-live confirmed — platform fully operational</td>
+          <td>Both Parties</td>
+          <td>Week 2</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="page-footer">
+      <div class="page-footer-brand">
+        <span style="font-weight:700;color:var(--green)">myfiti</span>
+        <div class="page-footer-dot"></div>
+        <span>Partnership Agreement</span>
+        <div class="page-footer-dot"></div>
+        <span>MYF-ROA-2026-001</span>
+      </div>
+      <span>Schedule B · Page 14 of 14 &nbsp;·&nbsp; End of Document</span>
+    </div>
+  </div>
+</div>
+
+<div class="pdf-btn-wrap">
+  <button class="pdf-btn" onclick="window.print()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Save as PDF
+  </button>
+</div>
+
+</body>
+</html>

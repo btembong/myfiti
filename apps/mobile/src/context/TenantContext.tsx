@@ -1,6 +1,30 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import type { TenantBranding } from '@gymflow/types'
+
+export interface TenantFeatures {
+  show_announcements: boolean
+  allow_self_renewal: boolean
+  referral_system: boolean
+  guest_passes: boolean
+  show_leaderboard: boolean
+  show_body_metrics: boolean
+  show_trainer_ratings: boolean
+  wod_leaderboard: boolean
+}
+
+export interface TenantBranding {
+  id: string
+  slug: string
+  name: string
+  logo_url: string
+  primary_color: string
+  secondary_color: string
+  splash_bg_color: string
+  font: 'default' | 'inter' | 'roboto'
+  timezone: string
+  currency: string
+  features: TenantFeatures
+}
 
 interface TenantContextValue {
   branding: TenantBranding | null
