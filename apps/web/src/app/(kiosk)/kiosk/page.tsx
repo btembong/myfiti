@@ -1735,7 +1735,7 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
     setCheckinLoading(true)
     try {
       const r = await kPost<{
-        ok: boolean; reason?: string
+        ok: boolean; reason?: string; message?: string
         member?: { id: string; name: string; avatar_url?: string | null; status: string; expires_at?: string | null }
       }>('/api/checkin/verify-qr', { token: rawValue }, tenantSlugRef.current)
       const memberObj = r.member ? {
@@ -1768,7 +1768,7 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
     setCheckinLoading(true)
     try {
       const r = await kPost<{
-        ok: boolean; reason?: string
+        ok: boolean; reason?: string; message?: string
         member?: { id: string; name: string; avatar_url?: string | null; status: string; expires_at?: string | null; total_checkins?: number }
       }>('/api/checkin/verify-pin', { pin: pinValue }, tenantSlugRef.current)
       const memberObj = r.member ? {
