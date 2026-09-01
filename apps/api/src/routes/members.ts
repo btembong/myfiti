@@ -201,6 +201,7 @@ membersRouter.post('/', validate(createMemberSchema), async (req, res) => {
       undefined,
       undefined,
       pin,
+      id,
     ).catch(err => console.warn('[members/create] welcome email failed:', err))
 
     return res.status(201).json({ ok: true, id, qrCode, pin })
@@ -299,6 +300,8 @@ membersRouter.post('/:id/resend-welcome', async (req, res) => {
       member.qr_code,
       member.plan_name,
       member.expires_at,
+      undefined,
+      id,
     )
 
     return res.json({ ok: true })
@@ -562,6 +565,8 @@ membersRouter.post('/import', validate(importMembersSchema), async (req, res) =>
           m.qrCode,
           matchedPlan ? m.plan_name : null,
           matchedPlan && m.expires_at ? m.expires_at : null,
+          undefined,
+          m.id,
         ).catch(err => console.warn('[members/import] welcome email failed for', m.email, err))
       }
     }
@@ -721,6 +726,7 @@ membersRouter.post('/:id/confirm-payment', async (req, res) => {
       undefined,
       undefined,
       member.pin,
+      member.id,
     ).catch(err => console.warn('[members/confirm-payment] welcome email failed:', err))
 
     return res.json({ ok: true, message: 'Member activated successfully.' })
