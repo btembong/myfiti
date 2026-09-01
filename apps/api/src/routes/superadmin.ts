@@ -310,7 +310,10 @@ superadminRouter.get('/gyms', async (req, res) => {
             ),
             tenantQuery<{ total: string }>(
               t.slug,
-              `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE created_at >= date_trunc('month', NOW())`,
+              `SELECT COALESCE(SUM(mp.price), 0) as total
+               FROM subscriptions s
+               JOIN membership_plans mp ON mp.id = s.plan_id
+               WHERE s.status IN ('active', 'expiring_soon', 'grace_period')`,
             ),
           ])
           const m = memberResult.rows[0]
@@ -355,7 +358,10 @@ superadminRouter.get('/gyms/:id', async (req, res) => {
         ),
         tenantQuery<{ total: string }>(
           tenant.slug,
-          `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE created_at >= date_trunc('month', NOW())`,
+          `SELECT COALESCE(SUM(mp.price), 0) as total
+           FROM subscriptions s
+           JOIN membership_plans mp ON mp.id = s.plan_id
+           WHERE s.status IN ('active', 'expiring_soon', 'grace_period')`,
         ),
       ])
       const m = memberResult.rows[0]
