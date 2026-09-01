@@ -20,6 +20,8 @@ qrCodesRouter.get('/:memberId', async (req, res) => {
     )
 
     let memberQR: { qr_code: string; id: string } | null = null
+    let gymLogoUrl: string | null = null
+    let gymFinderColor: string = '#14B946'
 
     for (const tenant of tenants) {
       try {
@@ -30,6 +32,13 @@ qrCodesRouter.get('/:memberId', async (req, res) => {
         )
         if (rows[0]) {
           memberQR = rows[0]
+          // Fetch gym branding for styled QR
+          const { rows: gs } = await tenantQuery<{ logo_url: string | null; primary_color: string | null }>(
+            tenant.slug,
+            `SELECT logo_url, primary_color FROM gym_settings WHERE id = 'singleton' LIMIT 1`,
+          )
+          gymLogoUrl     = gs[0]?.logo_url    ?? null
+          gymFinderColor = gs[0]?.primary_color ?? '#14B946'
           break
         }
       } catch {
@@ -41,10 +50,11 @@ qrCodesRouter.get('/:memberId', async (req, res) => {
       return res.status(404).json({ error: 'Member not found' })
     }
 
-    // Generate QR code (pure black & white for maximum scanability)
+    // Generate styled QR matching mobile app (rounded dots, branded finder squares, logo)
     const qrBuffer = await generateStyledQRCode(memberQR.qr_code, {
       size: 300,
-      filename: `${memberId}.png`,
+      logoUrl:     gymLogoUrl,
+      finderColor: gymFinderColor,
     })
 
     // Return as PNG — cross-origin headers required for embedding in emails
