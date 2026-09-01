@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Paper, Text, Title, Group, Stack, Badge, Avatar,
-  Button, TextInput, SegmentedControl, Alert, Menu,
+  Button, TextInput, SegmentedControl, Alert, Menu, Select,
   ActionIcon, ThemeIcon, SimpleGrid, Divider, Box,
   Modal, Textarea, Checkbox, Tooltip,
 } from '@mantine/core'
