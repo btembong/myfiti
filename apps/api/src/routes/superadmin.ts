@@ -303,26 +303,33 @@ superadminRouter.get('/gyms', async (req, res) => {
     const gyms = await Promise.all(
       tenants.map(async t => {
         try {
-          const memberResult = await tenantQuery<{ total: string; active: string }>(
-            t.slug,
-            `SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'active') as active FROM members`,
-          )
+          const [memberResult, monthlyRevResult, annualRevResult] = await Promise.all([
+            tenantQuery<{ total: string; active: string }>(
+              t.slug,
+              `SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'active') as active FROM members`,
+            ),
+            tenantQuery<{ total: string }>(
+              t.slug,
+              `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status IN ('paid', 'completed') AND paid_at >= date_trunc('month', NOW())`,
+            ),
+            tenantQuery<{ total: string }>(
+              t.slug,
+              `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status IN ('paid', 'completed') AND paid_at >= NOW() - INTERVAL '1 year'`,
+            ),
+          ])
           const m = memberResult.rows[0]
-
-          const revenueResult = await tenantQuery<{ total: string }>(
-            t.slug,
-            `SELECT COALESCE(SUM(amount), 0) as total FROM wallet_transactions WHERE type = 'payment' AND status = 'completed'`,
-          )
-          const r = revenueResult.rows[0]
+          const mr = monthlyRevResult.rows[0]
+          const ar = annualRevResult.rows[0]
 
           return {
             ...t,
             totalMembers: parseInt(m?.total ?? '0'),
             activeMembers: parseInt(m?.active ?? '0'),
-            revenueXAF: parseInt(r?.total ?? '0'),
+            monthlyRevenueXAF: parseInt(mr?.total ?? '0'),
+            annualRevenueXAF: parseInt(ar?.total ?? '0'),
           }
         } catch {
-          return { ...t, totalMembers: 0, activeMembers: 0, revenueXAF: 0 }
+          return { ...t, totalMembers: 0, activeMembers: 0, monthlyRevenueXAF: 0, annualRevenueXAF: 0 }
         }
       }),
     )
@@ -340,9 +347,9 @@ superadminRouter.get('/gyms/:id', async (req, res) => {
       .where(eq(globalSchema.tenants.id, req.params.id)).limit(1)
     if (!tenant) return res.status(404).json({ error: 'Gym not found.' })
 
-    let stats = { totalMembers: 0, activeMembers: 0, checkinsToday: 0 }
+    let stats = { totalMembers: 0, activeMembers: 0, checkinsToday: 0, monthlyRevenueXAF: 0, annualRevenueXAF: 0 }
     try {
-      const [memberResult, checkinResult] = await Promise.all([
+      const [memberResult, checkinResult, monthlyRevResult, annualRevResult] = await Promise.all([
         tenantQuery<{ total: string; active: string }>(
           tenant.slug,
           `SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'active') as active FROM members`,
@@ -351,13 +358,25 @@ superadminRouter.get('/gyms/:id', async (req, res) => {
           tenant.slug,
           `SELECT COUNT(*) as today FROM check_ins WHERE checked_in_at >= CURRENT_DATE`,
         ),
+        tenantQuery<{ total: string }>(
+          tenant.slug,
+          `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status IN ('paid', 'completed') AND paid_at >= date_trunc('month', NOW())`,
+        ),
+        tenantQuery<{ total: string }>(
+          tenant.slug,
+          `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status IN ('paid', 'completed') AND paid_at >= NOW() - INTERVAL '1 year'`,
+        ),
       ])
       const m = memberResult.rows[0]
       const c = checkinResult.rows[0]
+      const mr = monthlyRevResult.rows[0]
+      const ar = annualRevResult.rows[0]
       stats = {
         totalMembers: parseInt(m?.total ?? '0'),
         activeMembers: parseInt(m?.active ?? '0'),
         checkinsToday: parseInt(c?.today ?? '0'),
+        monthlyRevenueXAF: parseInt(mr?.total ?? '0'),
+        annualRevenueXAF: parseInt(ar?.total ?? '0'),
       }
     } catch {
       // Tenant schema may not exist yet
