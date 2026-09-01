@@ -49,7 +49,10 @@ const T = {
     todaysClasses: "Today's classes", back: 'Back',
     welcomeBack: 'Welcome back!', membershipExpired: 'Membership expired',
     membershipCancelled: 'Membership cancelled', membershipSuspended: 'Membership suspended',
-    membershipFrozen: 'Membership frozen', seeReception: 'Please see a staff member',
+    membershipFrozen: 'Membership frozen', memberNotFound: 'Member not found',
+    invalidQR: 'QR code not recognised', invalidPin: 'Incorrect PIN — no member found',
+    outsideHours: 'Outside allowed hours',
+    seeReception: 'Please see a staff member',
     graceHeadline: 'Grace period', graceSubtitle: 'Your subscription has expired — please renew soon.',
     graceCTA: 'Proceed to gym',
     issueErrorHeadline: 'Payment error', issueErrorMessage: 'Could not process your pass. Please see a staff member.',
@@ -85,7 +88,10 @@ const T = {
     todaysClasses: 'Cours du jour', back: 'Retour',
     welcomeBack: 'Bienvenue !', membershipExpired: 'Abonnement expiré',
     membershipCancelled: 'Abonnement annulé', membershipSuspended: 'Abonnement suspendu',
-    membershipFrozen: 'Abonnement gelé', seeReception: 'Veuillez voir un membre du personnel',
+    membershipFrozen: 'Abonnement gelé', memberNotFound: 'Membre introuvable',
+    invalidQR: 'QR code non reconnu', invalidPin: 'PIN incorrect — aucun membre trouvé',
+    outsideHours: 'Hors des heures autorisées',
+    seeReception: 'Veuillez voir un membre du personnel',
     graceHeadline: 'Période de grâce', graceSubtitle: 'Votre abonnement a expiré — veuillez renouveler bientôt.',
     graceCTA: 'Accéder à la salle',
     issueErrorHeadline: 'Erreur de paiement', issueErrorMessage: 'Impossible de traiter votre pass. Veuillez voir un membre du personnel.',
@@ -1308,6 +1314,7 @@ export default function KioskPage() {
   const [dayPasses, setDayPasses] = useState(DAY_PASSES)
   const [staffInfo, setStaffInfo] = useState<{ id: string; name: string; role: string } | null>(null)
   const [denialReason, setDenialReason] = useState<string | null>(null)
+  const [denialMessage, setDenialMessage] = useState<string | null>(null)
   const [liveCheckin, setLiveCheckin] = useState<{ name: string; avatar_url?: string | null; method: string } | null>(null)
   const [gymQrToken, setGymQrToken] = useState<string>('')
   const [linkPaymentData, setLinkPaymentData] = useState<{ payment_url: string; merchant_transaction_id: string; day_pass_id: string; qr_token: string; amount: number; currency: string } | null>(null)
@@ -1748,9 +1755,10 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
       } else {
         sounds.denied()
         setDenialReason(r.reason ?? 'unknown')
+        setDenialMessage(r.reason === 'outside_hours' ? (r.message ?? null) : null)
         setScreen('denied')
       }
-    } catch { sounds.denied(); setDenialReason('unknown'); setScreen('denied') }
+    } catch { sounds.denied(); setDenialReason('unknown'); setDenialMessage(null); setScreen('denied') }
     finally { setCheckinLoading(false) }
   }
 
@@ -1788,7 +1796,10 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
           setPinLockCountdown(30)
           setPinAttempts(0)
         }
-        setDenialReason(r.reason ?? 'unknown')
+        // 'not_found' from PIN means wrong PIN, not a missing member record
+        const pinReason = r.reason === 'not_found' ? 'invalid_pin' : (r.reason ?? 'unknown')
+        setDenialReason(pinReason)
+        setDenialMessage(pinReason === 'outside_hours' ? (r.message ?? null) : null)
         setScreen('denied')
       }
     } catch {
@@ -1796,7 +1807,7 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
       const next = pinAttempts + 1
       setPinAttempts(next)
       if (next >= 3) { setPinLockedUntil(Date.now() + 30_000); setPinLockCountdown(30); setPinAttempts(0) }
-      setDenialReason('unknown'); setScreen('denied')
+      setDenialReason('unknown'); setDenialMessage(null); setScreen('denied')
     }
     finally { setPinValue(''); setCheckinLoading(false) }
   }
@@ -2473,12 +2484,21 @@ ${passId ? `<div class="center" style="font-size:9px;color:#888;font-family:mono
                   {denialReason === 'cancelled' ? t.membershipCancelled
                     : denialReason === 'suspended' ? t.membershipSuspended
                     : denialReason === 'frozen' ? t.membershipFrozen
+                    : denialReason === 'not_found' ? t.memberNotFound
+                    : denialReason === 'invalid_qr' || denialReason === 'wrong_type' ? t.invalidQR
+                    : denialReason === 'invalid_pin' ? t.invalidPin
+                    : denialReason === 'outside_hours' ? t.outsideHours
                     : t.membershipExpired}
                 </div>
               </motion.div>
               {checkedMember && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.44 }}>
                   <div style={{ fontSize: FS.xl, fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginTop: 10 }}>{checkedMember.name}</div>
+                </motion.div>
+              )}
+              {denialMessage && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+                  <div style={{ fontSize: FS.sm, color: 'rgba(255,255,255,0.5)', marginTop: 10, fontWeight: 500 }}>{denialMessage}</div>
                 </motion.div>
               )}
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.54 }}>

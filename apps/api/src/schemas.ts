@@ -43,6 +43,9 @@ export const createPaymentSchema = z.object({
 
 // ─── Plans ────────────────────────────────────────────────────────────────────
 
+// HH:MM or HH:MM:SS — from HTML <input type="time">
+const timeString = z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Invalid time format').optional().nullable()
+
 export const createPlanSchema = z.object({
   name: z.string().min(1, 'Plan name is required').max(100),
   description: z.string().max(500).optional().nullable(),
@@ -50,6 +53,9 @@ export const createPlanSchema = z.object({
   duration_days: z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]).transform(Number),
   currency: z.string().length(3).default('XAF'),
   features: z.string().max(2000).optional().nullable(),
+  access_type: z.enum(['open', 'time_slot']).default('open'),
+  access_start_time: timeString,
+  access_end_time: timeString,
 })
 
 export const updatePlanSchema = z.object({
@@ -59,6 +65,9 @@ export const updatePlanSchema = z.object({
   duration_days: z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]).transform(Number).optional(),
   features: z.string().max(2000).optional().nullable(),
   is_active: z.boolean().optional(),
+  access_type: z.enum(['open', 'time_slot']).optional(),
+  access_start_time: timeString,
+  access_end_time: timeString,
 })
 
 // ─── Settings / Staff ─────────────────────────────────────────────────────────

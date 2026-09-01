@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -35,6 +35,10 @@ import {
 } from 'hugeicons-react'
 import { getSuperToken, setSuperToken, clearSuperToken } from '@/lib/auth'
 import { superApi } from '@/lib/api'
+
+// ─── Inactivity config ───────────────────────────────────────────────────────
+const IDLE_MS = 5 * 60 * 1000   // 5 minutes → auto-logout
+const WARN_MS = 4 * 60 * 1000   // 4 minutes → show warning banner
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 
@@ -114,7 +118,7 @@ const T = {
 
 // ─── Login form ───────────────────────────────────────────────────────────────
 
-function SuperAdminLogin({ onAuth }: { onAuth: () => void }) {
+function SuperAdminLogin({ onAuth, expired }: { onAuth: () => void; expired?: boolean }) {
   const [email, setEmail]     = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw]   = useState(false)
@@ -154,6 +158,12 @@ function SuperAdminLogin({ onAuth }: { onAuth: () => void }) {
             <p style={{ fontSize: 13, color: T.textSecondary, margin: 0 }}>Super Admin access</p>
           </div>
         </div>
+
+        {expired && !error && (
+          <div style={{ borderLeft: '2px solid #92400e', paddingLeft: 12, fontSize: 13, color: '#fbbf24', marginBottom: 16 }}>
+            Session expired due to inactivity. Please sign in again.
+          </div>
+        )}
 
         {error && (
           <div style={{ borderLeft: '2px solid #7f1d1d', paddingLeft: 12, fontSize: 13, color: '#f87171', marginBottom: 16 }}>
@@ -207,16 +217,50 @@ function SuperAdminLogin({ onAuth }: { onAuth: () => void }) {
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
 export function SuperAdminShell({ children }: { children: ReactNode }) {
-  const [collapsed, setCollapsed]     = useState(false)
+  const [collapsed, setCollapsed]         = useState(false)
   const [notifications, setNotifications] = useState(NOTIFS)
-  const [notifOpen, setNotifOpen]     = useState(false)
-  const [userOpen, setUserOpen]       = useState(false)
-  const [isAuthed, setIsAuthed]       = useState(false)
+  const [notifOpen, setNotifOpen]         = useState(false)
+  const [userOpen, setUserOpen]           = useState(false)
+  const [isAuthed, setIsAuthed]           = useState(false)
+  const [sessionExpired, setSessionExpired] = useState(false)
+  const [idleWarning, setIdleWarning]     = useState(false)
+  const lastActivity                      = useRef(Date.now())
   const path = usePathname()
   const unread = notifications.filter(n => !n.read).length
 
   useEffect(() => { setIsAuthed(!!getSuperToken()) }, [])
 
+  // ── Inactivity auto-logout ──────────────────────────────────────────────────
+  const resetIdle = useCallback(() => {
+    lastActivity.current = Date.now()
+    setIdleWarning(false)
+  }, [])
+
+  useEffect(() => {
+    if (!isAuthed) return
+
+    const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'] as const
+    ACTIVITY_EVENTS.forEach(ev => window.addEventListener(ev, resetIdle, { passive: true }))
+
+    const interval = setInterval(() => {
+      const idle = Date.now() - lastActivity.current
+      if (idle >= IDLE_MS) {
+        clearSuperToken()
+        setIsAuthed(false)
+        setSessionExpired(true)
+        setIdleWarning(false)
+      } else if (idle >= WARN_MS) {
+        setIdleWarning(true)
+      }
+    }, 10_000)
+
+    return () => {
+      ACTIVITY_EVENTS.forEach(ev => window.removeEventListener(ev, resetIdle))
+      clearInterval(interval)
+    }
+  }, [isAuthed, resetIdle])
+
+  // ── Sidebar keyboard shortcut ───────────────────────────────────────────────
   useEffect(() => {
     function handler(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'b') { e.preventDefault(); setCollapsed(c => !c) }
@@ -225,7 +269,7 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  if (!isAuthed) return <SuperAdminLogin onAuth={() => setIsAuthed(true)} />
+  if (!isAuthed) return <SuperAdminLogin onAuth={() => { setSessionExpired(false); setIsAuthed(true) }} expired={sessionExpired} />
 
   const CRUMBS: Record<string, string[]> = {
     '/superadmin':                    ['Dashboard'],
@@ -424,6 +468,18 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
             borderBottom: `1px solid ${T.border}`,
           }}
         >
+          {/* Idle warning */}
+          {idleWarning && (
+            <div style={{ position: 'fixed', top: 56, left: 0, right: 0, zIndex: 39, background: 'rgba(120,80,0,0.95)', backdropFilter: 'blur(8px)', borderBottom: '1px solid #92400e', padding: '8px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 13, color: '#fbbf24', fontWeight: 500 }}>
+                Session expiring due to inactivity — move your mouse or press any key to stay signed in.
+              </span>
+              <button onClick={resetIdle} style={{ fontSize: 12, fontWeight: 600, color: '#fbbf24', background: 'rgba(255,191,36,0.12)', border: '1px solid rgba(255,191,36,0.25)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}>
+                Stay signed in
+              </button>
+            </div>
+          )}
+
           {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <span style={{ fontSize: 14, color: T.textMuted }}>Platform</span>

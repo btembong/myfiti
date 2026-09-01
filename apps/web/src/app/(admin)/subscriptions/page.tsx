@@ -36,6 +36,9 @@ import { useSort, usePagination, SortableHeader, PaginationBar } from '../_compo
 interface Plan {
   id: string; name: string; cycle: 'monthly' | 'quarterly' | 'annual'
   price: number; currency: string; members: number; duration_days: number
+  access_type: 'open' | 'time_slot'
+  access_start_time: string | null
+  access_end_time: string | null
 }
 
 interface Subscription {
@@ -66,7 +69,7 @@ export default function SubscriptionsPage() {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
-  const [newPlan, setNewPlan] = useState({ name: '', price: 0, cycle: 'monthly' })
+  const [newPlan, setNewPlan] = useState({ name: '', price: 0, cycle: 'monthly', access_type: 'open', access_start_time: '06:00', access_end_time: '22:00' })
   const [plans, setPlans] = useState<Plan[]>([])
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [saving, setSaving] = useState(false)
@@ -74,7 +77,7 @@ export default function SubscriptionsPage() {
 
   // Edit plan modal
   const [editPlan, setEditPlan] = useState<Plan | null>(null)
-  const [editForm, setEditForm] = useState({ name: '', price: 0, cycle: 'monthly' })
+  const [editForm, setEditForm] = useState({ name: '', price: 0, cycle: 'monthly', access_type: 'open', access_start_time: '06:00', access_end_time: '22:00' })
   const [editSaving, setEditSaving] = useState(false)
 
   // Vouchers
@@ -129,13 +132,16 @@ export default function SubscriptionsPage() {
   const fetchData = useCallback(() => {
     setLoading(true)
     Promise.all([
-      api.get<{ plans: Array<{ id: string; name: string; price: string; duration_days: number; subscriber_count: string }> }>('/api/subscriptions/plans')
+      api.get<{ plans: Array<{ id: string; name: string; price: string; duration_days: number; subscriber_count: string; access_type?: string; access_start_time?: string | null; access_end_time?: string | null }> }>('/api/subscriptions/plans')
         .then(d => setPlans((d.plans ?? []).map(p => ({
           id: p.id, name: p.name,
           cycle: p.duration_days <= 31 ? 'monthly' as const : p.duration_days <= 100 ? 'quarterly' as const : 'annual' as const,
           price: parseFloat(p.price ?? '0'), currency: 'XAF',
           members: parseInt(p.subscriber_count ?? '0'),
           duration_days: p.duration_days,
+          access_type: (p.access_type ?? 'open') as 'open' | 'time_slot',
+          access_start_time: p.access_start_time ?? null,
+          access_end_time: p.access_end_time ?? null,
         }))))
         .catch(catchToast('Failed to load plans')),
 
@@ -160,10 +166,15 @@ export default function SubscriptionsPage() {
     setSaving(true)
     try {
       const duration = newPlan.cycle === 'monthly' ? 30 : newPlan.cycle === 'quarterly' ? 90 : 365
-      await api.post('/api/subscriptions/plans', { name: newPlan.name, price: newPlan.price, duration_days: duration })
+      await api.post('/api/subscriptions/plans', {
+        name: newPlan.name, price: newPlan.price, duration_days: duration,
+        access_type: newPlan.access_type,
+        access_start_time: newPlan.access_type === 'time_slot' ? newPlan.access_start_time : null,
+        access_end_time:   newPlan.access_type === 'time_slot' ? newPlan.access_end_time   : null,
+      })
       showSuccess(`Plan "${newPlan.name}" created`)
       setCreateOpen(false)
-      setNewPlan({ name: '', price: 0, cycle: 'monthly' })
+      setNewPlan({ name: '', price: 0, cycle: 'monthly', access_type: 'open', access_start_time: '06:00', access_end_time: '22:00' })
       fetchData()
     } catch (err) { showError(err instanceof Error ? err.message : 'Failed to create plan') }
     finally { setSaving(false) }
@@ -176,6 +187,9 @@ export default function SubscriptionsPage() {
       const duration = editForm.cycle === 'monthly' ? 30 : editForm.cycle === 'quarterly' ? 90 : 365
       await api.patch(`/api/subscriptions/plans/${editPlan.id}`, {
         name: editForm.name, price: editForm.price, duration_days: duration,
+        access_type: editForm.access_type,
+        access_start_time: editForm.access_type === 'time_slot' ? editForm.access_start_time : null,
+        access_end_time:   editForm.access_type === 'time_slot' ? editForm.access_end_time   : null,
       })
       showSuccess(`Plan "${editForm.name}" updated`)
       setEditPlan(null)
@@ -186,7 +200,12 @@ export default function SubscriptionsPage() {
 
   function openEditPlan(plan: Plan) {
     setEditPlan(plan)
-    setEditForm({ name: plan.name, price: plan.price, cycle: plan.cycle })
+    setEditForm({
+      name: plan.name, price: plan.price, cycle: plan.cycle,
+      access_type: plan.access_type ?? 'open',
+      access_start_time: plan.access_start_time ?? '06:00',
+      access_end_time:   plan.access_end_time   ?? '22:00',
+    })
   }
 
   function archivePlan(plan: Plan) {
@@ -316,6 +335,11 @@ export default function SubscriptionsPage() {
                   ₣{plan.price.toLocaleString('fr-CM')}
                 </Text>
                 <Text size="xs" c="dimmed" mb="sm">per {plan.cycle === 'monthly' ? 'month' : plan.cycle === 'quarterly' ? 'quarter' : 'year'}</Text>
+                {plan.access_type === 'time_slot' && plan.access_start_time && plan.access_end_time && (
+                  <Badge size="xs" color="violet" variant="light" mb="xs">
+                    {plan.access_start_time.slice(0, 5)} – {plan.access_end_time.slice(0, 5)}
+                  </Badge>
+                )}
                 <Divider mb="sm" />
                 <Group gap="xs">
                   <UserGroupIcon size={13} style={{ color: '#9ca3af' }} />
@@ -629,6 +653,29 @@ export default function SubscriptionsPage() {
             ]}
             radius="md" size="sm"
           />
+          <Switch
+            label="Restrict access to time window"
+            description="Members on this plan can only check in during the set hours."
+            checked={newPlan.access_type === 'time_slot'}
+            onChange={e => setNewPlan(p => ({ ...p, access_type: e.currentTarget.checked ? 'time_slot' : 'open' }))}
+            size="sm"
+          />
+          {newPlan.access_type === 'time_slot' && (
+            <Group grow gap="sm">
+              <TextInput
+                label="Start time" type="time"
+                value={newPlan.access_start_time}
+                onChange={e => setNewPlan(p => ({ ...p, access_start_time: e.target.value }))}
+                radius="md" size="sm"
+              />
+              <TextInput
+                label="End time" type="time"
+                value={newPlan.access_end_time}
+                onChange={e => setNewPlan(p => ({ ...p, access_end_time: e.target.value }))}
+                radius="md" size="sm"
+              />
+            </Group>
+          )}
           <Group justify="flex-end" mt="xs">
             <Button variant="default" size="sm" onClick={() => setCreateOpen(false)}>Cancel</Button>
             <Button size="sm" color="indigo" loading={saving} leftSection={<CheckmarkCircle01Icon size={14} />}
@@ -670,6 +717,29 @@ export default function SubscriptionsPage() {
             ]}
             radius="md" size="sm"
           />
+          <Switch
+            label="Restrict access to time window"
+            description="Members on this plan can only check in during the set hours."
+            checked={editForm.access_type === 'time_slot'}
+            onChange={e => setEditForm(f => ({ ...f, access_type: e.currentTarget.checked ? 'time_slot' : 'open' }))}
+            size="sm"
+          />
+          {editForm.access_type === 'time_slot' && (
+            <Group grow gap="sm">
+              <TextInput
+                label="Start time" type="time"
+                value={editForm.access_start_time}
+                onChange={e => setEditForm(f => ({ ...f, access_start_time: e.target.value }))}
+                radius="md" size="sm"
+              />
+              <TextInput
+                label="End time" type="time"
+                value={editForm.access_end_time}
+                onChange={e => setEditForm(f => ({ ...f, access_end_time: e.target.value }))}
+                radius="md" size="sm"
+              />
+            </Group>
+          )}
           <Group justify="flex-end" mt="xs">
             <Button variant="default" size="sm" onClick={() => setEditPlan(null)}>Cancel</Button>
             <Button size="sm" color="indigo" loading={editSaving} onClick={savePlanEdit}>

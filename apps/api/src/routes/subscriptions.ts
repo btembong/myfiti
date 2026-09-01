@@ -56,13 +56,16 @@ subscriptionsRouter.get('/plans', async (req, res) => {
 // POST /api/subscriptions/plans
 subscriptionsRouter.post('/plans', validate(createPlanSchema), async (req, res) => {
   try {
-    const { name, description, price, duration_days, currency, features } = req.body
+    const { name, description, price, duration_days, currency, features, access_type, access_start_time, access_end_time } = req.body
     const id = uuid()
+    const aType = access_type ?? 'open'
+    const aStart = aType === 'time_slot' ? (access_start_time ?? null) : null
+    const aEnd   = aType === 'time_slot' ? (access_end_time   ?? null) : null
     await tenantQuery(
       req.tenant.slug,
-      `INSERT INTO membership_plans (id, name, description, price, currency, duration_days, features, is_active, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, NOW())`,
-      [id, name, description ?? null, parseFloat(price), currency ?? 'XAF', parseInt(duration_days), features ?? null],
+      `INSERT INTO membership_plans (id, name, description, price, currency, duration_days, features, access_type, access_start_time, access_end_time, is_active, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, NOW())`,
+      [id, name, description ?? null, parseFloat(price), currency ?? 'XAF', parseInt(duration_days), features ?? null, aType, aStart, aEnd],
     )
     res.status(201).json({ id, ok: true })
   } catch (err) {
@@ -76,7 +79,7 @@ subscriptionsRouter.patch('/plans/:id', validate(updatePlanSchema), async (req, 
   try {
     const { id } = req.params
     const fields = req.body as Record<string, unknown>
-    const allowed = ['name', 'description', 'price', 'duration_days', 'features', 'is_active']
+    const allowed = ['name', 'description', 'price', 'duration_days', 'features', 'is_active', 'access_type', 'access_start_time', 'access_end_time']
 
     const params: unknown[] = []
     const sets: string[] = []

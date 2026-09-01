@@ -67,6 +67,11 @@ export async function provisionTenantSchema(schemaName: string) {
       created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`,
 
+    // Idempotent column additions for time-based access control on membership plans
+    `ALTER TABLE "${schemaName}".membership_plans ADD COLUMN IF NOT EXISTS access_type TEXT NOT NULL DEFAULT 'open'`,
+    `ALTER TABLE "${schemaName}".membership_plans ADD COLUMN IF NOT EXISTS access_start_time TIME`,
+    `ALTER TABLE "${schemaName}".membership_plans ADD COLUMN IF NOT EXISTS access_end_time TIME`,
+
     `CREATE TABLE IF NOT EXISTS "${schemaName}".subscriptions (
       id               TEXT PRIMARY KEY,
       member_id        TEXT NOT NULL REFERENCES "${schemaName}".members(id),

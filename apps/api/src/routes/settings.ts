@@ -154,41 +154,60 @@ settingsRouter.post('/billing/initiate-payment', async (req, res) => {
 // ─── PATCH /api/settings/billing/plan ────────────────────────────────────────
 // Change the gym's myfiti subscription plan. Owner only.
 
+const DURATION_MONTHS: Record<string, number> = { monthly: 1, '6mo': 6, '1yr': 12, '2yr': 24 }
+const DURATION_DISCOUNT: Record<string, number> = { monthly: 1.0, '6mo': 0.90, '1yr': 0.80, '2yr': 0.70 }
+
 settingsRouter.patch('/billing/plan', requireRole('owner'), async (req, res) => {
   try {
-    const { plan } = req.body as { plan?: string }
+    const { plan, duration = 'monthly' } = req.body as { plan?: string; duration?: string }
     const validPlans = ['starter', 'growth', 'growth_plus', 'enterprise']
+    const validDurations = ['monthly', '6mo', '1yr', '2yr']
     if (!plan || !validPlans.includes(plan)) {
       return res.status(400).json({ error: 'Invalid plan. Choose: starter, growth, growth_plus, or enterprise.' })
+    }
+    if (!validDurations.includes(duration)) {
+      return res.status(400).json({ error: 'Invalid duration.' })
     }
     if (plan === req.tenant.plan) {
       return res.status(400).json({ error: 'You are already on this plan.' })
     }
 
     const prevPlan = req.tenant.plan
-    const newAmount = PLAN_PRICE_XAF[plan] ?? 0
+    const baseMonthly = PLAN_PRICE_XAF[plan] ?? 0
+    const months = DURATION_MONTHS[duration] ?? 1
+    const discount = DURATION_DISCOUNT[duration] ?? 1.0
+    const perMonth = Math.round(baseMonthly * discount)
+    const invoiceAmount = perMonth * months
 
-    // Update tenant plan
+    // Update tenant plan + set renewal date based on duration
+    const renewalAt = new Date()
+    renewalAt.setMonth(renewalAt.getMonth() + months)
+
     await db.update(globalSchema.tenants)
-      .set({ plan: plan as 'starter' | 'growth' | 'growth_plus' | 'enterprise', updated_at: new Date() })
+      .set({
+        plan: plan as 'starter' | 'growth' | 'growth_plus' | 'enterprise',
+        subscription_renewal_at: baseMonthly > 0 ? renewalAt : null,
+        updated_at: new Date(),
+      })
       .where(eq(globalSchema.tenants.id, req.tenant.id))
 
-    // If upgrading to a paid plan, generate a pending invoice for this month
-    if (newAmount > 0) {
+    // If upgrading to a paid plan, generate a pending invoice for the full duration
+    if (invoiceAmount > 0) {
       const invoiceId = uuid()
       const now = new Date()
-      const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      const periodEnd = new Date(now)
+      periodEnd.setMonth(periodEnd.getMonth() + months)
       const invoiceNum = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${invoiceId.slice(0, 6).toUpperCase()}`
       await globalQuery(
         `INSERT INTO platform_invoices (id, tenant_id, invoice_number, amount_xaf, plan, status, period_start, period_end, due_date, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $7, NOW(), NOW())
          ON CONFLICT DO NOTHING`,
-        [invoiceId, req.tenant.id, invoiceNum, newAmount, plan, now.toISOString().slice(0, 10), periodEnd.toISOString().slice(0, 10)],
+        [invoiceId, req.tenant.id, invoiceNum, invoiceAmount, plan, now.toISOString().slice(0, 10), periodEnd.toISOString().slice(0, 10)],
       )
     }
 
-    console.log(`[settings/billing/plan] Tenant ${req.tenant.slug}: ${prevPlan} → ${plan}`)
-    return res.json({ ok: true, plan, message: plan === 'starter' ? 'Downgraded to Starter.' : `Upgraded to ${plan} plan.` })
+    console.log(`[settings/billing/plan] Tenant ${req.tenant.slug}: ${prevPlan} → ${plan} (${duration})`)
+    return res.json({ ok: true, plan, duration, message: plan === 'starter' ? 'Downgraded to Starter.' : `Upgraded to ${plan} plan.` })
   } catch (err) {
     console.error('[settings/billing/plan PATCH]', err)
     return res.status(500).json({ error: 'Failed to change plan.' })

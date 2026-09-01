@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { setToken, setTenantSlug, decodeToken } from '@/lib/auth'
-import { ViewIcon, ViewOffIcon, Loading03Icon } from 'hugeicons-react'
+import { ViewIcon, ViewOffIcon, Loading03Icon, LockIcon, Mail01Icon, ArrowRight01Icon } from 'hugeicons-react'
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
@@ -34,6 +34,7 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [suspended, setSuspended] = useState<{ tenantName: string } | null>(null)
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
@@ -57,6 +58,10 @@ export default function LoginPage() {
           router.push(`/signup?verify=${encodeURIComponent(form.email)}`)
           return
         }
+        if (data.suspended) {
+          setSuspended({ tenantName: data.tenantName ?? 'your gym' })
+          return
+        }
         setError(data.error || 'Invalid email or password.')
         return
       }
@@ -71,6 +76,86 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (suspended) {
+    return (
+      <div className="w-full" style={{ maxWidth: 420 }}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, ease: EASE }}
+          style={{ background: '#0a0a0a', border: '1px solid #2a1515', borderRadius: 16, padding: 32 }}
+        >
+          {/* Icon */}
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: '#1a0a0a', border: '1px solid #3a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+            <LockIcon size={22} color="#ef4444" />
+          </div>
+
+          {/* Heading */}
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f0f0f0', margin: '0 0 8px', letterSpacing: '-0.01em' }}>
+            Account Suspended
+          </h2>
+          <p style={{ fontSize: 13, color: '#555', margin: '0 0 20px', lineHeight: 1.6 }}>
+            <strong style={{ color: '#888' }}>{suspended.tenantName}</strong> has been suspended on the myfiti platform.
+            Access to your dashboard and member data is temporarily restricted.
+          </p>
+
+          {/* Reasons */}
+          <div style={{ background: '#0f0f0f', border: '1px solid #1f1f1f', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#3a3a3a', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+              Common reasons
+            </p>
+            {[
+              'Outstanding subscription payment not received',
+              'Subscription plan expired with no renewal',
+              'Violation of myfiti Terms of Service',
+            ].map((r, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: i < 2 ? 8 : 0 }}>
+                <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#3a3a3a', marginTop: 5, flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: '#444', lineHeight: 1.5 }}>{r}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Next steps */}
+          <p style={{ fontSize: 12, fontWeight: 600, color: '#3a3a3a', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+            What to do next
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+            {[
+              { step: '1', text: 'Contact myfiti billing support to understand the reason for suspension.' },
+              { step: '2', text: 'Settle any outstanding balance or clarify the issue with our team.' },
+              { step: '3', text: 'Once resolved, your account will be reactivated within 24 hours.' },
+            ].map(({ step, text }) => (
+              <div key={step} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <div style={{ width: 20, height: 20, borderRadius: 6, background: '#141414', border: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#555' }}>{step}</span>
+                </div>
+                <span style={{ fontSize: 12, color: '#555', lineHeight: 1.6 }}>{text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <a
+              href={`mailto:billing@myfiti.fit?subject=Account%20Suspension%20-%20${encodeURIComponent(suspended.tenantName)}&body=Hello%20myfiti%20team%2C%0A%0AMy%20gym%20account%20(${encodeURIComponent(suspended.tenantName)})%20has%20been%20suspended.%20I%20would%20like%20to%20resolve%20this%20issue.%0A%0AEmail%3A%20${encodeURIComponent(form.email)}%0A%0APlease%20advise%20on%20the%20next%20steps.%0A%0AThank%20you.`}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '11px 0', borderRadius: 10, fontSize: 13, fontWeight: 600, background: '#f0f0f0', color: '#0a0a0a', textDecoration: 'none', boxSizing: 'border-box' }}
+            >
+              <Mail01Icon size={15} /> Email Support
+              <ArrowRight01Icon size={14} />
+            </a>
+            <button
+              onClick={() => setSuspended(null)}
+              style={{ width: '100%', padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 500, background: 'none', border: '1px solid #1f1f1f', color: '#444', cursor: 'pointer' }}
+            >
+              Back to sign in
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    )
   }
 
   return (

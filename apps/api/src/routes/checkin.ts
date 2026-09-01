@@ -6,6 +6,21 @@ import { requireAuth, requireRole } from '../middleware/auth.js'
 import { tenantQuery } from '../db/client.js'
 import { addKioskClient, broadcastCheckin } from '../lib/kiosk-events.js'
 
+// ─── Time-slot helper ─────────────────────────────────────────────────────────
+
+function isInTimeSlot(startTime: string, endTime: string, tz: string): boolean {
+  const now = new Date()
+  const timeStr = now.toLocaleTimeString('en-US', { hour12: false, timeZone: tz, hour: '2-digit', minute: '2-digit' })
+  const [ch, cm] = timeStr.split(':').map(Number)
+  const [sh, sm] = startTime.split(':').map(Number)
+  const [eh, em] = endTime.split(':').map(Number)
+  const cur   = ch * 60 + cm
+  const start = sh * 60 + sm
+  const end   = eh * 60 + em
+  // Supports windows that cross midnight (e.g. 22:00–06:00)
+  return end >= start ? cur >= start && cur < end : cur >= start || cur < end
+}
+
 export const checkinRouter = Router()
 
 // ─── POST /api/checkin/verify-qr ─────────────────────────────────────────────
@@ -40,13 +55,17 @@ checkinRouter.post('/verify-qr', async (req, res) => {
 
     const { rows } = await tenantQuery(
       req.tenant.slug,
-      `SELECT m.*, s.status as sub_status, s.expires_at
+      `SELECT m.*, s.status as sub_status, s.expires_at,
+              mp.access_type, mp.access_start_time::text as access_start_time, mp.access_end_time::text as access_end_time,
+              COALESCE(gs.timezone, 'Africa/Douala') as gym_timezone
        FROM members m
        LEFT JOIN LATERAL (
-         SELECT status, expires_at FROM subscriptions
+         SELECT status, expires_at, plan_id FROM subscriptions
          WHERE member_id = m.id
          ORDER BY created_at DESC LIMIT 1
        ) s ON TRUE
+       LEFT JOIN membership_plans mp ON mp.id = s.plan_id
+       CROSS JOIN (SELECT COALESCE(timezone, 'Africa/Douala') as timezone FROM gym_settings WHERE id = 'singleton' LIMIT 1) gs
        WHERE m.id = $1
        LIMIT 1`,
       [memberId],
@@ -64,6 +83,23 @@ checkinRouter.post('/verify-qr', async (req, res) => {
         member: { name: result.name, avatar_url: result.avatar_url },
         message: 'Membership suspended.',
       })
+    }
+
+    // Check time-slot restriction if plan has one
+    if (result.access_type === 'time_slot' && result.access_start_time && result.access_end_time) {
+      const allowed = isInTimeSlot(
+        result.access_start_time as string,
+        result.access_end_time as string,
+        result.gym_timezone as string,
+      )
+      if (!allowed) {
+        return res.json({
+          ok: false,
+          reason: 'outside_hours',
+          member: { name: result.name, avatar_url: result.avatar_url },
+          message: `Access is only allowed between ${result.access_start_time} and ${result.access_end_time}.`,
+        })
+      }
     }
 
     // Record check-in
@@ -178,13 +214,17 @@ checkinRouter.post('/verify-pin', async (req, res) => {
 
     const { rows } = await tenantQuery(
       req.tenant.slug,
-      `SELECT m.*, s.status as sub_status, s.expires_at
+      `SELECT m.*, s.status as sub_status, s.expires_at,
+              mp.access_type, mp.access_start_time::text as access_start_time, mp.access_end_time::text as access_end_time,
+              COALESCE(gs.timezone, 'Africa/Douala') as gym_timezone
        FROM members m
        LEFT JOIN LATERAL (
-         SELECT status, expires_at FROM subscriptions
+         SELECT status, expires_at, plan_id FROM subscriptions
          WHERE member_id = m.id
          ORDER BY created_at DESC LIMIT 1
        ) s ON TRUE
+       LEFT JOIN membership_plans mp ON mp.id = s.plan_id
+       CROSS JOIN (SELECT COALESCE(timezone, 'Africa/Douala') as timezone FROM gym_settings WHERE id = 'singleton' LIMIT 1) gs
        WHERE m.pin = $1 AND m.status != 'inactive'
        LIMIT 1`,
       [String(pin)],
@@ -209,6 +249,23 @@ checkinRouter.post('/verify-pin', async (req, res) => {
         member: { name: result.name, avatar_url: result.avatar_url },
         message: 'Membership cancelled.',
       })
+    }
+
+    // Check time-slot restriction if plan has one
+    if (result.access_type === 'time_slot' && result.access_start_time && result.access_end_time) {
+      const allowed = isInTimeSlot(
+        result.access_start_time as string,
+        result.access_end_time as string,
+        result.gym_timezone as string,
+      )
+      if (!allowed) {
+        return res.json({
+          ok: false,
+          reason: 'outside_hours',
+          member: { name: result.name, avatar_url: result.avatar_url },
+          message: `Access is only allowed between ${result.access_start_time} and ${result.access_end_time}.`,
+        })
+      }
     }
 
     const checkinId = uuid()

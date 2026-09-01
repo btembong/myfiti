@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Paper, Text, Title, Group, Stack, Badge, Button,
-  ThemeIcon, Divider, Box, SimpleGrid, Flex, ActionIcon, Tooltip, Modal,
+  ThemeIcon, Divider, Box, SimpleGrid, Flex, ActionIcon, Tooltip, Modal, SegmentedControl,
 } from '@mantine/core'
 import {
   CreditCardIcon,
@@ -33,25 +33,43 @@ const fade = {
 const PLAN_LABEL: Record<string, string> = {
   starter: 'Starter', growth: 'Growth', growth_plus: 'Growth+', enterprise: 'Enterprise',
 }
-const PLAN_PRICE: Record<string, number> = {
+const PLAN_BASE_PRICE: Record<string, number> = {
   starter: 0, growth: 9900, growth_plus: 19900, enterprise: 49900,
+}
+// Keep PLAN_PRICE for existing references that use current plan's price
+const PLAN_PRICE = PLAN_BASE_PRICE
+
+type BillingDuration = 'monthly' | '6mo' | '1yr' | '2yr'
+
+const DURATION_OPTIONS: { value: BillingDuration; label: string; months: number; discount: number; savingLabel: string }[] = [
+  { value: 'monthly', label: 'Monthly',   months: 1,  discount: 1.00, savingLabel: '' },
+  { value: '6mo',     label: '6 months',  months: 6,  discount: 0.90, savingLabel: 'Save 10%' },
+  { value: '1yr',     label: '1 year',    months: 12, discount: 0.80, savingLabel: 'Save 20%' },
+  { value: '2yr',     label: '2 years',   months: 24, discount: 0.70, savingLabel: 'Save 30%' },
+]
+
+function computePrice(baseMonthly: number, duration: BillingDuration) {
+  const opt = DURATION_OPTIONS.find(o => o.value === duration)!
+  const perMonth = Math.round(baseMonthly * opt.discount)
+  const total    = perMonth * opt.months
+  return { perMonth, total, months: opt.months, savingLabel: opt.savingLabel }
 }
 
 const PLANS = [
   {
-    key: 'starter', name: 'Starter', price: 0, cycle: 'Free forever',
+    key: 'starter', name: 'Starter', basePrice: 0, cycle: 'Free forever',
     color: '#6b7280', badge: 'Free', badgeColor: 'gray',
     features: ['Up to 50 members', 'Member management', 'Check-in tracking', 'Basic payments', 'Dashboard & analytics'],
     missing:  ['Classes & scheduling', 'Trainer management', 'SMS & messaging', 'Priority support'],
   },
   {
-    key: 'growth', name: 'Growth', price: 9900, cycle: 'per month',
+    key: 'growth', name: 'Growth', basePrice: 9900, cycle: 'per month',
     color: '#6366f1', badge: 'Popular', badgeColor: 'indigo',
     features: ['Up to 200 members', 'Everything in Starter', 'Advanced analytics', 'Bulk email messaging', 'Custom branding'],
     missing:  ['Classes & scheduling', 'Trainer management', 'SMS campaigns'],
   },
   {
-    key: 'growth_plus', name: 'Growth+', price: 19900, cycle: 'per month',
+    key: 'growth_plus', name: 'Growth+', basePrice: 19900, cycle: 'per month',
     color: '#f59e0b', badge: 'Enterprise', badgeColor: 'yellow',
     features: ['Unlimited members', 'Everything in Growth', 'Classes & scheduling', 'Trainer management', 'SMS campaigns', 'Priority support', 'Custom integrations'],
     missing:  [],
@@ -89,6 +107,9 @@ export default function BillingPage() {
 
   // Iframe payment modal
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
+
+  // Duration picker
+  const [duration, setDuration] = useState<BillingDuration>('monthly')
 
   // Plan change modal
   const [changePlanKey, setChangePlanKey] = useState<string | null>(null)
@@ -139,7 +160,7 @@ export default function BillingPage() {
     if (!changePlanKey) return
     setChanging(true)
     try {
-      await api.patch('/api/settings/billing/plan', { plan: changePlanKey })
+      await api.patch('/api/settings/billing/plan', { plan: changePlanKey, duration })
       setBilling(b => b ? { ...b, plan: changePlanKey } : b)
       const label = PLAN_LABEL[changePlanKey] ?? changePlanKey
       notifications.show({ color: 'green', message: `Plan changed to ${label} successfully.` })
@@ -178,7 +199,7 @@ export default function BillingPage() {
   }
 
   const changePlan = PLANS.find(p => p.key === changePlanKey)
-  const isDowngrade = changePlanKey ? (PLAN_PRICE[changePlanKey] ?? 0) < planPrice : false
+  const isDowngrade = changePlanKey ? (PLAN_BASE_PRICE[changePlanKey] ?? 0) < planPrice : false
 
   return (
     <Stack gap="xl" p="xl" maw={820}>
@@ -287,11 +308,23 @@ export default function BillingPage() {
       {/* Plans comparison */}
       <motion.div variants={fade} custom={2} initial="hidden" animate="show">
         <Stack gap="sm" id="plans">
-          <Text size="xs" fw={700} tt="uppercase" style={{ letterSpacing: '0.1em', color: '#b0b7c3' }}>Plans</Text>
+          <Group justify="space-between" align="center">
+            <Text size="xs" fw={700} tt="uppercase" style={{ letterSpacing: '0.1em', color: '#b0b7c3' }}>Plans</Text>
+            <SegmentedControl
+              size="xs" radius="xl" value={duration}
+              onChange={v => setDuration(v as BillingDuration)}
+              data={DURATION_OPTIONS.map(o => ({
+                value: o.value,
+                label: o.savingLabel ? `${o.label} · ${o.savingLabel}` : o.label,
+              }))}
+              styles={{ root: { background: '#f4f5f9' }, label: { fontWeight: 600 } }}
+            />
+          </Group>
           <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
             {PLANS.map(plan => {
               const isCurrent = plan.key === planKey
-              const isUpgrade = (PLAN_PRICE[plan.key] ?? 0) > planPrice
+              const isUpgrade = (PLAN_BASE_PRICE[plan.key] ?? 0) > planPrice
+              const pricing = plan.basePrice > 0 ? computePrice(plan.basePrice, duration) : null
               return (
                 <Paper key={plan.name} radius="xl" p="xl" withBorder style={{
                   borderColor: isCurrent ? '#6366f1' : '#edeef4',
@@ -307,18 +340,27 @@ export default function BillingPage() {
                     <Badge size="xs" color={plan.badgeColor} variant="light">{plan.badge}</Badge>
                   </Group>
                   <Group gap={2} align="baseline" mb={4}>
-                    {plan.price === 0 ? (
+                    {!pricing ? (
                       <Text style={{ fontSize: '1.6rem', fontWeight: 900, color: '#111827', lineHeight: 1 }}>Free</Text>
                     ) : (
                       <>
                         <Text style={{ fontSize: '1.6rem', fontWeight: 900, color: '#111827', lineHeight: 1 }}>
-                          ₣{plan.price.toLocaleString('fr-CM')}
+                          ₣{pricing.perMonth.toLocaleString('fr-CM')}
                         </Text>
-                        <Text size="xs" c="dimmed">/{plan.cycle.replace('per ', '')}</Text>
+                        <Text size="xs" c="dimmed">/month</Text>
                       </>
                     )}
                   </Group>
-                  <Text size="xs" c="dimmed" mb="md">{plan.cycle}</Text>
+                  {pricing && duration !== 'monthly' ? (
+                    <Stack gap={2} mb="md">
+                      <Text size="xs" c="dimmed">
+                        ₣{pricing.total.toLocaleString('fr-CM')} billed every {pricing.months} months
+                      </Text>
+                      <Badge size="xs" color="green" variant="light">{computePrice(plan.basePrice, duration).savingLabel}</Badge>
+                    </Stack>
+                  ) : (
+                    <Text size="xs" c="dimmed" mb="md">{plan.basePrice > 0 ? 'billed monthly' : plan.cycle}</Text>
+                  )}
                   <Divider mb="md" />
                   <Stack gap={6} mb="lg">
                     {plan.features.map(f => (
@@ -501,7 +543,12 @@ export default function BillingPage() {
               <Text size="xs" c="dimmed">
                 {isDowngrade
                   ? `You will lose access to features not included in the ${changePlan.name} plan. This takes effect immediately.`
-                  : `You will be billed ₣${changePlan.price.toLocaleString('fr-CM')}/month. An invoice will be generated immediately.`}
+                  : (() => {
+                      const p = computePrice(changePlan.basePrice, duration)
+                      return duration === 'monthly'
+                        ? `You will be billed ₣${p.perMonth.toLocaleString('fr-CM')}/month. An invoice will be generated immediately.`
+                        : `You will be billed ₣${p.total.toLocaleString('fr-CM')} upfront (₣${p.perMonth.toLocaleString('fr-CM')}/month × ${p.months} months). An invoice will be generated immediately.`
+                    })()}
               </Text>
             </Box>
             <Group gap="md">

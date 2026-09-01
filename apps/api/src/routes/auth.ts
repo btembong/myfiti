@@ -528,11 +528,18 @@ authRouter.post('/login', async (req, res) => {
     let resolvedTenantId: string | null = owner.tenant_id ?? null
     if (resolvedTenantId) {
       const [tenant] = await db
-        .select({ slug: globalSchema.tenants.slug })
+        .select({ slug: globalSchema.tenants.slug, status: globalSchema.tenants.status, name: globalSchema.tenants.name })
         .from(globalSchema.tenants)
         .where(eq(globalSchema.tenants.id, resolvedTenantId))
         .limit(1)
       if (tenant) {
+        if (tenant.status === 'suspended' || tenant.status === 'cancelled') {
+          return res.status(403).json({
+            error: 'Your gym account has been suspended.',
+            suspended: true,
+            tenantName: tenant.name,
+          })
+        }
         tenantSlug = tenant.slug
       } else {
         // tenant_id is stale (tenant was re-seeded) — clear and fall through
@@ -543,11 +550,18 @@ authRouter.post('/login', async (req, res) => {
     if (!resolvedTenantId) {
       // Fallback: find tenant by owner_email case-insensitively (handles seeded data)
       const [tenant] = await db
-        .select({ id: globalSchema.tenants.id, slug: globalSchema.tenants.slug })
+        .select({ id: globalSchema.tenants.id, slug: globalSchema.tenants.slug, status: globalSchema.tenants.status, name: globalSchema.tenants.name })
         .from(globalSchema.tenants)
         .where(sql`LOWER(${globalSchema.tenants.owner_email}) = LOWER(${owner.email})`)
         .limit(1)
       if (tenant) {
+        if (tenant.status === 'suspended' || tenant.status === 'cancelled') {
+          return res.status(403).json({
+            error: 'Your gym account has been suspended.',
+            suspended: true,
+            tenantName: tenant.name,
+          })
+        }
         tenantSlug = tenant.slug
         resolvedTenantId = tenant.id
         // Self-heal: link this owner to their tenant
