@@ -87,7 +87,12 @@ export default function AnalyticsPage() {
     ]).then(([gr, ov, an]) => {
       setGyms(gr.gyms.map(mapGym))
       setOverview(ov)
-      setAnalytics(an)
+      setAnalytics({
+        mrr_history: an.mrr_history ?? [],
+        churn_by_month: an.churn_by_month ?? [],
+        cohorts: an.cohorts ?? [],
+        total_members: an.total_members ?? 0,
+      })
     }).catch(() => {})
   }, [])
 
