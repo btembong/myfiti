@@ -217,8 +217,9 @@ publicRouter.post('/gym/:slug/register', rateLimitApi, async (req, res) => {
       return res.status(400).json({ error: 'Invalid gym identifier.' })
     }
 
-    const { name, email, phone, plan_id } = req.body as {
+    const { name, email, phone, plan_id, payment_method, payment_ref } = req.body as {
       name?: string; email?: string; phone?: string; plan_id?: string
+      payment_method?: string; payment_ref?: string
     }
 
     if (!name?.trim() || !email?.trim()) {
@@ -254,11 +255,16 @@ publicRouter.post('/gym/:slug/register', rateLimitApi, async (req, res) => {
     const id = uuid()
     const qrCode = `myfiti-${id.slice(0, 8).toUpperCase()}`
 
+    // If plan selected + payment method provided, member created as inactive (pending payment)
+    const memberStatus = plan_id && payment_method ? 'inactive' : 'active'
+    const paymentStatus = plan_id && payment_method ? 'pending_payment' : (payment_method ? 'pending_payment' : null)
+    const paymentRef = uuid()
+
     await tenantQuery(
       slug,
-      `INSERT INTO members (id, name, email, phone, status, qr_code, joined_at, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, 'active', $5, NOW(), NOW(), NOW())`,
-      [id, name.trim(), email.toLowerCase().trim(), phone?.trim() ?? null, qrCode],
+      `INSERT INTO members (id, name, email, phone, status, qr_code, payment_status, payment_method, payment_ref, joined_at, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), NOW())`,
+      [id, name.trim(), email.toLowerCase().trim(), phone?.trim() ?? null, memberStatus, qrCode, paymentStatus, payment_method || null, paymentStatus ? paymentRef : null],
     )
 
     // Create pending subscription if plan selected
@@ -286,18 +292,169 @@ publicRouter.post('/gym/:slug/register', rateLimitApi, async (req, res) => {
       }
     }
 
-    // Welcome email — best-effort
-    sendMemberWelcomeEmail(
-      { email: email.toLowerCase().trim(), name: name.trim() },
-      gym.name,
-      qrCode,
-      planName,
-      expiresAt,
-    ).catch(err => console.warn('[public/register] welcome email failed:', err))
+    // Welcome email — only if member is active (no payment required)
+    if (memberStatus === 'active') {
+      sendMemberWelcomeEmail(
+        { email: email.toLowerCase().trim(), name: name.trim() },
+        gym.name,
+        qrCode,
+        planName,
+        expiresAt,
+        undefined,
+        id,
+      ).catch(err => console.warn('[public/register] welcome email failed:', err))
+    }
 
-    return res.status(201).json({ ok: true, memberId: id, qrCode })
+    return res.status(201).json({
+      ok: true,
+      memberId: id,
+      qrCode,
+      payment_ref: paymentStatus ? paymentRef : undefined,
+    })
   } catch (err) {
     console.error('[public/gym/:slug/register]', err)
     return res.status(500).json({ error: 'Registration failed. Please try again.' })
+  }
+})
+
+// ─── POST /api/public/gym/:slug/register-with-tranzak ──────────────────
+// Public member registration with Tranzak USSD payment — no auth required.
+// Creates member as inactive, sends USSD, polls until payment confirmed.
+
+publicRouter.post('/gym/:slug/register-with-tranzak', rateLimitApi, async (req, res) => {
+  try {
+    const { slug } = req.params
+    if (!SLUG_RE.test(slug)) {
+      return res.status(400).json({ error: 'Invalid gym identifier.' })
+    }
+
+    const { name, email, phone, plan_id, phone_for_payment } = req.body as {
+      name?: string; email?: string; phone?: string; plan_id?: string
+      phone_for_payment?: string
+    }
+
+    if (!name?.trim() || !email?.trim()) {
+      return res.status(400).json({ error: 'Name and email are required.' })
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ error: 'Invalid email address.' })
+    }
+    if (!phone_for_payment?.trim()) {
+      return res.status(400).json({ error: 'Phone number for payment is required.' })
+    }
+
+    // Resolve tenant and plan
+    const { rows: gymRows } = await globalQuery<{ id: string; name: string; status: string; currency: string }>(
+      `SELECT id, name, status, currency FROM tenants WHERE slug = $1 LIMIT 1`,
+      [slug],
+    )
+    const gym = gymRows[0]
+    if (!gym) return res.status(404).json({ error: 'Gym not found.' })
+    if (gym.status === 'suspended' || gym.status === 'cancelled') {
+      return res.status(403).json({ error: 'This gym is not accepting registrations.' })
+    }
+
+    const { tenantQuery } = await import('../db/client.js')
+
+    // Resolve plan
+    if (!plan_id || !UUID_RE.test(plan_id)) {
+      return res.status(400).json({ error: 'Valid plan required for payment.' })
+    }
+
+    const { rows: planRows } = await tenantQuery<{
+      id: string; name: string; price: number; duration_days: number
+    }>(
+      slug,
+      `SELECT id, name, price, duration_days FROM membership_plans WHERE id = $1 AND is_active = TRUE LIMIT 1`,
+      [plan_id],
+    )
+    const plan = planRows[0]
+    if (!plan) return res.status(404).json({ error: 'Plan not found.' })
+
+    // Check for duplicate email
+    const { rows: existing } = await tenantQuery<{ id: string }>(
+      slug,
+      `SELECT id FROM members WHERE email = $1 LIMIT 1`,
+      [email.toLowerCase().trim()],
+    )
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'A member with this email already exists at this gym.' })
+    }
+
+    // Create member (inactive, pending payment)
+    const memberId = uuid()
+    const qrCode = `myfiti-${memberId.slice(0, 8).toUpperCase()}`
+    const paymentRef = uuid()
+
+    await tenantQuery(
+      slug,
+      `INSERT INTO members (id, name, email, phone, status, qr_code, payment_status, payment_method, payment_ref, joined_at, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, 'inactive', $5, 'pending_payment', 'momo', $6, NOW(), NOW(), NOW())`,
+      [memberId, name.trim(), email.toLowerCase().trim(), phone?.trim() ?? null, qrCode, paymentRef],
+    )
+
+    // Create pending subscription
+    const subId = uuid()
+    const starts = new Date()
+    const expires = new Date(starts.getTime() + plan.duration_days * 86400000)
+    await tenantQuery(
+      slug,
+      `INSERT INTO subscriptions (id, member_id, plan_id, status, started_at, expires_at, created_at, updated_at)
+       VALUES ($1, $2, $3, 'pending', NOW(), $4, NOW(), NOW())`,
+      [subId, memberId, plan.id, expires.toISOString()],
+    )
+
+    // Send Tranzak USSD
+    const appId  = process.env.TRANZAK_APP_ID
+    const appKey = process.env.TRANZAK_APP_KEY
+    if (!appId || !appKey) {
+      return res.status(503).json({ error: 'Payment provider not configured. Please contact support.' })
+    }
+    const BASE_URL = process.env.TRANZAK_ENV === 'live' ? 'https://dsapi.tranzak.me' : 'https://sandbox.dsapi.tranzak.me'
+
+    // Auth
+    const authRes = await fetch(`${BASE_URL}/auth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appId, appKey }),
+    })
+    if (!authRes.ok) throw new Error('Tranzak auth failed')
+    const authBody = await authRes.json() as { data?: { token: string }; token?: string }
+    const token = authBody.data?.token ?? authBody.token ?? ''
+    if (!token) throw new Error('Tranzak auth: no token in response')
+
+    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
+    const merchantTransactionId = `mem-${memberId}`
+
+    // Create payment
+    const paymentRes = await fetch(`${BASE_URL}/xp021/v1/request/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        amount:               plan.price,
+        currencyCode:         gym.currency ?? 'XAF',
+        description:          `${gym.name} membership: ${plan.name}`,
+        merchantTransactionId,
+        returnUrl:            `${APP_URL}/join/${slug}?payment=success`,
+        customData:           { member_id: memberId, plan_id: plan.id },
+      }),
+    })
+    if (!paymentRes.ok) {
+      const errText = await paymentRes.text()
+      throw new Error(`Tranzak create error: ${errText}`)
+    }
+
+    const paymentData = await paymentRes.json() as { data?: { paymentUrl: string; requestId: string } }
+    const paymentId  = paymentData?.data?.requestId ?? uuid()
+
+    return res.status(201).json({
+      ok: true,
+      member_id: memberId,
+      qr_code: qrCode,
+      payment_id: paymentId,
+    })
+  } catch (err) {
+    console.error('[public/gym/:slug/register-with-tranzak]', err)
+    return res.status(500).json({ error: 'Failed to process payment registration.' })
   }
 })

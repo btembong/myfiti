@@ -701,24 +701,19 @@ export async function sendMemberWelcomeEmail(
   planName?: string | null,
   expiresAt?: string | null,
   pin?: string | null,
+  memberId?: string | null,
 ) {
   const first   = to.name.split(' ')[0]
   const expLine = expiresAt
     ? new Date(expiresAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
     : null
 
-  // Generate a real scannable QR code image and embed it inline
+  // Use hosted QR code URL for Gmail compatibility (data: URIs blocked by Gmail)
   let qrImgTag = `<span style="font-size:20px;font-weight:700;letter-spacing:0.14em;color:${C.pri};font-family:ui-monospace,Menlo,'Courier New',monospace;">${qrCode}</span>`
-  try {
-    const QRCode = (await import('qrcode')).default
-    const pngDataUrl: string = await QRCode.toDataURL(qrCode, {
-      width: 200,
-      margin: 2,
-      color: { dark: '#000000', light: '#ffffff' },
-    })
-    qrImgTag = `<img src="${pngDataUrl}" width="160" height="160" alt="QR Code" style="display:block;border-radius:8px;"/>`
-  } catch {
-    // fallback to text if qrcode generation fails
+  if (memberId) {
+    const apiUrl = process.env.API_URL ?? 'https://api.myfiti.fit'
+    const qrUrl = `${apiUrl}/qr-codes/${memberId}.png`
+    qrImgTag = `<img src="${qrUrl}" width="160" height="160" alt="QR Code" style="display:block;border-radius:8px;"/>`
   }
 
   const html = shell(`
