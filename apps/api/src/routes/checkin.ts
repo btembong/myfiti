@@ -73,7 +73,7 @@ checkinRouter.post('/verify-qr', async (req, res) => {
 
     const result = rows[0] as Record<string, unknown> | undefined
     if (!result) {
-      return res.status(404).json({ ok: false, reason: 'not_found', message: 'Member not found.' })
+      return res.json({ ok: false, reason: 'not_found', message: 'Member not found.' })
     }
 
     if (result.sub_status === 'suspended' || result.sub_status === 'cancelled') {
@@ -232,7 +232,7 @@ checkinRouter.post('/verify-pin', async (req, res) => {
 
     const result = rows[0] as Record<string, unknown> | undefined
     if (!result) {
-      return res.status(404).json({ ok: false, reason: 'not_found', message: 'No member found with that PIN.' })
+      return res.json({ ok: false, reason: 'not_found', message: 'No member found with that PIN.' })
     }
 
     if (result.status === 'suspended') {
