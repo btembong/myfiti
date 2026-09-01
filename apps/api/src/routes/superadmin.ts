@@ -303,7 +303,7 @@ superadminRouter.get('/gyms', async (req, res) => {
     const gyms = await Promise.all(
       tenants.map(async t => {
         try {
-          const [memberResult, monthlyRevResult, annualRevResult] = await Promise.all([
+          const [memberResult, revResult] = await Promise.all([
             tenantQuery<{ total: string; active: string }>(
               t.slug,
               `SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'active') as active FROM members`,
@@ -312,25 +312,19 @@ superadminRouter.get('/gyms', async (req, res) => {
               t.slug,
               `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE paid_at >= date_trunc('month', NOW())`,
             ),
-            tenantQuery<{ total: string }>(
-              t.slug,
-              `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE paid_at >= NOW() - INTERVAL '1 year'`,
-            ),
           ])
           const m = memberResult.rows[0]
-          const mr = monthlyRevResult.rows[0]
-          const ar = annualRevResult.rows[0]
+          const r = revResult.rows[0]
 
           return {
             ...t,
             totalMembers: parseInt(m?.total ?? '0'),
             activeMembers: parseInt(m?.active ?? '0'),
-            monthlyRevenueXAF: parseInt(mr?.total ?? '0'),
-            annualRevenueXAF: parseInt(ar?.total ?? '0'),
+            revenueXAF: parseInt(r?.total ?? '0'),
           }
         } catch (err) {
           console.error(`[superadmin/gyms] Failed to load stats for ${t.slug}:`, err)
-          return { ...t, totalMembers: 0, activeMembers: 0, monthlyRevenueXAF: 0, annualRevenueXAF: 0 }
+          return { ...t, totalMembers: 0, activeMembers: 0, revenueXAF: 0 }
         }
       }),
     )
@@ -348,9 +342,9 @@ superadminRouter.get('/gyms/:id', async (req, res) => {
       .where(eq(globalSchema.tenants.id, req.params.id)).limit(1)
     if (!tenant) return res.status(404).json({ error: 'Gym not found.' })
 
-    let stats = { totalMembers: 0, activeMembers: 0, checkinsToday: 0, monthlyRevenueXAF: 0, annualRevenueXAF: 0 }
+    let stats = { totalMembers: 0, activeMembers: 0, checkinsToday: 0, revenueXAF: 0 }
     try {
-      const [memberResult, checkinResult, monthlyRevResult, annualRevResult] = await Promise.all([
+      const [memberResult, checkinResult, revResult] = await Promise.all([
         tenantQuery<{ total: string; active: string }>(
           tenant.slug,
           `SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'active') as active FROM members`,
@@ -363,25 +357,19 @@ superadminRouter.get('/gyms/:id', async (req, res) => {
           tenant.slug,
           `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE paid_at >= date_trunc('month', NOW())`,
         ),
-        tenantQuery<{ total: string }>(
-          tenant.slug,
-          `SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE paid_at >= NOW() - INTERVAL '1 year'`,
-        ),
       ])
       const m = memberResult.rows[0]
       const c = checkinResult.rows[0]
-      const mr = monthlyRevResult.rows[0]
-      const ar = annualRevResult.rows[0]
+      const r = revResult.rows[0]
       stats = {
         totalMembers: parseInt(m?.total ?? '0'),
         activeMembers: parseInt(m?.active ?? '0'),
         checkinsToday: parseInt(c?.today ?? '0'),
-        monthlyRevenueXAF: parseInt(mr?.total ?? '0'),
-        annualRevenueXAF: parseInt(ar?.total ?? '0'),
+        revenueXAF: parseInt(r?.total ?? '0'),
       }
     } catch (err) {
       console.error(`[superadmin/gyms/:id] Failed to load stats for ${tenant.slug}:`, err)
-      // Tenant schema may not exist yet
+      stats = { totalMembers: 0, activeMembers: 0, checkinsToday: 0, revenueXAF: 0 }
     }
 
     res.json({ ...tenant, ...stats })
