@@ -96,12 +96,20 @@ settingsRouter.post('/billing/initiate-payment', async (req, res) => {
   try {
     const tenantId   = req.tenant.id
     const tenantSlug = req.tenant.slug
-    const plan       = req.tenant.plan
-    const amount     = PLAN_PRICE_XAF[plan] ?? 0
+
+    // If upgrading, caller passes target_plan + duration so we charge the right amount
+    const targetPlan = (req.body as { target_plan?: string; duration?: string }).target_plan ?? req.tenant.plan
+    const duration   = (req.body as { duration?: string }).duration ?? 'monthly'
+    const baseAmount = PLAN_PRICE_XAF[targetPlan] ?? 0
+    const months     = DURATION_MONTHS[duration] ?? 1
+    const discount   = DURATION_DISCOUNT[duration] ?? 1.0
+    const amount     = Math.round(baseAmount * discount) * months
 
     if (amount === 0) {
       return res.status(400).json({ error: 'No payment required for free plan.' })
     }
+
+    const plan = targetPlan
 
     const appId  = process.env.TRANZAK_APP_ID
     const appKey = process.env.TRANZAK_APP_KEY

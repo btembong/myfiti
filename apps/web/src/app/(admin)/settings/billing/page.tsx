@@ -76,19 +76,6 @@ const PLANS = [
   },
 ]
 
-const ENTERPRISE = {
-  key: 'enterprise', name: 'Enterprise',
-  features: [
-    'Everything in Growth+',
-    'Dedicated account manager',
-    'Custom SLA & uptime guarantee',
-    'Multi-location support',
-    'Priority phone & email support',
-    'Custom contract & invoicing',
-    'On-premise deployment option',
-  ],
-}
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface BillingInfo {
@@ -128,6 +115,9 @@ export default function BillingPage() {
   const [changePlanKey, setChangePlanKey] = useState<string | null>(null)
   const [changing, setChanging] = useState(false)
 
+  // Pending upgrade — set before opening payment iframe, applied on payment_complete
+  const [pendingUpgrade, setPendingUpgrade] = useState<{ plan: string; duration: BillingDuration } | null>(null)
+
   function reloadBilling() {
     Promise.all([
       api.get<BillingInfo>('/api/settings'),
@@ -147,15 +137,32 @@ export default function BillingPage() {
   // Listen for iframe postMessage when payment completes
   useEffect(() => {
     function onMessage(e: MessageEvent) {
-      if (e.data === 'payment_complete') {
-        setPaymentUrl(null)
+      if (e.data !== 'payment_complete') return
+      setPaymentUrl(null)
+
+      // If this payment was for a plan upgrade, activate the plan now
+      const upgrade = pendingUpgrade
+      if (upgrade) {
+        setPendingUpgrade(null)
+        api.patch('/api/settings/billing/plan', { plan: upgrade.plan, duration: upgrade.duration })
+          .then(() => {
+            setBilling(b => b ? { ...b, plan: upgrade.plan } : b)
+            const label = PLAN_LABEL[upgrade.plan] ?? upgrade.plan
+            notifications.show({ color: 'green', message: `Payment confirmed — upgraded to ${label}!` })
+            reloadBilling()
+          })
+          .catch(() => {
+            notifications.show({ color: 'yellow', message: 'Payment received. Your plan will update shortly.' })
+            reloadBilling()
+          })
+      } else {
         notifications.show({ color: 'green', message: 'Payment received! Your billing status will update shortly.' })
         reloadBilling()
       }
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [])
+  }, [pendingUpgrade])
 
   async function handlePayNow() {
     setPaying(true)
@@ -173,16 +180,30 @@ export default function BillingPage() {
     if (!changePlanKey) return
     setChanging(true)
     try {
-      await api.patch('/api/settings/billing/plan', { plan: changePlanKey, duration })
-      setBilling(b => b ? { ...b, plan: changePlanKey } : b)
-      const label = PLAN_LABEL[changePlanKey] ?? changePlanKey
-      notifications.show({ color: 'green', message: `Plan changed to ${label} successfully.` })
+      const targetPrice = PLAN_BASE_PRICE[changePlanKey] ?? 0
+
+      // Downgrade to free (Starter) — no payment needed, activate immediately
+      if (targetPrice === 0) {
+        await api.patch('/api/settings/billing/plan', { plan: changePlanKey, duration: 'monthly' })
+        setBilling(b => b ? { ...b, plan: changePlanKey } : b)
+        notifications.show({ color: 'green', message: 'Downgraded to Starter.' })
+        setChangePlanKey(null)
+        return
+      }
+
+      // Upgrade to paid plan — initiate payment first, activate on success
+      const res = await api.post<{ payment_url: string }>(
+        '/api/settings/billing/initiate-payment',
+        { target_plan: changePlanKey, duration },
+      )
+      if (!res.payment_url) throw new Error('No payment URL returned.')
+
+      // Store upgrade intent — will be applied when payment_complete postMessage arrives
+      setPendingUpgrade({ plan: changePlanKey, duration })
       setChangePlanKey(null)
-      // Reload invoices in case a new one was generated
-      api.get<{ invoices: PlatformInvoice[] }>('/api/settings/billing/invoices')
-        .then(inv => setInvoices(inv.invoices)).catch(() => {})
+      setPaymentUrl(res.payment_url)
     } catch (err) {
-      notifications.show({ color: 'red', message: err instanceof Error ? err.message : 'Failed to change plan.' })
+      notifications.show({ color: 'red', message: err instanceof Error ? err.message : 'Failed to initiate payment.' })
     } finally {
       setChanging(false)
     }
@@ -605,7 +626,7 @@ export default function BillingPage() {
                 loading={changing}
                 onClick={confirmPlanChange}
               >
-                {isDowngrade ? 'Confirm downgrade' : 'Confirm upgrade'}
+                {isDowngrade ? 'Confirm downgrade' : 'Proceed to payment →'}
               </Button>
             </Group>
           </Stack>
