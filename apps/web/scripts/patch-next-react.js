@@ -48,6 +48,8 @@ const NEXT_BUNDLES = [
 // Sentinel v2 — bump version to re-apply over old conditional polyfills
 const SENTINEL = 'myfiti-polyfill-v2'
 
+let totalPatched = 0
+
 // ── Next.js RSC React (react.react-server.js) — patch useEffectEvent + Activity ─
 // app-page.runtime.prod.js loads this file at runtime (not react.production.js).
 // It has 0 occurrences of useEffectEvent — must be patched here.
@@ -91,8 +93,6 @@ const CJS_POLYFILL = `
 exports.Activity = exports.Activity || function Activity(props) { return props.children; };
 exports.useEffectEvent = exports.useEffectEvent || function useEffectEvent(fn) { return fn; };
 `
-
-let totalPatched = 0
 
 // Patch Next.js bundles (marker-based)
 for (const { file, marker, polyfill } of NEXT_BUNDLES) {
