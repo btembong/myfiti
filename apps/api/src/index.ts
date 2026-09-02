@@ -61,10 +61,10 @@ app.use('/assets', express.static(path.join(process.cwd(), 'public/assets')))
 app.use('/api', router)
 
 // ─── API Docs (Scalar) ───────────────────────────────────────────────────────
-app.use('/docs', apiReference({ spec: { content: openApiSpec }, pageTitle: 'Myfiti API' }))
+app.use('/api/docs', apiReference({ spec: { content: openApiSpec }, pageTitle: 'Myfiti API' }))
 
 // ─── OpenAPI spec (raw JSON) ──────────────────────────────────────────────────
-app.get('/openapi.json', (_req, res) => res.json(openApiSpec))
+app.get('/api/openapi.json', (_req, res) => res.json(openApiSpec))
 
 // ─── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({
