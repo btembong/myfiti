@@ -3,6 +3,7 @@ import { validateEnv } from './lib/env.js'
 validateEnv()
 
 import express from 'express'
+import path from 'path'
 import helmet from 'helmet'
 import cors from 'cors'
 import morgan from 'morgan'
@@ -50,6 +51,9 @@ app.use('/api', tenantMiddleware)
 
 // ─── Public QR code images (no auth, no tenant middleware) ───────────────────
 app.use('/qr-codes', qrCodesRouter)
+
+// ─── Public static assets (logos, images used in emails) ─────────────────────
+app.use('/assets', express.static(path.join(process.cwd(), 'public/assets')))
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api', router)
