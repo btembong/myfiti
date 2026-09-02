@@ -7,6 +7,8 @@ import path from 'path'
 import helmet from 'helmet'
 import cors from 'cors'
 import morgan from 'morgan'
+import { apiReference } from '@scalar/express-api-reference'
+import { openApiSpec } from './openapi.js'
 
 import { tenantMiddleware } from './middleware/tenant.js'
 import { errorHandler } from './middleware/error.js'
@@ -57,6 +59,12 @@ app.use('/assets', express.static(path.join(process.cwd(), 'public/assets')))
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api', router)
+
+// ─── API Docs (Scalar) ───────────────────────────────────────────────────────
+app.use('/docs', apiReference({ spec: { content: openApiSpec }, pageTitle: 'Myfiti API' }))
+
+// ─── OpenAPI spec (raw JSON) ──────────────────────────────────────────────────
+app.get('/openapi.json', (_req, res) => res.json(openApiSpec))
 
 // ─── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({
