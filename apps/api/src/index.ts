@@ -39,6 +39,10 @@ app.use(cors({
 }))
 app.use(morgan('dev'))
 
+// ─── API Docs (Scalar) — before tenant middleware so no tenant required ───────
+app.use('/api/docs', apiReference({ spec: { content: openApiSpec }, pageTitle: 'Myfiti API' }))
+app.get('/api/openapi.json', (_req, res) => res.json(openApiSpec))
+
 // ─── Raw body for webhook signature verification ─────────────────────────────
 app.use('/api/webhooks', express.raw({ type: 'application/json' }))
 
@@ -59,12 +63,6 @@ app.use('/assets', express.static(path.join(process.cwd(), 'public/assets')))
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api', router)
-
-// ─── API Docs (Scalar) ───────────────────────────────────────────────────────
-app.use('/api/docs', apiReference({ spec: { content: openApiSpec }, pageTitle: 'Myfiti API' }))
-
-// ─── OpenAPI spec (raw JSON) ──────────────────────────────────────────────────
-app.get('/api/openapi.json', (_req, res) => res.json(openApiSpec))
 
 // ─── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({
