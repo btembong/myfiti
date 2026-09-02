@@ -82,7 +82,7 @@ export const subscriptionWorker = new Worker(
     }
 
     const to = { email: member.email, name: member.name }
-    const renewUrl = `${APP_URL}/member/renew?gym=${tenantSlug}`
+    const renewUrl = `${APP_URL}/member/renew?gym=${tenantSlug}&mid=${memberId}`
 
     switch (job.name) {
       case 'send-expiry-reminder':
