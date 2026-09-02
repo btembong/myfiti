@@ -252,15 +252,16 @@ export default function RenewScreen() {
             </View>
             <View style={[styles.subStatusPill, {
               backgroundColor: sub.status === 'active' ? accent + '18'
-                : sub.status === 'grace_period' ? '#fbbf2418' : '#ef444418',
+                : sub.status === 'grace_period' || sub.status === 'pending' ? '#fbbf2418' : '#ef444418',
             }]}>
               <Text style={[styles.subStatusText, {
                 color: sub.status === 'active' || sub.status === 'expiring_soon' ? accent
-                  : sub.status === 'grace_period' ? '#fbbf24' : '#ef4444',
+                  : sub.status === 'grace_period' || sub.status === 'pending' ? '#fbbf24' : '#ef4444',
               }]}>
                 {sub.status === 'active' ? `Expires ${fmtDate(sub.expires_at)}`
                   : sub.status === 'expiring_soon' ? `Expiring ${fmtDate(sub.expires_at)}`
                   : sub.status === 'grace_period' ? 'Grace period'
+                  : sub.status === 'pending' ? 'Payment pending'
                   : 'Expired'}
               </Text>
             </View>

@@ -234,11 +234,12 @@ function MemberRenewContent() {
     if (s.status === 'active')         return `Expires ${fmtDate(s.expires_at)}`
     if (s.status === 'expiring_soon')  return `Expiring ${fmtDate(s.expires_at)}`
     if (s.status === 'grace_period')   return 'Grace period'
+    if (s.status === 'pending')        return 'Payment pending'
     return 'Expired'
   }
   const subStatusColor = (s: SubInfo) =>
     s.status === 'active' || s.status === 'expiring_soon' ? C.ok
-    : s.status === 'grace_period' ? C.warn
+    : s.status === 'grace_period' || s.status === 'pending' ? C.warn
     : C.err
 
   if (loadingGym) return <Shell><Card><p style={{ margin: 0, fontSize: 13, color: C.mut, textAlign: 'center' }}>Loading…</p></Card></Shell>
