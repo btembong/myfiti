@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+const API_URL = ''  // use relative Next.js proxy routes
 
 const C = {
   bg: '#000000', card: '#0a0a0a', border: '#1a1a1a', surface: '#0d0d0d',
@@ -44,8 +44,8 @@ function MemberRenewContent() {
     if (!gymSlug) { setError('No gym specified.'); setLoading(false); return }
 
     Promise.all([
-      fetch(`${API_URL}/api/public/gym/${gymSlug}`).then(r => r.json()),
-      fetch(`${API_URL}/api/public/gym/${gymSlug}/plans`).then(r => r.json()),
+      fetch(`/api/public/gym/${gymSlug}`).then(r => r.json()),
+      fetch(`/api/public/gym/${gymSlug}/plans`).then(r => r.json()),
     ]).then(([gymData, plansData]) => {
       if (gymData.gym) setGym(gymData.gym)
       else setError(gymData.error ?? 'Gym not found.')
