@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment Integration — Beginner to Pro</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #080808;
+      color: #aaa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    nav {
+      background: #0c0c0c;
+      border-right: 1px solid #141414;
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #222 transparent;
+    }
+    nav::-webkit-scrollbar { width: 4px; }
+    nav::-webkit-scrollbar-thumb { background: #222; border-radius: 4px; }
+
+    .nav-logo {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e5e5e5;
+      padding: 0 20px 20px;
+      border-bottom: 1px solid #141414;
+      margin-bottom: 12px;
+    }
+    .nav-logo span { color: #f59e0b; }
+
+    .nav-section {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #333;
+      padding: 14px 20px 6px;
+    }
+
+    nav a {
+      display: block;
+      padding: 6px 20px;
+      color: #555;
+      text-decoration: none;
+      font-size: 12.5px;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    nav a:hover  { color: #ccc; }
+    nav a.active { color: #f59e0b; border-left-color: #f59e0b; background: #f59e0b0a; }
+
+    /* ── Main ── */
+    .main { padding: 48px 64px; max-width: 900px; }
+
+    .content > h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #e5e5e5;
+      margin-bottom: 8px;
+    }
+    .subtitle { font-size: 14px; color: #555; margin-bottom: 48px; }
+
+    /* ── Sections ── */
+    .doc-section {
+      margin-bottom: 72px;
+      scroll-margin-top: 32px;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      border-radius: 999px;
+      padding: 3px 12px;
+      margin-bottom: 12px;
+      border: 1px solid;
+    }
+    .beginner { color: #4ade80; border-color: #166534; background: #052e16; }
+    .mid      { color: #60a5fa; border-color: #1e3a5f; background: #0c1f35; }
+    .pro      { color: #f59e0b; border-color: #78350f; background: #1c0a00; }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #e5e5e5;
+      margin-bottom: 6px;
+    }
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ccc;
+      margin: 28px 0 10px;
+    }
+    h4 { font-size: 13px; font-weight: 600; color: #bbb; margin-bottom: 4px; }
+
+    .section-intro {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 20px;
+      border-left: 2px solid #1a1a1a;
+      padding-left: 12px;
+    }
+
+    p { margin-bottom: 14px; color: #888; }
+
+    /* ── Code ── */
+    pre {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 10px;
+      padding: 20px 24px;
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 12.5px;
+      line-height: 1.65;
+      overflow-x: auto;
+      margin: 12px 0 20px;
+      color: #aaa;
+    }
+    code {
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      background: #111;
+      border: 1px solid #1d1d1d;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 12px;
+      color: #ccc;
+    }
+    pre code { background: none; border: none; padding: 0; font-size: inherit; }
+
+    .key     { color: #60a5fa; }
+    .str     { color: #4ade80; }
+    .num     { color: #f59e0b; }
+    .comment { color: #333; font-style: italic; }
+    .method  { color: #f59e0b; font-weight: 700; }
+    .url     { color: #a78bfa; }
+    .kw      { color: #f472b6; }
+    .fn      { color: #60a5fa; }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 20px;
+      font-size: 13px;
+    }
+    th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #333;
+      border-bottom: 1px solid #141414;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #0f0f0f;
+      color: #777;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { color: #ccc; }
+
+    /* ── Callouts ── */
+    .callout {
+      display: flex;
+      gap: 14px;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 16px 0;
+    }
+    .callout-tip     { background: #052e16; border: 1px solid #166534; }
+    .callout-info    { background: #0c1f35; border: 1px solid #1e3a5f; }
+    .callout-warning { background: #1c150a; border: 1px solid #78350f; }
+    .callout-danger  { background: #1a0505; border: 1px solid #7f1d1d; }
+    .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .callout-body strong { display: block; color: #e5e5e5; margin-bottom: 4px; font-size: 13px; }
+    .callout-body p { margin: 0; font-size: 13px; }
+
+    /* ── Steps ── */
+    .steps { display: flex; flex-direction: column; gap: 0; margin: 14px 0 20px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+      border-left: 2px solid #141414;
+      margin-left: 16px;
+      padding-left: 24px;
+      position: relative;
+    }
+    .step-num {
+      position: absolute;
+      left: -13px;
+      top: 18px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #111;
+      border: 1px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #555;
+      flex-shrink: 0;
+    }
+    .step-body { flex: 1; }
+    .step-body h4 { color: #e5e5e5; margin-bottom: 6px; }
+    .step-body p  { font-size: 13px; margin: 0; }
+    .step-body pre { margin: 10px 0 0; }
+
+    /* ── Flow diagram ── */
+    .flow {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 10px;
+      padding: 24px;
+      margin: 14px 0 20px;
+      font-family: monospace;
+      font-size: 12.5px;
+      line-height: 2;
+      color: #555;
+    }
+    .flow .actor  { color: #60a5fa; font-weight: 700; }
+    .flow .action { color: #e5e5e5; }
+    .flow .note   { color: #333; font-style: italic; }
+    .flow .ok     { color: #4ade80; }
+    .flow .err    { color: #f87171; }
+    .flow .arrow  { color: #333; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .badge-green  { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+    .badge-blue   { background: #0c1f35; color: #60a5fa; border: 1px solid #1e3a5f; }
+    .badge-yellow { background: #1c150a; color: #f59e0b; border: 1px solid #78350f; }
+    .badge-red    { background: #1a0505; color: #f87171; border: 1px solid #7f1d1d; }
+    .badge-purple { background: #0f0b1f; color: #a78bfa; border: 1px solid #3b2a6f; }
+
+    /* ── Level divider ── */
+    .level-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 64px 0 48px;
+    }
+    .level-divider .ld-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      white-space: nowrap;
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid;
+    }
+    .ld-beginner { color: #4ade80; border-color: #166534; background: #052e16; }
+    .ld-mid      { color: #60a5fa; border-color: #1e3a5f; background: #0c1f35; }
+    .ld-pro      { color: #f59e0b; border-color: #78350f; background: #1c0a00; }
+    .level-divider::before,
+    .level-divider::after { content: ''; flex: 1; height: 1px; background: #151515; }
+
+    hr { border: none; border-top: 1px solid #131313; margin: 48px 0; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav>
+    <div class="nav-logo">Payment Integration Guide<br><span>Tranzak · Beginner to Pro</span></div>
+
+    <div class="nav-section">Beginner</div>
+    <a href="#what-is-payment-integration">What is Payment Integration?</a>
+    <a href="#payment-flow-types">Payment Flow Types</a>
+    <a href="#key-concepts">Key Concepts</a>
+    <a href="#tranzak-intro">Meet Tranzak</a>
+    <a href="#sandbox-vs-live">Sandbox vs Live</a>
+    <a href="#first-call">Your First API Call</a>
+
+    <div class="nav-section">Intermediate</div>
+    <a href="#auth">Authentication</a>
+    <a href="#hosted-payment">Hosted Payment (Redirect)</a>
+    <a href="#webhooks">Webhooks — Payment Notifications</a>
+    <a href="#webhook-security">Webhook Security</a>
+    <a href="#status-polling">Status Polling</a>
+    <a href="#ussd-push">USSD Push (Direct Charge)</a>
+    <a href="#idempotency">Idempotency</a>
+    <a href="#error-handling">Error Handling</a>
+
+    <div class="nav-section">Advanced / Pro</div>
+    <a href="#disbursement">Disbursement (Payout)</a>
+    <a href="#full-integration">Full Integration Pattern</a>
+    <a href="#js-implementation">JavaScript Implementation</a>
+    <a href="#webhook-handler">Production Webhook Handler</a>
+    <a href="#testing-strategy">Testing Strategy</a>
+    <a href="#security">Security Checklist</a>
+    <a href="#common-bugs">Common Bugs (Real Examples)</a>
+    <a href="#provider-comparison">Comparing Providers</a>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+  <div class="content">
+    <h1>Payment Integration — Beginner to Pro</h1>
+    <p class="subtitle">General payment API concepts explained from scratch, using Tranzak (our live provider) as the real implementation throughout.</p>
+
+    <!-- ══════════════════════════════════════════════ BEGINNER -->
+    <div class="level-divider"><span class="ld-label ld-beginner">Beginner</span></div>
+
+    <!-- What is Payment Integration -->
+    <div class="doc-section" id="what-is-payment-integration">
+      <div class="section-label beginner">Beginner</div>
+      <h2>What is Payment Integration?</h2>
+      <p class="section-intro">How software applications collect money — without handling cash or banking directly.</p>
+
+      <p>
+        A <strong style="color:#e5e5e5">payment integration</strong> is how your application connects to an external service
+        that processes real money transactions. Instead of building your own banking infrastructure
+        (which requires licenses, compliance, and years of work), you call a <strong style="color:#e5e5e5">payment provider's API</strong>
+        and they handle the actual movement of money.
+      </p>
+
+      <p>Think of it this way:</p>
+      <table>
+        <thead><tr><th>Your app does</th><th>The payment provider does</th></tr></thead>
+        <tbody>
+          <tr><td>Tells the provider "charge XAF 10,000 to this phone number"</td><td>Connects to mobile money network, triggers USSD prompt, waits for approval</td></tr>
+          <tr><td>Records the payment reference and waits for confirmation</td><td>Deducts from payer's account, deposits to merchant account</td></tr>
+          <tr><td>Updates the member's subscription when confirmed</td><td>Sends a webhook callback with the result</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Why not just accept cash?</h3>
+      <p>You can — and Myfiti supports cash payments too. But digital payments add:</p>
+      <table>
+        <thead><tr><th>Benefit</th><th>How it works</th></tr></thead>
+        <tbody>
+          <tr><td>Remote payment</td><td>Member pays from their phone at home, subscription activates automatically</td></tr>
+          <tr><td>No manual confirmation</td><td>Webhook arrives → subscription activated, no staff needed</td></tr>
+          <tr><td>Audit trail</td><td>Every transaction has a reference ID, timestamp, and status — no disputes</td></tr>
+          <tr><td>Partial automation</td><td>Renewal reminders + payment links sent by email → self-service</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <strong>Payment provider = payment gateway</strong>
+          <p>Payment provider, payment gateway, and payment processor are often used interchangeably. They all mean the same thing: the service that sits between your app and the banking network. Tranzak is ours for Cameroon/Central Africa mobile money.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Flow Types -->
+    <div class="doc-section" id="payment-flow-types">
+      <div class="section-label beginner">Beginner</div>
+      <h2>Payment Flow Types</h2>
+      <p class="section-intro">There are three fundamentally different ways a payment can happen — understanding these eliminates most integration confusion.</p>
+
+      <h3>Type 1 — Hosted Payment Page (Redirect)</h3>
+      <p>Your app sends the customer to the provider's payment page. The provider handles the UI. When done, the customer comes back to your site.</p>
+      <div class="flow">
+        <span class="actor">Customer</span>  <span class="arrow">→</span>  <span class="action">clicks "Pay Now" on your site</span><br>
+        <span class="actor">Your app</span>  <span class="arrow">→</span>  <span class="action">calls provider API → gets a payment URL</span><br>
+        <span class="actor">Your app</span>  <span class="arrow">→</span>  <span class="action">redirects customer to payment URL</span><br>
+        <span class="actor">Customer</span>  <span class="arrow">→</span>  <span class="action">fills card details / selects mobile money on provider's page</span><br>
+        <span class="actor">Provider</span>  <span class="arrow">→</span>  <span class="action">processes payment</span><br>
+        <span class="actor">Provider</span>  <span class="arrow">→</span>  <span class="action">calls YOUR webhook URL with result</span>  <span class="ok">(server-to-server)</span><br>
+        <span class="actor">Provider</span>  <span class="arrow">→</span>  <span class="action">redirects customer back to your <code>returnUrl</code></span>
+      </div>
+      <p><strong style="color:#e5e5e5">Used in Myfiti for:</strong> Web renewal page (<code>/member/renew</code>) when payment_method = mobile_money</p>
+      <p><strong style="color:#e5e5e5">Tranzak endpoint:</strong> <code>POST /xp021/v1/request/create</code></p>
+
+      <h3>Type 2 — Direct Charge / USSD Push</h3>
+      <p>Your server charges the customer's phone directly — no redirect. The customer receives a USSD pop-up on their handset and approves by entering their PIN.</p>
+      <div class="flow">
+        <span class="actor">Customer</span>  <span class="arrow">→</span>  <span class="action">enters phone number in your app</span><br>
+        <span class="actor">Your app</span>  <span class="arrow">→</span>  <span class="action">calls provider API with amount + phone number</span><br>
+        <span class="actor">Provider</span>  <span class="arrow">→</span>  <span class="action">sends USSD prompt to customer's phone</span>  <span class="note">(like a *123# menu)</span><br>
+        <span class="actor">Customer</span>  <span class="arrow">→</span>  <span class="action">approves with their mobile money PIN</span><br>
+        <span class="actor">Provider</span>  <span class="arrow">→</span>  <span class="action">calls YOUR webhook URL with result</span><br>
+        <span class="actor">Your app</span>  <span class="arrow">→</span>  <span class="action">activates subscription on webhook receipt</span>
+      </div>
+      <p><strong style="color:#e5e5e5">Used in Myfiti for:</strong> Mobile app in-app renewal, mobile app wallet top-up</p>
+      <p><strong style="color:#e5e5e5">Tranzak endpoint:</strong> <code>POST /xp021/v1/request/create-mobile-wallet-charge</code></p>
+
+      <h3>Type 3 — Disbursement / Payout</h3>
+      <p>Your server sends money <em>to</em> a customer's phone — the reverse of a charge. Used for refunds, cashouts, or prize payouts.</p>
+      <div class="flow">
+        <span class="actor">Your app</span>  <span class="arrow">→</span>  <span class="action">calls provider API with amount + recipient phone</span><br>
+        <span class="actor">Provider</span>  <span class="arrow">→</span>  <span class="action">deducts from YOUR merchant wallet</span><br>
+        <span class="actor">Provider</span>  <span class="arrow">→</span>  <span class="action">credits recipient's mobile money account</span><br>
+        <span class="actor">Provider</span>  <span class="arrow">→</span>  <span class="action">sends webhook confirming completion</span>
+      </div>
+      <p><strong style="color:#e5e5e5">Used in Myfiti for:</strong> Member wallet cashout</p>
+      <p><strong style="color:#e5e5e5">Tranzak endpoint:</strong> <code>POST /xp021/v1/request/create-mobile-wallet-payout</code></p>
+    </div>
+
+    <!-- Key Concepts -->
+    <div class="doc-section" id="key-concepts">
+      <div class="section-label beginner">Beginner</div>
+      <h2>Key Concepts</h2>
+      <p class="section-intro">Seven terms that appear in every payment integration — understand these first.</p>
+
+      <table>
+        <thead><tr><th>Term</th><th>What it means</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong style="color:#e5e5e5">Transaction Reference</strong></td>
+            <td>A unique ID <em>you</em> generate to identify this payment attempt. Used to link the provider's result back to your database record.</td>
+            <td><code>RENEW-b8160866-1725264000</code></td>
+          </tr>
+          <tr>
+            <td><strong style="color:#e5e5e5">Request ID</strong></td>
+            <td>A unique ID the <em>provider</em> assigns to your payment request. Use this to look up status.</td>
+            <td><code>TZ-abc123def456</code></td>
+          </tr>
+          <tr>
+            <td><strong style="color:#e5e5e5">Webhook</strong></td>
+            <td>A POST request the provider sends to your server when a payment completes. This is how you know it worked — do NOT rely on the customer returning to your site.</td>
+            <td><code>POST /api/webhooks/tranzak</code></td>
+          </tr>
+          <tr>
+            <td><strong style="color:#e5e5e5">callbackUrl</strong></td>
+            <td>The URL you give the provider so it knows where to send the webhook.</td>
+            <td><code>https://api.myfiti.fit/api/webhooks/tranzak?ctx=renew&amp;tenant=korafit&amp;id=sub-uuid</code></td>
+          </tr>
+          <tr>
+            <td><strong style="color:#e5e5e5">returnUrl</strong></td>
+            <td>Where the customer's browser goes after they finish on the provider's hosted page. (Browser redirect — different from webhook.)</td>
+            <td><code>https://app.myfiti.fit/payment/success</code></td>
+          </tr>
+          <tr>
+            <td><strong style="color:#e5e5e5">Idempotency</strong></td>
+            <td>Ensuring the same payment isn't processed twice even if your code calls the provider multiple times with the same reference.</td>
+            <td>Use the same <code>mchTransactionRef</code> — provider returns the same result instead of charging twice</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#e5e5e5">Pending → Successful</strong></td>
+            <td>Payments start as <code>pending</code> and transition to <code>successful</code> or <code>failed</code>. Never assume instant.</td>
+            <td>USSD push can take 30 seconds to 5 minutes to complete</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-danger">
+        <div class="callout-icon">🔴</div>
+        <div class="callout-body">
+          <strong>Never activate a subscription based on customer return to your site</strong>
+          <p>The customer can close the browser, modify URLs, or arrive at <code>returnUrl</code> even if payment failed. Only activate subscriptions inside your webhook handler, after verifying the provider's signature.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meet Tranzak -->
+    <div class="doc-section" id="tranzak-intro">
+      <div class="section-label beginner">Beginner</div>
+      <h2>Meet Tranzak</h2>
+      <p class="section-intro">The payment provider powering Myfiti's mobile money flows in Cameroon and Central Africa.</p>
+
+      <p>
+        <strong style="color:#e5e5e5">Tranzak</strong> is a fintech platform that connects to mobile money networks
+        (MTN MoMo, Orange Money, etc.) across Central Africa. It's the equivalent of Stripe for African mobile money.
+      </p>
+
+      <h3>What Tranzak supports</h3>
+      <table>
+        <thead><tr><th>Operation</th><th>Tranzak endpoint group</th><th>Networks</th></tr></thead>
+        <tbody>
+          <tr><td>Hosted payment (collect from customer)</td><td><code>/xp021/v1/request/create</code></td><td>MTN, Orange, and others</td></tr>
+          <tr><td>USSD push (charge phone directly)</td><td><code>/xp021/v1/request/create-mobile-wallet-charge</code></td><td>MTN MoMo, Orange Money</td></tr>
+          <tr><td>Payout (send money to phone)</td><td><code>/xp021/v1/request/create-mobile-wallet-payout</code></td><td>MTN, Orange</td></tr>
+          <tr><td>Status check</td><td><code>/xp021/v1/request/details</code></td><td>All</td></tr>
+          <tr><td>Auth token</td><td><code>/auth/token</code></td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Tranzak credentials you need</h3>
+      <table>
+        <thead><tr><th>Credential</th><th>What it is</th><th>In Myfiti env</th></tr></thead>
+        <tbody>
+          <tr><td><code>appId</code></td><td>Your merchant app identifier</td><td><code>TRANZAK_APP_ID</code></td></tr>
+          <tr><td><code>appKey</code></td><td>Your merchant secret key</td><td><code>TRANZAK_APP_KEY</code></td></tr>
+          <tr><td><code>webhookSecret</code></td><td>String Tranzak sends in webhook payloads for verification</td><td><code>TRANZAK_WEBHOOK_SECRET</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>How it compares to other providers</h3>
+      <table>
+        <thead><tr><th>Provider</th><th>Region</th><th>Primary method</th><th>API style</th></tr></thead>
+        <tbody>
+          <tr><td><strong style="color:#e5e5e5">Tranzak</strong></td><td>Central Africa</td><td>Mobile money (MTN, Orange)</td><td>REST + Bearer token (short-lived)</td></tr>
+          <tr><td>Stripe</td><td>Global</td><td>Card (Visa, Mastercard)</td><td>REST + API key (long-lived)</td></tr>
+          <tr><td>Flutterwave</td><td>Africa (wider)</td><td>Card + mobile money + bank</td><td>REST + API key</td></tr>
+          <tr><td>MTN MoMo API</td><td>MTN markets</td><td>Mobile money directly</td><td>REST + OAuth 2.0</td></tr>
+          <tr><td>PayStack</td><td>Nigeria / Ghana</td><td>Card + bank transfer</td><td>REST + Secret key</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sandbox vs Live -->
+    <div class="doc-section" id="sandbox-vs-live">
+      <div class="section-label beginner">Beginner</div>
+      <h2>Sandbox vs Live</h2>
+      <p class="section-intro">Always develop against the sandbox — it behaves identically but moves no real money.</p>
+
+      <table>
+        <thead><tr><th></th><th>Sandbox</th><th>Live</th></tr></thead>
+        <tbody>
+          <tr><td><strong style="color:#e5e5e5">Base URL</strong></td><td><code>https://sandbox.dsapi.tranzak.me</code></td><td><code>https://dsapi.tranzak.me</code></td></tr>
+          <tr><td><strong style="color:#e5e5e5">Money moved</strong></td><td>No — test only</td><td>Yes — real XAF</td></tr>
+          <tr><td><strong style="color:#e5e5e5">USSD push</strong></td><td>Simulated (auto-approves or use sandbox phone)</td><td>Real USSD on customer's phone</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Webhooks</strong></td><td>Sent to your callbackUrl (must be reachable)</td><td>Same</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Credentials</strong></td><td>Sandbox appId + appKey from Tranzak dashboard</td><td>Live credentials (separate)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Switching between sandbox and live in Myfiti</h3>
+      <p>The env var <code>TRANZAK_ENV</code> controls which base URL the code uses:</p>
+      <pre><span class="comment"># apps/api/.env</span>
+
+<span class="comment"># Sandbox (development)</span>
+TRANZAK_ENV=sandbox
+TRANZAK_APP_ID=your-sandbox-app-id
+TRANZAK_APP_KEY=your-sandbox-app-key
+
+<span class="comment"># Live (production) — set this on the VPS</span>
+TRANZAK_ENV=live
+TRANZAK_APP_ID=your-live-app-id
+TRANZAK_APP_KEY=your-live-app-key</pre>
+
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <strong>Sandbox webhooks need a public URL</strong>
+          <p>Tranzak's sandbox still sends real HTTP POST requests to your callbackUrl. If you're developing locally, Tranzak cannot reach <code>localhost:4000</code>. Use <strong>ngrok</strong> to create a public tunnel: <code>ngrok http 4000</code>, then use the generated URL as your callbackUrl.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- First Call -->
+    <div class="doc-section" id="first-call">
+      <div class="section-label beginner">Beginner</div>
+      <h2>Your First API Call</h2>
+      <p class="section-intro">Get an auth token from Tranzak — the first call every integration must make.</p>
+
+      <p>Before you can call any Tranzak endpoint, you need a <strong style="color:#e5e5e5">Bearer token</strong>. You get it by POSTing your <code>appId</code> and <code>appKey</code>.</p>
+
+      <pre><span class="comment"># Using curl — sandbox example</span>
+curl -X POST https://sandbox.dsapi.tranzak.me/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"appId":"YOUR_APP_ID","appKey":"YOUR_APP_KEY"}'
+
+<span class="comment"># Response</span>
+{
+  <span class="key">"data"</span>: {
+    <span class="key">"token"</span>:     <span class="str">"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."</span>,
+    <span class="key">"expiresAt"</span>: <span class="str">"2026-09-02T12:30:00Z"</span>
+  },
+  <span class="key">"success"</span>: <span class="num">true</span>
+}</pre>
+
+      <p>You then include this token in every subsequent call as a header:</p>
+      <pre>Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...</pre>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <strong>Tokens are short-lived</strong>
+          <p>Tranzak tokens expire. In production code (see <a href="#auth" style="color:#60a5fa">Authentication section</a>), you should fetch a fresh token before each request rather than caching one for hours. Myfiti's <code>tranzak.ts</code> does this automatically by calling <code>getAuthToken()</code> at the start of every <code>tranzakFetch()</code> call.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════ INTERMEDIATE -->
+    <div class="level-divider"><span class="ld-label ld-mid">Intermediate</span></div>
+
+    <!-- Authentication -->
+    <div class="doc-section" id="auth">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Authentication Deep Dive</h2>
+      <p class="section-intro">How Tranzak auth works under the hood and how Myfiti implements it.</p>
+
+      <p>Tranzak uses a two-step auth model: your <code>appId</code>/<code>appKey</code> are long-lived credentials; the <code>token</code> they generate is short-lived (expires in ~1 hour).</p>
+
+      <h3>Auth flow</h3>
+      <div class="flow">
+        <span class="actor">Your server</span>    <span class="arrow">→ POST /auth/token</span>    <span class="action">{ appId, appKey }</span><br>
+        <span class="actor">Tranzak</span>          <span class="arrow">→</span>                         <span class="ok">{ data: { token, expiresAt } }</span><br>
+        <span class="actor">Your server</span>    <span class="arrow">→ POST /xp021/v1/...</span> <span class="action">Authorization: Bearer &lt;token&gt;</span><br>
+        <span class="actor">Tranzak</span>          <span class="arrow">→</span>                         <span class="ok">{ data: {...}, success: true }</span>
+      </div>
+
+      <h3>Myfiti's implementation</h3>
+      <p>The <code>getAuthToken()</code> function in <code>apps/api/src/lib/tranzak.ts</code> fetches a fresh token on every call — no caching:</p>
+      <pre><span class="comment">// apps/api/src/lib/tranzak.ts — simplified</span>
+<span class="kw">async function</span> <span class="fn">getAuthToken</span>(appId, appKey) {
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">`${BASE_URL}/auth/token`</span>, {
+    method: <span class="str">'POST'</span>,
+    headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+    body: JSON.stringify({ appId, appKey }),
+  })
+
+  <span class="kw">const</span> body = <span class="kw">await</span> res.json()
+  <span class="comment">// Supports both { data: { token } } and { token } response shapes</span>
+  <span class="kw">const</span> token = body.data?.token ?? body.token
+  <span class="kw">if</span> (!token) <span class="kw">throw new</span> Error(<span class="str">`Tranzak auth error: ${JSON.stringify(body)}`</span>)
+  <span class="kw">return</span> token
+}
+
+<span class="comment">// Then every API call goes through tranzakFetch() which auto-fetches a token</span>
+<span class="kw">async function</span> <span class="fn">tranzakFetch</span>(path, options) {
+  <span class="kw">const</span> token = <span class="kw">await</span> <span class="fn">getAuthToken</span>()
+  <span class="kw">return</span> fetch(BASE_URL + path, {
+    ...options,
+    headers: { <span class="str">'Authorization'</span>: <span class="str">`Bearer ${token}`</span>, ...options.headers },
+  })
+}</pre>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <strong>Per-request auth is the safest pattern</strong>
+          <p>Fetching a fresh token per request adds ~100ms latency but eliminates all "expired token" errors. For high-volume systems you'd cache with a short TTL (e.g. 55 minutes), but for a gym management API this is unnecessary complexity.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hosted Payment -->
+    <div class="doc-section" id="hosted-payment">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Hosted Payment Page (Redirect Flow)</h2>
+      <p class="section-intro">The most common payment type — send the customer to Tranzak's secure payment page.</p>
+
+      <h3>Step 1 — Create a payment request</h3>
+      <pre><span class="method">POST</span> <span class="url">https://dsapi.tranzak.me/xp021/v1/request/create</span>
+Authorization: Bearer &lt;token&gt;
+Content-Type: application/json
+
+{
+  <span class="key">"amount"</span>:           <span class="num">10000</span>,
+  <span class="key">"currencyCode"</span>:     <span class="str">"XAF"</span>,
+  <span class="key">"description"</span>:      <span class="str">"GymFlow payment — ref: RENEW-b8160866-1725264000"</span>,
+  <span class="key">"mchTransactionRef"</span>: <span class="str">"RENEW-b8160866-1725264000"</span>,
+  <span class="key">"callbackUrl"</span>:      <span class="str">"https://api.myfiti.fit/api/webhooks/tranzak?ctx=public-renew&amp;tenant=korafit&amp;id=sub-uuid"</span>,
+  <span class="key">"returnUrl"</span>:        <span class="str">"https://app.myfiti.fit/payment/success"</span>
+}</pre>
+
+      <h3>Response — the payment URL</h3>
+      <pre>{
+  <span class="key">"data"</span>: {
+    <span class="key">"requestId"</span>: <span class="str">"TZ-abc123def456"</span>,
+    <span class="key">"status"</span>:    <span class="str">"PAYER_REDIRECT_REQUIRED"</span>,
+    <span class="key">"links"</span>: {
+      <span class="key">"paymentAuthUrl"</span>: <span class="str">"https://pay.tranzak.me/link/TZ-abc123def456"</span>,
+      <span class="key">"returnUrl"</span>:     <span class="str">"https://app.myfiti.fit/payment/success"</span>
+    }
+  },
+  <span class="key">"success"</span>: <span class="num">true</span>
+}</pre>
+
+      <h3>Step 2 — Redirect the customer</h3>
+      <p>Take <code>data.links.paymentAuthUrl</code> and redirect the customer's browser to it. They complete payment on Tranzak's hosted page.</p>
+
+      <div class="callout callout-danger">
+        <div class="callout-icon">🔴</div>
+        <div class="callout-body">
+          <strong>Common bug: wrong field name</strong>
+          <p>The payment URL is at <code>data.links.paymentAuthUrl</code> — NOT <code>data.paymentUrl</code>. This exact mistake caused a 502 error in Myfiti's production API. Always double-check response field names against the real API response, not assumptions.</p>
+        </div>
+      </div>
+
+      <h3>Step 3 — Store the requestId</h3>
+      <p>Save <code>data.requestId</code> to your database immediately. You'll need it to poll status and to match against incoming webhooks.</p>
+
+      <h3>Field reference</h3>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>amount</code></td><td>number</td><td>Yes</td><td>In the smallest currency unit (XAF has no decimals)</td></tr>
+          <tr><td><code>currencyCode</code></td><td>string</td><td>Yes</td><td><code>"XAF"</code>, <code>"USD"</code>, etc.</td></tr>
+          <tr><td><code>mchTransactionRef</code></td><td>string</td><td>Yes</td><td>Your unique reference — use for idempotency</td></tr>
+          <tr><td><code>callbackUrl</code></td><td>string</td><td>Yes</td><td>Your webhook URL — must be publicly reachable</td></tr>
+          <tr><td><code>returnUrl</code></td><td>string</td><td>No</td><td>Browser redirect after payment — NOT the result</td></tr>
+          <tr><td><code>description</code></td><td>string</td><td>No</td><td>Shown to customer on payment page</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Webhooks -->
+    <div class="doc-section" id="webhooks">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Webhooks — Payment Notifications</h2>
+      <p class="section-intro">How Tranzak tells your server that a payment completed — the most critical part of any integration.</p>
+
+      <p>
+        When a payment completes (success or failure), Tranzak sends a <strong style="color:#e5e5e5">POST request to your callbackUrl</strong>.
+        This is called a <strong style="color:#e5e5e5">webhook</strong>. Your server must receive it, verify it, and act on it.
+      </p>
+
+      <h3>Webhook payload structure</h3>
+      <pre><span class="comment">// POST /api/webhooks/tranzak?ctx=public-renew&amp;tenant=korafit&amp;id=sub-uuid</span>
+{
+  <span class="key">"eventType"</span>:  <span class="str">"REQUEST.COMPLETED"</span>,
+  <span class="key">"resourceId"</span>: <span class="str">"TZ-abc123def456"</span>,
+  <span class="key">"authKey"</span>:    <span class="str">"your-webhook-secret-string"</span>,
+  <span class="key">"resource"</span>: {
+    <span class="key">"requestId"</span>:        <span class="str">"TZ-abc123def456"</span>,
+    <span class="key">"mchTransactionRef"</span>: <span class="str">"RENEW-b8160866-1725264000"</span>,
+    <span class="key">"status"</span>:           <span class="str">"SUCCESSFUL"</span>,
+    <span class="key">"amount"</span>:           <span class="num">10000</span>,
+    <span class="key">"currencyCode"</span>:     <span class="str">"XAF"</span>,
+    <span class="key">"transactionTime"</span>:  <span class="str">"2026-09-02T09:15:32Z"</span>
+  }
+}</pre>
+
+      <h3>All possible status values</h3>
+      <table>
+        <thead><tr><th>Status</th><th>Meaning</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-green">SUCCESSFUL</span></td><td>Payment approved and funds transferred</td><td>Activate subscription / fulfill order</td></tr>
+          <tr><td><span class="badge badge-red">FAILED</span></td><td>Payment declined or error occurred</td><td>Mark payment as failed, notify user</td></tr>
+          <tr><td><span class="badge badge-red">CANCELLED</span></td><td>Customer cancelled on payment page</td><td>Mark as cancelled, prompt to retry</td></tr>
+          <tr><td><span class="badge badge-red">CANCELLED_BY_PAYER</span></td><td>Customer rejected USSD prompt</td><td>Mark as cancelled, prompt to retry</td></tr>
+          <tr><td><span class="badge badge-yellow">PENDING</span></td><td>Awaiting customer action</td><td>No action yet — wait for next webhook</td></tr>
+          <tr><td><span class="badge badge-yellow">PAYMENT_IN_PROGRESS</span></td><td>USSD sent, awaiting customer PIN</td><td>No action yet</td></tr>
+          <tr><td><span class="badge badge-yellow">PAYER_REDIRECT_REQUIRED</span></td><td>Awaiting redirect completion</td><td>No action yet</td></tr>
+        </tbody>
+      </table>
+
+      <h3>What your webhook handler must do</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Verify the authKey</h4>
+            <p>Check that <code>payload.authKey</code> matches your stored <code>TRANZAK_WEBHOOK_SECRET</code>. Reject with 401 if it doesn't.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Check for duplicates</h4>
+            <p>Look up <code>resource.mchTransactionRef</code> in your database. If already processed, return 200 immediately (don't process twice).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Only act on SUCCESSFUL</h4>
+            <p>If <code>resource.status !== 'SUCCESSFUL'</code>, log it but return 200 without activating anything.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Fulfill the order</h4>
+            <p>Using the context from query params (<code>?ctx=</code>, <code>&tenant=</code>, <code>&id=</code>), find the pending subscription and activate it.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h4>Respond 200 quickly</h4>
+            <p>Return <code>{ ok: true }</code> within 10 seconds. If you take longer, Tranzak may retry. Do heavy processing asynchronously after responding.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Webhook Security -->
+    <div class="doc-section" id="webhook-security">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Webhook Security</h2>
+      <p class="section-intro">How to verify that a webhook really came from Tranzak and not a malicious actor.</p>
+
+      <p>
+        Anyone who discovers your webhook URL could POST fake payment notifications to it.
+        This is why Tranzak sends an <strong style="color:#e5e5e5">authKey</strong> field inside every webhook payload.
+        You verify it against your stored webhook secret.
+      </p>
+
+      <h3>How Tranzak's authKey works</h3>
+      <p>Unlike some providers (Stripe uses HMAC-SHA256 on the raw body), Tranzak uses a simpler approach:</p>
+      <ul style="margin: 10px 0 14px; padding-left: 20px; color: #777; line-height: 2;">
+        <li>You configure a <strong style="color:#e5e5e5">webhook secret</strong> in your Tranzak dashboard</li>
+        <li>Tranzak includes that exact string as <code>authKey</code> in every webhook payload</li>
+        <li>You compare <code>payload.authKey</code> to your stored secret using a timing-safe comparison</li>
+      </ul>
+
+      <h3>Myfiti's implementation</h3>
+      <pre><span class="comment">// apps/api/src/routes/webhooks.ts</span>
+<span class="kw">import</span> crypto <span class="kw">from</span> <span class="str">'crypto'</span>
+
+<span class="kw">function</span> <span class="fn">verifyTranzakAuthKey</span>(authKey, secret) {
+  <span class="kw">if</span> (!authKey) <span class="kw">return false</span>
+  <span class="kw">try</span> {
+    <span class="comment">// timingSafeEqual prevents timing attacks — always use this for secret comparison</span>
+    <span class="kw">return</span> crypto.timingSafeEqual(
+      Buffer.from(authKey),
+      Buffer.from(secret)
+    )
+  } <span class="kw">catch</span> {
+    <span class="kw">return false</span>  <span class="comment">// length mismatch throws — treat as invalid</span>
+  }
+}
+
+<span class="comment">// In the webhook handler:</span>
+<span class="kw">if</span> (!<span class="fn">verifyTranzakAuthKey</span>(payload.authKey, webhookSecret)) {
+  <span class="kw">return</span> res.status(<span class="num">401</span>).json({ error: <span class="str">'invalid_authKey'</span> })
+}</pre>
+
+      <h3>Why timing-safe comparison?</h3>
+      <p>
+        A regular <code>===</code> string comparison stops as soon as it finds a mismatch — this leaks information
+        about how many characters were correct (timing attack). <code>crypto.timingSafeEqual</code> always takes
+        the same time regardless of where the mismatch is.
+      </p>
+
+      <h3>How other providers do security</h3>
+      <table>
+        <thead><tr><th>Provider</th><th>Method</th><th>What you check</th></tr></thead>
+        <tbody>
+          <tr><td>Tranzak</td><td>authKey in body</td><td><code>payload.authKey === WEBHOOK_SECRET</code></td></tr>
+          <tr><td>Stripe</td><td>HMAC-SHA256 signature header</td><td><code>stripe-signature</code> header — reconstructed from raw body</td></tr>
+          <tr><td>Flutterwave</td><td>Secret hash header</td><td><code>verif-hash</code> header === your secret</td></tr>
+          <tr><td>MTN MoMo</td><td>OAuth 2.0 + callback auth token</td><td>Bearer token in callback Authorization header</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <strong>Use raw body for HMAC-based providers</strong>
+          <p>For Stripe and similar providers, you must read the <em>raw request body</em> (not parsed JSON) to verify the signature — because JSON parsing can reorder fields and break the HMAC. In Express: <code>app.use('/webhooks/stripe', express.raw({ type: 'application/json' }))</code></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Polling -->
+    <div class="doc-section" id="status-polling">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Status Polling</h2>
+      <p class="section-intro">When webhooks aren't guaranteed — how to actively check payment status.</p>
+
+      <p>
+        Webhooks can occasionally fail (network issue, your server was down briefly). Polling is a fallback —
+        you periodically call the provider's status endpoint until the payment resolves.
+      </p>
+
+      <h3>Tranzak status endpoint</h3>
+      <pre><span class="method">GET</span> <span class="url">https://dsapi.tranzak.me/xp021/v1/request/details?requestId=TZ-abc123def456</span>
+Authorization: Bearer &lt;token&gt;
+
+<span class="comment">// Response</span>
+{
+  <span class="key">"data"</span>: {
+    <span class="key">"requestId"</span>:        <span class="str">"TZ-abc123def456"</span>,
+    <span class="key">"mchTransactionRef"</span>: <span class="str">"RENEW-b8160866-1725264000"</span>,
+    <span class="key">"status"</span>:           <span class="str">"SUCCESSFUL"</span>,
+    <span class="key">"amount"</span>:           <span class="num">10000</span>,
+    <span class="key">"currencyCode"</span>:     <span class="str">"XAF"</span>,
+    <span class="key">"transactionTime"</span>:  <span class="str">"2026-09-02T09:15:32Z"</span>
+  },
+  <span class="key">"success"</span>: <span class="num">true</span>
+}</pre>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <strong>Polling uses requestId, not mchTransactionRef</strong>
+          <p>The details endpoint requires Tranzak's own <code>requestId</code> (from the create response) — not your <code>mchTransactionRef</code>. Save the <code>requestId</code> to your database at payment creation time.</p>
+        </div>
+      </div>
+
+      <h3>Polling strategy</h3>
+      <table>
+        <thead><tr><th>Scenario</th><th>Strategy</th></tr></thead>
+        <tbody>
+          <tr><td>Mobile app — user is waiting on screen</td><td>Poll every 3–5 seconds, up to 2 minutes, then show "check back later"</td></tr>
+          <tr><td>Background job — no user waiting</td><td>Poll every 30 seconds for up to 24 hours, then mark as abandoned</td></tr>
+          <tr><td>Admin manual check</td><td>Single poll on demand via Scalar/Postman</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Myfiti's public polling endpoint</h3>
+      <p>The web renewal page uses this endpoint to show customers their payment status while they wait:</p>
+      <pre><span class="method">GET</span> <span class="url">https://api.myfiti.fit/api/public/gym/korafit/payment-status?pid=TZ-abc123&amp;mid=b8160866-...</span>
+
+{
+  <span class="key">"status"</span>:     <span class="str">"successful"</span>,
+  <span class="key">"expires_at"</span>: <span class="str">"2026-10-02T00:00:00Z"</span>
+}</pre>
+    </div>
+
+    <!-- USSD Push -->
+    <div class="doc-section" id="ussd-push">
+      <div class="section-label mid">Intermediate</div>
+      <h2>USSD Push (Direct Mobile Charge)</h2>
+      <p class="section-intro">Charge a customer's mobile money wallet without any redirect — they approve a USSD pop-up on their phone.</p>
+
+      <h3>When to use it vs hosted page</h3>
+      <table>
+        <thead><tr><th></th><th>USSD Push</th><th>Hosted Page</th></tr></thead>
+        <tbody>
+          <tr><td><strong style="color:#e5e5e5">UX</strong></td><td>Customer stays in your app — USSD appears on their phone</td><td>Customer is redirected away then comes back</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Requires</strong></td><td>Customer's phone number in advance</td><td>Nothing from customer upfront</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Best for</strong></td><td>Mobile apps, returning customers</td><td>Web checkout, first-time customers</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Failure mode</strong></td><td>Customer ignores/rejects USSD</td><td>Customer closes browser tab</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Making the charge request</h3>
+      <pre><span class="method">POST</span> <span class="url">https://dsapi.tranzak.me/xp021/v1/request/create-mobile-wallet-charge</span>
+Authorization: Bearer &lt;token&gt;
+Content-Type: application/json
+
+{
+  <span class="key">"amount"</span>:             <span class="num">10000</span>,
+  <span class="key">"currencyCode"</span>:       <span class="str">"XAF"</span>,
+  <span class="key">"mchTransactionRef"</span>:  <span class="str">"CHARGE-b8160866-1725264000"</span>,
+  <span class="key">"mobileWalletNumber"</span>: <span class="str">"237655123456"</span>,
+  <span class="key">"description"</span>:        <span class="str">"Monthly Gold membership — Kora Fit"</span>,
+  <span class="key">"payerNote"</span>:          <span class="str">"Gym membership payment"</span>,
+  <span class="key">"callbackUrl"</span>:        <span class="str">"https://api.myfiti.fit/api/webhooks/tranzak?ctx=member&amp;tenant=korafit&amp;id=pay-uuid"</span>
+}
+
+<span class="comment">// Response — requestId returned immediately, payment is pending</span>
+{
+  <span class="key">"data"</span>: {
+    <span class="key">"requestId"</span>: <span class="str">"TZ-xyz789"</span>,
+    <span class="key">"status"</span>:    <span class="str">"PAYMENT_IN_PROGRESS"</span>
+  },
+  <span class="key">"success"</span>: <span class="num">true</span>
+}</pre>
+
+      <h3>What happens next</h3>
+      <div class="flow">
+        <span class="actor">Tranzak</span>  <span class="arrow">→</span>  <span class="action">sends USSD prompt to <code>237655123456</code></span><br>
+        <span class="actor">Customer</span> <span class="arrow">→</span>  <span class="action">sees popup on their phone: "Approve XAF 10,000 to Kora Fit? Enter PIN:"</span><br>
+        <span class="actor">Customer</span> <span class="arrow">→</span>  <span class="action">enters mobile money PIN</span><br>
+        <span class="actor">Tranzak</span>  <span class="arrow">→</span>  <span class="action">debits customer, credits merchant</span><br>
+        <span class="actor">Tranzak</span>  <span class="arrow">→</span>  <span class="ok">POST /api/webhooks/tranzak { status: "SUCCESSFUL" }</span><br>
+        <span class="actor">Your API</span> <span class="arrow">→</span>  <span class="action">activates subscription on webhook receipt</span>
+      </div>
+
+      <h3>Field reference</h3>
+      <table>
+        <thead><tr><th>Field</th><th>Required</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>mobileWalletNumber</code></td><td>Yes</td><td>Phone number with country code, no +: <code>"237655123456"</code></td></tr>
+          <tr><td><code>mchTransactionRef</code></td><td>Yes</td><td>Your unique reference for this charge</td></tr>
+          <tr><td><code>payerNote</code></td><td>No</td><td>Shown in customer's transaction history</td></tr>
+          <tr><td><code>callbackUrl</code></td><td>Yes</td><td>Where to send the webhook when done</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Idempotency -->
+    <div class="doc-section" id="idempotency">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Idempotency</h2>
+      <p class="section-intro">Preventing double-charges when network errors cause your code to retry.</p>
+
+      <p>
+        <strong style="color:#e5e5e5">Idempotency</strong> means: calling the same operation twice produces the same result as calling it once.
+        For payments this is critical — a network timeout on your server doesn't mean the payment failed; Tranzak may have already charged the customer.
+      </p>
+
+      <h3>The problem</h3>
+      <div class="flow">
+        <span class="actor">Your server</span>  <span class="arrow">→</span>  <span class="action">POST /xp021/v1/request/create { mchTransactionRef: "RENEW-123" }</span><br>
+        <span class="actor">Tranzak</span>       <span class="arrow">→</span>  <span class="action">creates payment, sends USSD...</span><br>
+        <span class="actor">Network</span>        <span class="arrow">→</span>  <span class="err">timeout! Your server never gets the response</span><br>
+        <span class="actor">Your server</span>  <span class="arrow">→</span>  <span class="action">retries: POST /xp021/v1/request/create { mchTransactionRef: "RENEW-123" }</span><br>
+        <span class="actor">Tranzak</span>       <span class="arrow">→</span>  <span class="ok">recognises same mchTransactionRef → returns existing request, no double charge</span>
+      </div>
+
+      <h3>How mchTransactionRef prevents double charges</h3>
+      <p>If you send the same <code>mchTransactionRef</code> twice, Tranzak returns the existing payment request instead of creating a new one. This is the idempotency key.</p>
+
+      <h3>How to construct a good reference</h3>
+      <pre><span class="comment">// Pattern: ACTION-ENTITY_ID-TIMESTAMP</span>
+<span class="str">"RENEW-b8160866-1725264000"</span>      <span class="comment">// subscription renewal for member</span>
+<span class="str">"TOPUP-b8160866-1725264100"</span>      <span class="comment">// wallet top-up</span>
+<span class="str">"DAYPASS-korafit-1725264200"</span>     <span class="comment">// day pass purchase</span>
+<span class="str">"CASHOUT-b8160866-1725264300"</span>   <span class="comment">// wallet cashout</span>
+
+<span class="comment">// In Node.js:</span>
+<span class="kw">const</span> ref = <span class="str">`RENEW-${member.id}-${Math.floor(Date.now() / 1000)}`</span></pre>
+
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <strong>Don't reuse references for retry attempts</strong>
+          <p>If a payment genuinely failed and the customer wants to try again, generate a NEW reference. Reusing the old one would return the failed payment status instead of initiating a new charge.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Handling -->
+    <div class="doc-section" id="error-handling">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Error Handling</h2>
+      <p class="section-intro">What can go wrong and how to handle it gracefully.</p>
+
+      <h3>Tranzak API errors</h3>
+      <table>
+        <thead><tr><th>Scenario</th><th>What you see</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td>Wrong appId/appKey</td><td><code>401</code> from <code>/auth/token</code></td><td>Check credentials in env — ensure no trailing spaces</td></tr>
+          <tr><td>Expired token</td><td><code>401</code> from <code>/xp021/...</code></td><td>Re-fetch a new token (Myfiti does this automatically)</td></tr>
+          <tr><td>Invalid phone number</td><td><code>400</code> — "invalid mobile wallet number"</td><td>Ensure country code is included, no <code>+</code>, no spaces: <code>"237655123456"</code></td></tr>
+          <tr><td>Wrong currency</td><td><code>400</code> — currency not supported</td><td>Use <code>"XAF"</code> for Cameroon — check Tranzak's supported currencies list</td></tr>
+          <tr><td>Tranzak server error</td><td><code>500</code> or <code>502</code></td><td>Retry with exponential backoff: 1s, 2s, 4s, 8s — max 3 retries</td></tr>
+          <tr><td>Duplicate mchTransactionRef with different amount</td><td><code>400</code> — "reference already used"</td><td>Generate a new unique reference for new payment attempts</td></tr>
+          <tr><td>Insufficient customer balance</td><td>Payment completes but status = <code>FAILED</code></td><td>Notify customer to top up their mobile money account</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Webhook errors</h3>
+      <table>
+        <thead><tr><th>Scenario</th><th>Cause</th><th>Tranzak behaviour</th></tr></thead>
+        <tbody>
+          <tr><td>Your server returns 5xx</td><td>Your webhook handler crashed</td><td>Tranzak retries (typically 3–5 times over a few hours)</td></tr>
+          <tr><td>Your server times out</td><td>Processing took >10 seconds</td><td>Tranzak retries — this is why idempotency is critical</td></tr>
+          <tr><td>Your server returns 401</td><td>authKey mismatch — fake webhook</td><td>Tranzak doesn't retry 4xx responses</td></tr>
+          <tr><td>Your server was down</td><td>Deployment, crash, maintenance</td><td>Missed webhook — implement a reconciliation cron job</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <strong>Reconciliation cron — the safety net</strong>
+          <p>Run a daily job that finds subscriptions with <code>status = 'pending'</code> older than 24 hours and polls Tranzak's status endpoint for each. If status is <code>SUCCESSFUL</code>, activate them. This handles the rare case of a missed webhook.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ PRO -->
+    <div class="level-divider"><span class="ld-label ld-pro">Advanced / Pro</span></div>
+
+    <!-- Disbursement -->
+    <div class="doc-section" id="disbursement">
+      <div class="section-label pro">Pro</div>
+      <h2>Disbursement (Payout)</h2>
+      <p class="section-intro">Sending money from your merchant account to a customer's phone — used for cashouts.</p>
+
+      <p>
+        Disbursement is the reverse of a charge: money flows from your Tranzak merchant wallet
+        to the customer's mobile money account. Myfiti uses this for member wallet cashouts.
+      </p>
+
+      <pre><span class="method">POST</span> <span class="url">https://dsapi.tranzak.me/xp021/v1/request/create-mobile-wallet-payout</span>
+Authorization: Bearer &lt;token&gt;
+Content-Type: application/json
+
+{
+  <span class="key">"amount"</span>:             <span class="num">5000</span>,
+  <span class="key">"currencyCode"</span>:       <span class="str">"XAF"</span>,
+  <span class="key">"mchTransactionRef"</span>:  <span class="str">"CASHOUT-b8160866-1725264000"</span>,
+  <span class="key">"mobileWalletNumber"</span>: <span class="str">"237655123456"</span>,
+  <span class="key">"description"</span>:        <span class="str">"Wallet cashout — Myfiti"</span>,
+  <span class="key">"callbackUrl"</span>:        <span class="str">"https://api.myfiti.fit/api/webhooks/tranzak?ctx=cashout&amp;tenant=korafit&amp;id=wallet-tx-uuid"</span>
+}
+
+<span class="comment">// Response</span>
+{
+  <span class="key">"data"</span>: { <span class="key">"requestId"</span>: <span class="str">"TZ-payout-001"</span>, <span class="key">"status"</span>: <span class="str">"PENDING"</span> },
+  <span class="key">"success"</span>: <span class="num">true</span>
+}</pre>
+
+      <h3>Important differences from a charge</h3>
+      <table>
+        <thead><tr><th></th><th>Charge (collect)</th><th>Payout (disburse)</th></tr></thead>
+        <tbody>
+          <tr><td><strong style="color:#e5e5e5">Money direction</strong></td><td>Customer → Your wallet</td><td>Your wallet → Customer</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Customer action</strong></td><td>Approve USSD prompt</td><td>None — they just receive the funds</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Risk</strong></td><td>Customer can cancel</td><td>You need sufficient balance in your merchant wallet</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Webhook</strong></td><td>On USSD approval</td><td>When transfer completes (usually fast)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-danger">
+        <div class="callout-icon">🔴</div>
+        <div class="callout-body">
+          <strong>Deduct the wallet balance before calling Tranzak</strong>
+          <p>When processing a cashout: (1) deduct the amount from the member's wallet balance in your DB, (2) then call Tranzak. If you call Tranzak first and your server crashes before updating the DB, the money leaves your account but the member's balance isn't reduced — they could request it again.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Integration Pattern -->
+    <div class="doc-section" id="full-integration">
+      <div class="section-label pro">Pro</div>
+      <h2>Full Integration Pattern</h2>
+      <p class="section-intro">The correct end-to-end architecture for any payment feature — from initiation to database update.</p>
+
+      <h3>The complete flow (hosted payment example)</h3>
+      <pre><span class="comment">── 1. User clicks "Pay" ──────────────────────────────────────</span>
+   POST /api/public/gym/korafit/renew
+   { member_id, plan_id, payment_method: "mobile_money" }
+
+<span class="comment">── 2. Your API creates a pending record ──────────────────────</span>
+   INSERT INTO subscriptions (status='pending', ...)    <span class="comment">← save BEFORE calling provider</span>
+   INSERT INTO payments      (status='pending', ...)
+
+<span class="comment">── 3. Your API calls Tranzak ─────────────────────────────────</span>
+   POST /xp021/v1/request/create
+   { amount, mchTransactionRef: "RENEW-uuid-ts", callbackUrl: "...?ctx=public-renew&id=sub-uuid" }
+
+<span class="comment">── 4. Store the requestId ────────────────────────────────────</span>
+   UPDATE payments SET tranzak_request_id='TZ-abc' WHERE id=pay-uuid
+
+<span class="comment">── 5. Return payment URL to client ───────────────────────────</span>
+   { ok: true, payment_url: "https://pay.tranzak.me/...", payment_id: "TZ-abc" }
+
+<span class="comment">── 6. Client redirects user ──────────────────────────────────</span>
+   window.location.href = payment_url
+
+<span class="comment">── 7. User completes payment on Tranzak ──────────────────────</span>
+   (separate — user on Tranzak's site)
+
+<span class="comment">── 8. Tranzak calls your webhook ─────────────────────────────</span>
+   POST /api/webhooks/tranzak?ctx=public-renew&amp;tenant=korafit&amp;id=sub-uuid
+   { authKey: "...", resource: { status: "SUCCESSFUL", mchTransactionRef: "RENEW-uuid-ts" } }
+
+<span class="comment">── 9. Webhook handler: verify, dedupe, activate ──────────────</span>
+   verifyAuthKey(payload.authKey, secret)    → 401 if invalid
+   check webhook_events for duplicate        → 200 if seen before
+   if status !== "SUCCESSFUL" → 200 + ignore
+   UPDATE subscriptions SET status='active', expires_at=...
+   UPDATE members      SET status='active'
+   UPDATE payments     SET status='completed', paid_at=...
+   INSERT INTO webhook_events (status='processed')
+
+<span class="comment">── 10. Respond 200 to Tranzak ────────────────────────────────</span>
+    { ok: true }</pre>
+
+      <h3>Key architectural rules</h3>
+      <ul style="margin: 10px 0 14px; padding-left: 20px; color: #777; line-height: 2.2;">
+        <li>Create the DB record <strong style="color:#e5e5e5">before</strong> calling the provider — if the provider call fails, you have a pending record to retry from</li>
+        <li>Store <code>requestId</code> from Tranzak <strong style="color:#e5e5e5">immediately</strong> — you'll need it for status polling</li>
+        <li>All state changes happen <strong style="color:#e5e5e5">only in the webhook handler</strong> — never in the returnUrl handler</li>
+        <li>Use <strong style="color:#e5e5e5">context in callbackUrl query params</strong> — embed tenant, entity ID, and context type so the webhook handler knows what to activate</li>
+        <li><strong style="color:#e5e5e5">Respond 200 fast</strong> — do DB writes synchronously but skip anything slow (emails, push notifications) until after responding</li>
+      </ul>
+    </div>
+
+    <!-- JavaScript Implementation -->
+    <div class="doc-section" id="js-implementation">
+      <div class="section-label pro">Pro</div>
+      <h2>JavaScript Implementation</h2>
+      <p class="section-intro">A complete, production-ready Tranzak client in TypeScript — based on Myfiti's actual code.</p>
+
+      <h3>The Tranzak client</h3>
+      <pre><span class="comment">// lib/tranzak.ts</span>
+<span class="kw">const</span> BASE_URL = process.env.TRANZAK_ENV === <span class="str">'live'</span>
+  ? <span class="str">'https://dsapi.tranzak.me'</span>
+  : <span class="str">'https://sandbox.dsapi.tranzak.me'</span>
+
+<span class="comment">/** Fetch a short-lived auth token */</span>
+<span class="kw">async function</span> <span class="fn">getToken</span>() {
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">`${BASE_URL}/auth/token`</span>, {
+    method: <span class="str">'POST'</span>,
+    headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+    body: JSON.stringify({
+      appId:  process.env.TRANZAK_APP_ID,
+      appKey: process.env.TRANZAK_APP_KEY,
+    }),
+  })
+  <span class="kw">const</span> body = <span class="kw">await</span> res.json()
+  <span class="kw">const</span> token = body.data?.token ?? body.token
+  <span class="kw">if</span> (!token) <span class="kw">throw new</span> Error(<span class="str">`Tranzak auth failed: ${JSON.stringify(body)}`</span>)
+  <span class="kw">return</span> token
+}
+
+<span class="comment">/** Authenticated fetch to any Tranzak endpoint */</span>
+<span class="kw">async function</span> <span class="fn">tranzakFetch</span>&lt;T&gt;(path: string, options: RequestInit = {}): Promise&lt;T&gt; {
+  <span class="kw">const</span> token = <span class="kw">await</span> <span class="fn">getToken</span>()
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(BASE_URL + path, {
+    ...options,
+    headers: {
+      <span class="str">'Content-Type'</span>:  <span class="str">'application/json'</span>,
+      <span class="str">'Authorization'</span>: <span class="str">`Bearer ${token}`</span>,
+      ...options.headers,
+    },
+  })
+  <span class="kw">if</span> (!res.ok) {
+    <span class="kw">const</span> err = <span class="kw">await</span> res.text()
+    <span class="kw">throw new</span> Error(<span class="str">`Tranzak [${res.status}]: ${err}`</span>)
+  }
+  <span class="kw">return</span> res.json()
+}
+
+<span class="comment">/** Create a hosted payment request */</span>
+<span class="kw">export async function</span> <span class="fn">createPayment</span>({ amount, currency, reference, callbackUrl, returnUrl }) {
+  <span class="kw">const</span> body = <span class="kw">await</span> tranzakFetch&lt;{
+    data: { requestId: string; links: { paymentAuthUrl: string } }
+    success: boolean
+  }&gt;(<span class="str">'/xp021/v1/request/create'</span>, {
+    method: <span class="str">'POST'</span>,
+    body: JSON.stringify({
+      amount,
+      currencyCode:       currency,
+      mchTransactionRef:  reference,   <span class="comment">// NOT merchantTransactionId</span>
+      callbackUrl,
+      returnUrl,
+      description: <span class="str">`Payment ref: ${reference}`</span>,
+    }),
+  })
+  <span class="kw">if</span> (!body.success) <span class="kw">throw new</span> Error(<span class="str">'Tranzak create failed'</span>)
+  <span class="kw">return</span> {
+    requestId:  body.data.requestId,
+    paymentUrl: body.data.links.paymentAuthUrl,  <span class="comment">// NOT data.paymentUrl</span>
+  }
+}
+
+<span class="comment">/** Direct USSD push charge */</span>
+<span class="kw">export async function</span> <span class="fn">chargePhone</span>({ amount, currency, phone, reference, callbackUrl }) {
+  <span class="kw">const</span> body = <span class="kw">await</span> tranzakFetch&lt;{
+    data: { requestId: string; status: string }
+    success: boolean
+    errorMsg?: string
+  }&gt;(<span class="str">'/xp021/v1/request/create-mobile-wallet-charge'</span>, {
+    method: <span class="str">'POST'</span>,
+    body: JSON.stringify({
+      amount,
+      currencyCode:        currency,
+      mchTransactionRef:   reference,
+      mobileWalletNumber:  phone,   <span class="comment">// include country code, no +</span>
+      callbackUrl,
+    }),
+  })
+  <span class="kw">if</span> (!body.success) <span class="kw">throw new</span> Error(<span class="str">`Tranzak charge failed: ${body.errorMsg}`</span>)
+  <span class="kw">return</span> body.data.requestId
+}
+
+<span class="comment">/** Payout to phone (cashout) */</span>
+<span class="kw">export async function</span> <span class="fn">payoutPhone</span>({ amount, currency, phone, reference, callbackUrl }) {
+  <span class="kw">const</span> body = <span class="kw">await</span> tranzakFetch&lt;{
+    data: { requestId: string; status: string }
+    success: boolean
+  }&gt;(<span class="str">'/xp021/v1/request/create-mobile-wallet-payout'</span>, {
+    method: <span class="str">'POST'</span>,
+    body: JSON.stringify({
+      amount,
+      currencyCode:        currency,
+      mchTransactionRef:   reference,
+      mobileWalletNumber:  phone,
+      callbackUrl,
+    }),
+  })
+  <span class="kw">if</span> (!body.success) <span class="kw">throw new</span> Error(<span class="str">'Tranzak payout failed'</span>)
+  <span class="kw">return</span> body.data.requestId
+}
+
+<span class="comment">/** Poll payment status */</span>
+<span class="kw">export async function</span> <span class="fn">getStatus</span>(requestId: string) {
+  <span class="kw">const</span> statusMap = {
+    SUCCESSFUL:           <span class="str">'successful'</span>,
+    FAILED:               <span class="str">'failed'</span>,
+    CANCELLED:            <span class="str">'failed'</span>,
+    CANCELLED_BY_PAYER:   <span class="str">'failed'</span>,
+    PENDING:              <span class="str">'pending'</span>,
+    PAYMENT_IN_PROGRESS:  <span class="str">'pending'</span>,
+    PAYER_REDIRECT_REQUIRED: <span class="str">'pending'</span>,
+  }
+
+  <span class="kw">const</span> body = <span class="kw">await</span> tranzakFetch&lt;{ data: { status: string; amount: number } }&gt;(
+    <span class="str">`/xp021/v1/request/details?requestId=${requestId}`</span>
+  )
+
+  <span class="kw">return</span> statusMap[body.data.status] ?? <span class="str">'pending'</span>
+}</pre>
+    </div>
+
+    <!-- Webhook Handler -->
+    <div class="doc-section" id="webhook-handler">
+      <div class="section-label pro">Pro</div>
+      <h2>Production Webhook Handler</h2>
+      <p class="section-intro">A complete, safe webhook handler — based on Myfiti's actual implementation.</p>
+
+      <pre><span class="comment">// routes/webhooks.ts — simplified but production-accurate</span>
+<span class="kw">import</span> crypto <span class="kw">from</span> <span class="str">'node:crypto'</span>
+<span class="kw">import</span> { Router } <span class="kw">from</span> <span class="str">'express'</span>
+
+<span class="kw">const</span> router = Router()
+
+<span class="comment">// IMPORTANT: webhook route must use raw body parser for signature verification</span>
+<span class="comment">// (even though Tranzak uses authKey, not HMAC — good practice to keep raw)</span>
+<span class="comment">// app.use('/webhooks', express.raw({ type: 'application/json' }))</span>
+
+router.post(<span class="str">'/tranzak'</span>, <span class="kw">async</span> (req, res) => {
+  <span class="comment">// 1. Parse body</span>
+  <span class="kw">let</span> payload
+  <span class="kw">try</span> {
+    payload = <span class="kw">typeof</span> req.body === <span class="str">'string'</span>
+      ? JSON.parse(req.body)
+      : req.body
+  } <span class="kw">catch</span> {
+    <span class="kw">return</span> res.status(<span class="num">400</span>).json({ error: <span class="str">'invalid_json'</span> })
+  }
+
+  <span class="kw">const</span> resource = payload.resource
+  <span class="kw">if</span> (!resource) <span class="kw">return</span> res.status(<span class="num">400</span>).json({ error: <span class="str">'missing_resource'</span> })
+
+  <span class="kw">const</span> { mchTransactionRef, status, amount, currencyCode, transactionTime } = resource
+  <span class="kw">if</span> (!mchTransactionRef) <span class="kw">return</span> res.status(<span class="num">400</span>).json({ error: <span class="str">'missing_ref'</span> })
+
+  <span class="comment">// 2. Read context from callbackUrl query params</span>
+  <span class="kw">const</span> ctx    = req.query.ctx    <span class="comment">// e.g. "public-renew"</span>
+  <span class="kw">const</span> tenant = req.query.tenant <span class="comment">// e.g. "korafit"</span>
+  <span class="kw">const</span> id     = req.query.id     <span class="comment">// e.g. subscription UUID</span>
+
+  <span class="comment">// 3. Verify authKey</span>
+  <span class="kw">const</span> secret = process.env.TRANZAK_WEBHOOK_SECRET
+  <span class="kw">if</span> (!secret || !<span class="fn">timingSafeEqual</span>(payload.authKey, secret)) {
+    <span class="kw">return</span> res.status(<span class="num">401</span>).json({ error: <span class="str">'invalid_authKey'</span> })
+  }
+
+  <span class="comment">// 4. Deduplicate — check if we've already processed this reference</span>
+  <span class="kw">const</span> existing = <span class="kw">await</span> db.query(
+    <span class="str">'SELECT id FROM webhook_events WHERE transaction_ref = $1 AND status = $2'</span>,
+    [mchTransactionRef, <span class="str">'processed'</span>]
+  )
+  <span class="kw">if</span> (existing.rows.length > <span class="num">0</span>) {
+    <span class="kw">return</span> res.status(<span class="num">200</span>).json({ ok: <span class="num">true</span>, duplicate: <span class="num">true</span> })
+  }
+
+  <span class="comment">// 5. Only act on successful payments</span>
+  <span class="kw">if</span> (status !== <span class="str">'SUCCESSFUL'</span>) {
+    <span class="kw">return</span> res.status(<span class="num">200</span>).json({ ok: <span class="num">true</span>, ignored: status })
+  }
+
+  <span class="comment">// 6. Activate subscription based on context</span>
+  <span class="kw">await</span> <span class="fn">activateSubscription</span>({ id, tenant, amount, currencyCode, transactionTime, mchTransactionRef })
+
+  <span class="comment">// 7. Respond immediately — emails/notifications happen after</span>
+  res.status(<span class="num">200</span>).json({ ok: <span class="num">true</span> })
+})
+
+<span class="kw">function</span> <span class="fn">timingSafeEqual</span>(a, b) {
+  <span class="kw">if</span> (!a || !b) <span class="kw">return false</span>
+  <span class="kw">try</span> {
+    <span class="kw">return</span> crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b))
+  } <span class="kw">catch</span> { <span class="kw">return false</span> }
+}</pre>
+    </div>
+
+    <!-- Testing Strategy -->
+    <div class="doc-section" id="testing-strategy">
+      <div class="section-label pro">Pro</div>
+      <h2>Testing Strategy</h2>
+      <p class="section-intro">A systematic approach to testing payment flows without moving real money.</p>
+
+      <h3>Phase 1 — Unit test the logic (no network)</h3>
+      <pre><span class="comment">// Mock tranzakFetch and test your handler logic</span>
+jest.mock(<span class="str">'./tranzak'</span>, () => ({
+  createPayment: jest.fn().mockResolvedValue({
+    requestId:  <span class="str">'TZ-test-001'</span>,
+    paymentUrl: <span class="str">'https://pay.tranzak.me/test'</span>,
+  }),
+}))
+
+<span class="comment">// Test your webhook handler with a fake payload</span>
+<span class="kw">const</span> fakeWebhook = {
+  authKey:  process.env.TRANZAK_WEBHOOK_SECRET,
+  resource: {
+    mchTransactionRef: <span class="str">'RENEW-test-123'</span>,
+    status:            <span class="str">'SUCCESSFUL'</span>,
+    amount:            <span class="num">10000</span>,
+    currencyCode:      <span class="str">'XAF'</span>,
+    transactionTime:   <span class="str">'2026-09-02T09:00:00Z'</span>,
+  }
+}</pre>
+
+      <h3>Phase 2 — Integration test with sandbox</h3>
+      <table>
+        <thead><tr><th>Test</th><th>How</th><th>Expected</th></tr></thead>
+        <tbody>
+          <tr><td>Auth works</td><td>Call <code>/auth/token</code> with sandbox creds</td><td>Returns <code>{ data: { token } }</code></td></tr>
+          <tr><td>Create payment</td><td>POST <code>/xp021/v1/request/create</code> with sandbox amount</td><td>Returns <code>paymentAuthUrl</code></td></tr>
+          <tr><td>Webhook received</td><td>Use ngrok to expose localhost, trigger a sandbox payment</td><td>Your handler logs the webhook</td></tr>
+          <tr><td>Subscription activated</td><td>Check DB after sandbox webhook arrives</td><td>Subscription status = active</td></tr>
+          <tr><td>Duplicate webhook</td><td>Send same webhook payload twice</td><td>Second returns <code>{ duplicate: true }</code></td></tr>
+          <tr><td>Fake authKey</td><td>Send webhook with wrong authKey</td><td>Returns 401</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Phase 3 — Simulate failure scenarios</h3>
+      <pre><span class="comment"># Test your deduplication — send the webhook twice</span>
+curl -X POST http://localhost:4000/api/webhooks/tranzak?ctx=public-renew^&tenant=korafit^&id=sub-uuid \
+  -H "Content-Type: application/json" \
+  -d '{"authKey":"YOUR_SECRET","resource":{"mchTransactionRef":"RENEW-test","status":"SUCCESSFUL","amount":10000,"currencyCode":"XAF","transactionTime":"2026-09-02T09:00:00Z"}}'
+
+<span class="comment"># Second call should return { duplicate: true }</span>
+
+<span class="comment"># Test invalid authKey</span>
+curl -X POST http://localhost:4000/api/webhooks/tranzak \
+  -H "Content-Type: application/json" \
+  -d '{"authKey":"WRONG_KEY","resource":{"mchTransactionRef":"RENEW-x","status":"SUCCESSFUL"}}'
+<span class="comment"># Should return 401</span>
+
+<span class="comment"># Test FAILED status (should be ignored)</span>
+curl -X POST http://localhost:4000/api/webhooks/tranzak?ctx=public-renew^&tenant=korafit^&id=sub-uuid \
+  -H "Content-Type: application/json" \
+  -d '{"authKey":"YOUR_SECRET","resource":{"mchTransactionRef":"RENEW-fail","status":"FAILED","amount":0,"currencyCode":"XAF","transactionTime":null}}'
+<span class="comment"># Should return { ok: true, ignored: "FAILED" } — no subscription activated</span></pre>
+    </div>
+
+    <!-- Security Checklist -->
+    <div class="doc-section" id="security">
+      <div class="section-label pro">Pro</div>
+      <h2>Security Checklist</h2>
+      <p class="section-intro">Every item here represents a real attack vector if ignored.</p>
+
+      <table>
+        <thead><tr><th>Check</th><th>Why it matters</th><th>Status in Myfiti</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Verify webhook signature on every request</td>
+            <td>Anyone can POST to your webhook URL and fake a payment confirmation</td>
+            <td><span class="badge badge-green">Done</span> — <code>timingSafeEqual(authKey, secret)</code></td>
+          </tr>
+          <tr>
+            <td>Use timing-safe comparison</td>
+            <td>Normal string comparison leaks secret length via timing</td>
+            <td><span class="badge badge-green">Done</span> — <code>crypto.timingSafeEqual</code></td>
+          </tr>
+          <tr>
+            <td>Deduplicate webhook events</td>
+            <td>Webhook retries can double-activate subscriptions if not handled</td>
+            <td><span class="badge badge-green">Done</span> — <code>webhook_events</code> table</td>
+          </tr>
+          <tr>
+            <td>Store credentials in env, not code</td>
+            <td>Keys committed to git can never be fully revoked</td>
+            <td><span class="badge badge-green">Done</span> — <code>.env</code> + VPS env</td>
+          </tr>
+          <tr>
+            <td>Never log full API keys or tokens</td>
+            <td>Log aggregators may store them indefinitely</td>
+            <td><span class="badge badge-green">Done</span> — only log refs/IDs</td>
+          </tr>
+          <tr>
+            <td>Validate amount before activating</td>
+            <td>Attacker could replay a payment for XAF 1 to activate a XAF 10,000 plan</td>
+            <td><span class="badge badge-yellow">Partial</span> — verify amount in webhook handler</td>
+          </tr>
+          <tr>
+            <td>HTTPS only for callbackUrl</td>
+            <td>HTTP webhooks can be intercepted and the authKey stolen</td>
+            <td><span class="badge badge-green">Done</span> — all URLs use <code>https://</code></td>
+          </tr>
+          <tr>
+            <td>Rate limit payment initiation endpoints</td>
+            <td>Attacker could flood provider with fake payment requests</td>
+            <td><span class="badge badge-green">Done</span> — <code>rateLimitApi</code> middleware</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <strong>Amount validation is important</strong>
+          <p>When your webhook fires, verify that the amount in <code>resource.amount</code> matches what the subscription should cost. A sophisticated attacker could initiate a payment for XAF 1, get a webhook, and replay it against a different subscription endpoint.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Common Bugs -->
+    <div class="doc-section" id="common-bugs">
+      <div class="section-label pro">Pro</div>
+      <h2>Common Bugs (Real Examples)</h2>
+      <p class="section-intro">Actual bugs from Myfiti's production integration — with root cause and fix.</p>
+
+      <h3>Bug 1 — Wrong field name causes 502</h3>
+      <pre><span class="comment">// WRONG — field name doesn't exist in Tranzak's API</span>
+body: JSON.stringify({
+  merchantTransactionId: reference,   <span class="err">// ← invalid field</span>
+})
+
+<span class="comment">// CORRECT</span>
+body: JSON.stringify({
+  mchTransactionRef: reference,       <span class="ok">// ← correct field name</span>
+})</pre>
+      <p><strong style="color:#e5e5e5">Symptom:</strong> <code>POST /api/public/gym/korafit/renew</code> returns 502. PM2 logs show Tranzak returning 400.</p>
+      <p><strong style="color:#e5e5e5">Root cause:</strong> Assumed field name without checking the actual API spec.</p>
+      <p><strong style="color:#e5e5e5">Prevention:</strong> Always test against the real API (not docs alone) and log the raw Tranzak error response.</p>
+
+      <h3>Bug 2 — Wrong response path crashes the server</h3>
+      <pre><span class="comment">// WRONG — data.paymentUrl doesn't exist</span>
+<span class="kw">const</span> paymentUrl = paymentData?.data?.paymentUrl ?? <span class="str">''</span>  <span class="err">// ← undefined</span>
+
+<span class="comment">// CORRECT — the URL is nested inside links</span>
+<span class="kw">const</span> paymentUrl = paymentData?.data?.links?.paymentAuthUrl ?? <span class="str">''</span>  <span class="ok">// ← correct</span></pre>
+      <p><strong style="color:#e5e5e5">Symptom:</strong> Payment URL returned to client is an empty string — Tranzak redirect page shows "invalid link".</p>
+      <p><strong style="color:#e5e5e5">Root cause:</strong> Assumed response structure without verifying against actual response.</p>
+      <p><strong style="color:#e5e5e5">Prevention:</strong> Log the full Tranzak response during development. Write the actual type definition from real responses.</p>
+
+      <h3>Bug 3 — Activating subscription on browser return (not webhook)</h3>
+      <pre><span class="comment">// WRONG — user's browser arrives at returnUrl</span>
+app.get(<span class="str">'/payment/success'</span>, <span class="kw">async</span> (req, res) => {
+  <span class="kw">const</span> { ref } = req.query
+  <span class="kw">await</span> activateSubscription(ref)  <span class="err">// ← NEVER do this</span>
+  res.send(<span class="str">'Payment successful!'</span>)
+})
+
+<span class="comment">// CORRECT — only activate inside the webhook handler</span>
+app.get(<span class="str">'/payment/success'</span>, <span class="kw">async</span> (req, res) => {
+  <span class="comment">// Just show a "processing..." UI — poll status separately</span>
+  res.send(<span class="str">'Processing your payment...'</span>)
+})</pre>
+      <p><strong style="color:#e5e5e5">Symptom:</strong> Subscriptions activated without actual payment — attacker crafts a returnUrl request manually.</p>
+      <p><strong style="color:#e5e5e5">Root cause:</strong> Treating the customer's browser return as proof of payment.</p>
+
+      <h3>Bug 4 — Forgetting to save requestId</h3>
+      <pre><span class="comment">// WRONG — requestId discarded after create</span>
+<span class="kw">const</span> { paymentUrl } = <span class="kw">await</span> createPayment(...)
+<span class="comment">// requestId never stored — can't poll status later</span>
+
+<span class="comment">// CORRECT</span>
+<span class="kw">const</span> { paymentUrl, requestId } = <span class="kw">await</span> createPayment(...)
+<span class="kw">await</span> db.query(
+  <span class="str">'UPDATE payments SET tranzak_request_id=$1 WHERE id=$2'</span>,
+  [requestId, paymentId]
+)</pre>
+      <p><strong style="color:#e5e5e5">Symptom:</strong> Cannot reconcile failed webhooks — no way to poll status for pending payments.</p>
+    </div>
+
+    <!-- Provider Comparison -->
+    <div class="doc-section" id="provider-comparison">
+      <div class="section-label pro">Pro</div>
+      <h2>Comparing Payment Providers</h2>
+      <p class="section-intro">If you needed to swap or add a provider — what changes and what stays the same.</p>
+
+      <p>The core integration pattern never changes. What differs is the specific API shape:</p>
+
+      <table>
+        <thead><tr><th>Concern</th><th>Tranzak</th><th>Stripe</th><th>Flutterwave</th></tr></thead>
+        <tbody>
+          <tr><td><strong style="color:#e5e5e5">Auth method</strong></td><td>POST <code>/auth/token</code> → short-lived Bearer</td><td>Static secret key in headers</td><td>Static secret key in headers</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Create payment</strong></td><td><code>/xp021/v1/request/create</code></td><td><code>/v1/payment_intents</code></td><td><code>/v3/payments</code></td></tr>
+          <tr><td><strong style="color:#e5e5e5">Payment URL field</strong></td><td><code>data.links.paymentAuthUrl</code></td><td><code>next_action.redirect_to_url.url</code></td><td><code>data.link</code></td></tr>
+          <tr><td><strong style="color:#e5e5e5">idempotency key</strong></td><td><code>mchTransactionRef</code></td><td><code>Idempotency-Key</code> header</td><td><code>tx_ref</code></td></tr>
+          <tr><td><strong style="color:#e5e5e5">Webhook security</strong></td><td>authKey in body</td><td>HMAC-SHA256 header</td><td>Secret hash header</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Success status</strong></td><td><code>"SUCCESSFUL"</code></td><td><code>"succeeded"</code></td><td><code>"successful"</code></td></tr>
+          <tr><td><strong style="color:#e5e5e5">Payout</strong></td><td><code>/xp021/v1/request/create-mobile-wallet-payout</code></td><td><code>/v1/payouts</code></td><td><code>/v3/transfers</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>How Myfiti's code isolates provider differences</h3>
+      <p>
+        The <code>PaymentProviderClient</code> interface in <code>@gymflow/types</code> defines two methods:
+        <code>initializeTransaction()</code> and <code>verifyTransaction()</code>. The Tranzak implementation
+        maps Tranzak-specific field names to this interface. Adding a new provider means writing
+        a new implementation of the same interface — the rest of the codebase doesn't change.
+      </p>
+      <pre><span class="comment">// @gymflow/types — the provider-agnostic interface</span>
+<span class="kw">interface</span> PaymentProviderClient {
+  initializeTransaction(params: {
+    amount:       number
+    currency:     string
+    reference:    string
+    callback_url: string
+    metadata?:    Record&lt;string, unknown&gt;
+  }): Promise&lt;{ payment_url: string; reference: string; request_id: string }&gt;
+
+  verifyTransaction(requestId: string): Promise&lt;{
+    reference: string
+    status:    <span class="str">'pending'</span> | <span class="str">'successful'</span> | <span class="str">'failed'</span>
+    amount:    number
+    currency:  string
+    paid_at:   string | null
+  }&gt;
+}
+
+<span class="comment">// Swap providers by changing one line:</span>
+<span class="kw">import</span> { tranzak } <span class="kw">from</span> <span class="str">'./tranzak.js'</span>    <span class="comment">// current</span>
+<span class="kw">import</span> { stripe }  <span class="kw">from</span> <span class="str">'./stripe.js'</span>    <span class="comment">// hypothetical future</span>
+
+<span class="kw">const</span> paymentProvider: PaymentProviderClient = tranzak  <span class="comment">// change this one var</span></pre>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <strong>Design against an interface, not a provider</strong>
+          <p>The best payment integrations hide provider specifics behind a thin abstraction layer. Your business logic calls <code>paymentProvider.initializeTransaction()</code> — it doesn't know or care whether that calls Tranzak, Stripe, or Flutterwave underneath.</p>
+        </div>
+      </div>
+    </div>
+
+    <hr />
+    <p style="font-size: 13px; color: #2a2a2a; text-align: center;">Myfiti / GymFlow · Payment Integration Guide · September 2026</p>
+
+  </div>
+  </div>
+
+</div>
+
+<script>
+  const sections = document.querySelectorAll('.doc-section')
+  const links    = document.querySelectorAll('nav a')
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'))
+        const active = document.querySelector(`nav a[href="#${entry.target.id}"]`)
+        if (active) active.classList.add('active')
+      }
+    })
+  }, { rootMargin: '-20% 0px -75% 0px' })
+
+  sections.forEach(s => observer.observe(s))
+</script>
+</body>
+</html>
