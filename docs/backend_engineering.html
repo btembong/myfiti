@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Backend Engineering — Complete Course</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080808; color: #aaa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px; line-height: 1.75;
+    }
+    .layout { display: grid; grid-template-columns: 270px 1fr; min-height: 100vh; }
+    nav {
+      background: #0c0c0c; border-right: 1px solid #141414;
+      padding: 24px 0; position: sticky; top: 0; height: 100vh;
+      overflow-y: auto; scrollbar-width: thin; scrollbar-color: #222 transparent;
+    }
+    nav::-webkit-scrollbar { width: 4px; }
+    nav::-webkit-scrollbar-thumb { background: #222; border-radius: 4px; }
+    .nav-logo { font-size: 13px; font-weight: 700; color: #e5e5e5; padding: 0 20px 20px; border-bottom: 1px solid #141414; margin-bottom: 12px; }
+    .nav-logo span { color: #a78bfa; }
+    .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #333; padding: 14px 20px 6px; }
+    nav a { display: block; padding: 6px 20px; color: #555; text-decoration: none; font-size: 12.5px; border-left: 2px solid transparent; transition: color .15s, border-color .15s; }
+    nav a:hover { color: #ccc; }
+    nav a.active { color: #a78bfa; border-left-color: #a78bfa; background: #a78bfa0a; }
+    .main { padding: 48px 64px; max-width: 920px; }
+    .content > h1 { font-size: 30px; font-weight: 800; color: #e5e5e5; margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: #555; margin-bottom: 48px; }
+    .doc-section { margin-bottom: 72px; scroll-margin-top: 32px; }
+    .section-label { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; border-radius: 999px; padding: 3px 12px; margin-bottom: 12px; border: 1px solid; }
+    .beginner { color: #4ade80; border-color: #166534; background: #052e16; }
+    .mid      { color: #60a5fa; border-color: #1e3a5f; background: #0c1f35; }
+    .pro      { color: #f59e0b; border-color: #78350f; background: #1c0a00; }
+    h2 { font-size: 22px; font-weight: 700; color: #e5e5e5; margin-bottom: 6px; }
+    h3 { font-size: 15px; font-weight: 600; color: #ccc; margin: 28px 0 10px; }
+    h4 { font-size: 13px; font-weight: 600; color: #bbb; margin-bottom: 4px; }
+    .section-intro { font-size: 13px; color: #555; margin-bottom: 20px; border-left: 2px solid #1a1a1a; padding-left: 12px; }
+    p { margin-bottom: 14px; color: #888; }
+    pre {
+      background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 10px;
+      padding: 20px 24px; font-family: 'Fira Code','Cascadia Code','Consolas',monospace;
+      font-size: 12.5px; line-height: 1.65; overflow-x: auto; margin: 12px 0 20px; color: #aaa;
+    }
+    code { font-family: 'Fira Code','Cascadia Code','Consolas',monospace; background: #111; border: 1px solid #1d1d1d; border-radius: 4px; padding: 1px 6px; font-size: 12px; color: #ccc; }
+    pre code { background: none; border: none; padding: 0; font-size: inherit; }
+    .key { color: #60a5fa; } .str { color: #4ade80; } .num { color: #f59e0b; }
+    .comment { color: #333; font-style: italic; } .kw { color: #f472b6; } .fn { color: #60a5fa; }
+    .ty { color: #a78bfa; } .ok { color: #4ade80; } .err { color: #f87171; }
+    table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 13px; }
+    th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #333; border-bottom: 1px solid #141414; }
+    td { padding: 10px 12px; border-bottom: 1px solid #0f0f0f; color: #777; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { color: #ccc; }
+    .callout { display: flex; gap: 14px; border-radius: 10px; padding: 16px 20px; margin: 16px 0; }
+    .callout-tip  { background: #052e16; border: 1px solid #166534; }
+    .callout-info { background: #0c1f35; border: 1px solid #1e3a5f; }
+    .callout-warn { background: #1c150a; border: 1px solid #78350f; }
+    .callout-danger { background: #1a0505; border: 1px solid #7f1d1d; }
+    .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .callout-body strong { display: block; color: #e5e5e5; margin-bottom: 4px; font-size: 13px; }
+    .callout-body p { margin: 0; font-size: 13px; }
+    .steps { display: flex; flex-direction: column; gap: 0; margin: 14px 0 20px; }
+    .step { display: flex; gap: 16px; padding: 16px 0; border-left: 2px solid #141414; margin-left: 16px; padding-left: 24px; position: relative; }
+    .step-num { position: absolute; left: -13px; top: 18px; width: 24px; height: 24px; border-radius: 50%; background: #111; border: 1px solid #222; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #555; flex-shrink: 0; }
+    .step-body { flex: 1; }
+    .step-body h4 { color: #e5e5e5; margin-bottom: 6px; }
+    .step-body p  { font-size: 13px; margin: 0; }
+    .step-body pre { margin: 10px 0 0; }
+    .level-divider { display: flex; align-items: center; gap: 16px; margin: 64px 0 48px; }
+    .level-divider .ld-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; padding: 6px 16px; border-radius: 999px; border: 1px solid; }
+    .ld-beginner { color: #4ade80; border-color: #166534; background: #052e16; }
+    .ld-mid      { color: #60a5fa; border-color: #1e3a5f; background: #0c1f35; }
+    .ld-pro      { color: #f59e0b; border-color: #78350f; background: #1c0a00; }
+    .level-divider::before,.level-divider::after { content: ''; flex: 1; height: 1px; background: #151515; }
+    ul, ol { margin: 10px 0 14px; padding-left: 22px; color: #777; }
+    li { margin-bottom: 6px; }
+    hr { border: none; border-top: 1px solid #131313; margin: 48px 0; }
+    .diagram { background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 10px; padding: 24px; margin: 14px 0 20px; font-family: monospace; font-size: 12.5px; line-height: 2; color: #555; }
+    .d-blue   { color: #60a5fa; font-weight: 700; }
+    .d-green  { color: #4ade80; }
+    .d-yellow { color: #f59e0b; }
+    .d-purple { color: #a78bfa; }
+    .d-red    { color: #f87171; }
+    .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+    .badge-g { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+    .badge-b { background: #0c1f35; color: #60a5fa; border: 1px solid #1e3a5f; }
+    .badge-y { background: #1c150a; color: #f59e0b; border: 1px solid #78350f; }
+    .badge-r { background: #1a0505; color: #f87171; border: 1px solid #7f1d1d; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+<nav>
+  <div class="nav-logo">Backend Engineering<br><span>Complete Course</span></div>
+
+  <div class="nav-section">Beginner</div>
+  <a href="#what-is-backend">What is a Backend?</a>
+  <a href="#how-web-works">How the Web Works</a>
+  <a href="#http-fundamentals">HTTP Fundamentals</a>
+  <a href="#nodejs-basics">Node.js Basics</a>
+  <a href="#first-server">Your First Server</a>
+  <a href="#routes">Routes &amp; Handlers</a>
+  <a href="#request-response">Request &amp; Response</a>
+
+  <div class="nav-section">Intermediate</div>
+  <a href="#middleware">Middleware</a>
+  <a href="#middleware-types">Middleware Types</a>
+  <a href="#databases-intro">Databases — Intro</a>
+  <a href="#sql-basics">SQL Basics</a>
+  <a href="#express-db">Connecting Express to DB</a>
+  <a href="#rest-design">REST API Design</a>
+  <a href="#validation">Validation with Zod</a>
+  <a href="#authentication">Authentication (JWT)</a>
+  <a href="#password-hashing">Password Hashing</a>
+  <a href="#error-handling">Error Handling</a>
+  <a href="#env-config">Environment Config</a>
+
+  <div class="nav-section">Advanced / Pro</div>
+  <a href="#drizzle-orm">ORM (Drizzle)</a>
+  <a href="#db-patterns">DB Patterns</a>
+  <a href="#rate-limiting">Rate Limiting</a>
+  <a href="#cors-helmet">CORS &amp; Helmet</a>
+  <a href="#background-jobs">Background Jobs (BullMQ)</a>
+  <a href="#caching">Caching (Redis)</a>
+  <a href="#security-depth">Security In Depth</a>
+  <a href="#testing">Testing</a>
+  <a href="#deployment">Deployment</a>
+  <a href="#architecture">Architecture Patterns</a>
+</nav>
+
+<div class="main">
+<div class="content">
+  <h1>Backend Engineering — Complete Course</h1>
+  <p class="subtitle">From first server to production deployment. All examples use Node.js + Express + PostgreSQL — the same stack powering this application.</p>
+
+  <!-- ══════════════════════ BEGINNER -->
+  <div class="level-divider"><span class="ld-label ld-beginner">Beginner</span></div>
+
+  <div class="doc-section" id="what-is-backend">
+    <div class="section-label beginner">Beginner</div>
+    <h2>What is a Backend?</h2>
+    <p class="section-intro">Every application has two sides — this is the half users never see.</p>
+    <p>When you open a web or mobile app, what you see is the <strong style="color:#e5e5e5">frontend</strong> — buttons, forms, screens. But when you press "Sign In", something behind the scenes validates your password, looks up your account, and sends your data back. That invisible layer is the <strong style="color:#e5e5e5">backend</strong>.</p>
+    <table>
+      <thead><tr><th>Frontend</th><th>Backend</th></tr></thead>
+      <tbody>
+        <tr><td>Runs in the browser or phone</td><td>Runs on a server</td></tr>
+        <tr><td>Shows data to the user</td><td>Stores and processes data</td></tr>
+        <tr><td>HTML, CSS, JavaScript / React Native</td><td>Node.js, Python, Go, Java…</td></tr>
+        <tr><td>Can be seen and modified by users</td><td>Users cannot access it directly</td></tr>
+        <tr><td>Stateless (data reloaded per page)</td><td>Stateful (data persists in database)</td></tr>
+      </tbody>
+    </table>
+    <h3>What a backend does</h3>
+    <ul>
+      <li><strong style="color:#e5e5e5">Receives requests</strong> from clients (browser, mobile app, other servers)</li>
+      <li><strong style="color:#e5e5e5">Validates and processes</strong> the data — is this user allowed? is the input valid?</li>
+      <li><strong style="color:#e5e5e5">Reads/writes the database</strong> — look up members, create payments, save settings</li>
+      <li><strong style="color:#e5e5e5">Calls external services</strong> — payment providers, email services, SMS</li>
+      <li><strong style="color:#e5e5e5">Sends a response</strong> back — usually JSON data</li>
+    </ul>
+    <div class="callout callout-info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>This course's stack</strong>
+        <p>Node.js (runtime) + Express (HTTP framework) + PostgreSQL (database) + Redis (cache/queue). This is one of the most common production stacks in the world and exactly what runs this app.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-section" id="how-web-works">
+    <div class="section-label beginner">Beginner</div>
+    <h2>How the Web Works</h2>
+    <p class="section-intro">The full journey of a request — from the user's tap to the database and back.</p>
+    <div class="diagram">
+<span class="d-blue">User</span>         taps "View Members" in the admin app
+  <span class="d-yellow">↓</span>
+<span class="d-blue">Browser/App</span>  sends HTTP GET https://api.myfiti.fit/api/members
+  <span class="d-yellow">↓</span> (travels over the internet)
+<span class="d-blue">Caddy</span>        reverse proxy receives request, forwards to Node.js on port 4000
+  <span class="d-yellow">↓</span>
+<span class="d-blue">Express</span>      matches route GET /api/members, runs middleware chain
+  <span class="d-yellow">↓</span>
+<span class="d-blue">Auth MW</span>      verifies JWT token — is this user logged in?
+  <span class="d-yellow">↓</span>
+<span class="d-blue">Tenant MW</span>    resolves gym slug → finds which database schema to use
+  <span class="d-yellow">↓</span>
+<span class="d-blue">Route handler</span> runs: SELECT * FROM members WHERE status = 'active'
+  <span class="d-yellow">↓</span>
+<span class="d-blue">PostgreSQL</span>   executes query, returns rows
+  <span class="d-yellow">↓</span>
+<span class="d-blue">Route handler</span> formats rows as JSON, sends response
+  <span class="d-yellow">↓</span> (travels back over internet)
+<span class="d-blue">Browser/App</span>  receives JSON, renders the member list
+    </div>
+    <p>Every API call follows this same path. Your job as a backend engineer is to build each layer correctly.</p>
+  </div>
+
+  <div class="doc-section" id="http-fundamentals">
+    <div class="section-label beginner">Beginner</div>
+    <h2>HTTP Fundamentals</h2>
+    <p class="section-intro">HTTP is the language clients and servers use to communicate — you must know it fluently.</p>
+    <h3>The request structure</h3>
+    <pre><span class="comment">// Every HTTP request has these parts:</span>
+
+<span class="comment">1. Request line: METHOD + URL + HTTP version</span>
+POST /api/members HTTP/1.1
+
+<span class="comment">2. Headers: key-value metadata</span>
+Host:          api.myfiti.fit
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type:  application/json
+X-Tenant-Slug: korafit
+
+<span class="comment">3. Body (only for POST, PUT, PATCH)</span>
+{
+  "name":  "Alice Mbah",
+  "email": "alice@example.cm"
+}</pre>
+
+    <h3>The response structure</h3>
+    <pre><span class="comment">// Every HTTP response has:</span>
+
+<span class="comment">1. Status line</span>
+HTTP/1.1 201 Created
+
+<span class="comment">2. Headers</span>
+Content-Type: application/json
+Cache-Control: no-store
+
+<span class="comment">3. Body</span>
+{
+  "member": { "id": "b8160866-...", "name": "Alice Mbah", "status": "pending" }
+}</pre>
+
+    <h3>HTTP Methods</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Action</th><th>Has body?</th><th>Idempotent?</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-b">GET</span></td><td>Read — retrieve data</td><td>No</td><td>Yes — calling N times = same as 1</td></tr>
+        <tr><td><span class="badge badge-g">POST</span></td><td>Create — add something new</td><td>Yes</td><td>No — creates a new record each time</td></tr>
+        <tr><td><span class="badge badge-y">PATCH</span></td><td>Update — change part of a record</td><td>Yes</td><td>Yes (if designed correctly)</td></tr>
+        <tr><td><span class="badge badge-y">PUT</span></td><td>Replace — overwrite entire record</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td><span class="badge badge-r">DELETE</span></td><td>Remove a record</td><td>No</td><td>Yes</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Status code groups</h3>
+    <table>
+      <thead><tr><th>Range</th><th>Meaning</th><th>Common codes</th></tr></thead>
+      <tbody>
+        <tr><td>2xx</td><td>Success</td><td>200 OK, 201 Created, 204 No Content</td></tr>
+        <tr><td>3xx</td><td>Redirect</td><td>301 Moved, 302 Found, 304 Not Modified</td></tr>
+        <tr><td>4xx</td><td>Client error (their fault)</td><td>400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 429 Too Many Requests</td></tr>
+        <tr><td>5xx</td><td>Server error (your fault)</td><td>500 Internal Server Error, 502 Bad Gateway, 503 Service Unavailable</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="doc-section" id="nodejs-basics">
+    <div class="section-label beginner">Beginner</div>
+    <h2>Node.js Basics</h2>
+    <p class="section-intro">Node.js lets you run JavaScript on a server — not just in the browser.</p>
+    <p>Before Node.js existed, JavaScript only ran in browsers. Node.js is a <strong style="color:#e5e5e5">runtime</strong> built on Chrome's V8 engine that executes JavaScript on your machine or server.</p>
+    <h3>Key characteristics</h3>
+    <table>
+      <thead><tr><th>Property</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td><strong style="color:#e5e5e5">Single-threaded</strong></td><td>One thread handles all requests — no parallel execution</td></tr>
+        <tr><td><strong style="color:#e5e5e5">Non-blocking I/O</strong></td><td>While waiting for DB/file/network, handles other requests instead of sleeping</td></tr>
+        <tr><td><strong style="color:#e5e5e5">Event loop</strong></td><td>The mechanism that manages async operations — "do this, when done call me back"</td></tr>
+        <tr><td><strong style="color:#e5e5e5">npm / pnpm</strong></td><td>Package managers — install libraries like Express, Drizzle, etc.</td></tr>
+      </tbody>
+    </table>
+    <h3>async/await — the foundation of backend Node.js</h3>
+    <pre><span class="comment">// Almost everything in Node.js is async — it takes time and doesn't block</span>
+
+<span class="comment">// BAD — this "blocks" — nothing else can run while sleeping</span>
+<span class="kw">function</span> <span class="fn">sleep</span>(ms) {
+  <span class="kw">const</span> start = Date.now()
+  <span class="kw">while</span> (Date.now() - start &lt; ms) {} <span class="comment">// busy loop — terrible</span>
+}
+
+<span class="comment">// GOOD — async: gives control back to Node while waiting</span>
+<span class="kw">async function</span> <span class="fn">getMembers</span>() {
+  <span class="kw">const</span> rows = <span class="kw">await</span> db.query(<span class="str">'SELECT * FROM members'</span>)
+  <span class="comment">// while db is running the query, Node handles other requests</span>
+  <span class="kw">return</span> rows
+}
+
+<span class="comment">// async functions always return a Promise</span>
+<span class="comment">// await pauses execution of THIS function until the promise resolves</span>
+<span class="comment">// but does NOT block the entire server</span></pre>
+
+    <h3>CommonJS vs ES Modules</h3>
+    <pre><span class="comment">// CommonJS (older — .js files with "type":"commonjs" in package.json)</span>
+<span class="kw">const</span> express = require(<span class="str">'express'</span>)
+module.exports = { router }
+
+<span class="comment">// ES Modules (modern — .js files with "type":"module" or .mjs extension)</span>
+<span class="kw">import</span> express <span class="kw">from</span> <span class="str">'express'</span>
+<span class="kw">export</span> { router }
+
+<span class="comment">// This project uses ES Modules ("type":"module" in package.json)</span></pre>
+  </div>
+
+  <div class="doc-section" id="first-server">
+    <div class="section-label beginner">Beginner</div>
+    <h2>Your First Express Server</h2>
+    <p class="section-intro">Express is a minimal framework that turns Node.js into a proper web server in 10 lines.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Install Express</h4>
+          <pre>mkdir my-api &amp;&amp; cd my-api
+npm init -y
+npm install express</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Create index.js</h4>
+          <pre><span class="kw">import</span> express <span class="kw">from</span> <span class="str">'express'</span>
+
+<span class="kw">const</span> app  = express()
+<span class="kw">const</span> PORT = <span class="num">4000</span>
+
+app.use(express.json())   <span class="comment">// parse JSON request bodies</span>
+
+app.get(<span class="str">'/'</span>, (req, res) => {
+  res.json({ message: <span class="str">'Hello from my API!'</span> })
+})
+
+app.listen(PORT, () => {
+  console.log(<span class="str">`Server running on port ${PORT}`</span>)
+})</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Run it</h4>
+          <pre>node index.js
+<span class="comment"># Server running on port 4000</span>
+
+<span class="comment"># Test it:</span>
+curl http://localhost:4000
+<span class="comment"># {"message":"Hello from my API!"}</span></pre>
+        </div>
+      </div>
+    </div>
+    <p>That's it. You have a running HTTP server. Everything else builds on this foundation.</p>
+  </div>
+
+  <div class="doc-section" id="routes">
+    <div class="section-label beginner">Beginner</div>
+    <h2>Routes &amp; Handlers</h2>
+    <p class="section-intro">Routes map URL patterns to functions. Every API endpoint is a route.</p>
+    <pre><span class="comment">// Route syntax: app.METHOD(PATH, HANDLER)</span>
+<span class="comment">// METHOD = get | post | patch | put | delete</span>
+<span class="comment">// PATH   = string or pattern with :params</span>
+<span class="comment">// HANDLER = function(req, res) { ... }</span>
+
+<span class="comment">// GET — no body, returns a list</span>
+app.get(<span class="str">'/members'</span>, (req, res) => {
+  res.json({ members: [] })
+})
+
+<span class="comment">// POST — receives a body, creates something</span>
+app.post(<span class="str">'/members'</span>, (req, res) => {
+  <span class="kw">const</span> { name, email } = req.body      <span class="comment">// from JSON body</span>
+  <span class="comment">// ... save to database ...</span>
+  res.status(<span class="num">201</span>).json({ member: { id: <span class="str">'uuid'</span>, name, email } })
+})
+
+<span class="comment">// Path parameter — :id is a variable</span>
+app.get(<span class="str">'/members/:id'</span>, (req, res) => {
+  <span class="kw">const</span> { id } = req.params             <span class="comment">// from URL</span>
+  res.json({ member: { id } })
+})
+
+<span class="comment">// PATCH — partial update</span>
+app.patch(<span class="str">'/members/:id'</span>, (req, res) => {
+  <span class="kw">const</span> { id }    = req.params
+  <span class="kw">const</span> { phone } = req.body
+  res.json({ ok: <span class="kw">true</span> })
+})
+
+<span class="comment">// DELETE</span>
+app.delete(<span class="str">'/members/:id'</span>, (req, res) => {
+  res.status(<span class="num">204</span>).send()   <span class="comment">// 204 = No Content (deleted)</span>
+})</pre>
+
+    <h3>Organising routes — Express Router</h3>
+    <pre><span class="comment">// routes/members.js — separate file for member routes</span>
+<span class="kw">import</span> { Router } <span class="kw">from</span> <span class="str">'express'</span>
+
+<span class="kw">export const</span> membersRouter = Router()
+
+membersRouter.get(<span class="str">'/'</span>,     listMembers)
+membersRouter.post(<span class="str">'/'</span>,    createMember)
+membersRouter.get(<span class="str">'/:id'</span>, getMember)
+membersRouter.patch(<span class="str">'/:id'</span>, updateMember)
+
+<span class="comment">// index.js — mount the router under /members</span>
+<span class="kw">import</span> { membersRouter } <span class="kw">from</span> <span class="str">'./routes/members.js'</span>
+app.use(<span class="str">'/members'</span>, membersRouter)
+
+<span class="comment">// Now: GET /members → listMembers</span>
+<span class="comment">//      GET /members/:id → getMember</span></pre>
+  </div>
+
+  <div class="doc-section" id="request-response">
+    <div class="section-label beginner">Beginner</div>
+    <h2>Request &amp; Response Objects</h2>
+    <p class="section-intro">The two objects every handler receives — know every part of them.</p>
+    <h3>The Request (req)</h3>
+    <pre><span class="comment">// req contains everything the client sent</span>
+app.post(<span class="str">'/members/:id/subscribe'</span>, (req, res) => {
+
+  req.params.id          <span class="comment">// path parameter:  /members/b8160866 → "b8160866"</span>
+  req.query.status       <span class="comment">// query param:     ?status=active → "active"</span>
+  req.body.plan_id       <span class="comment">// JSON body field: { "plan_id": "uuid" }</span>
+  req.headers['authorization']  <span class="comment">// header:         "Bearer eyJ..."</span>
+  req.headers['x-tenant-slug']  <span class="comment">// custom header:  "korafit"</span>
+  req.method             <span class="comment">// HTTP method:     "POST"</span>
+  req.path               <span class="comment">// URL path:        "/members/b8160866/subscribe"</span>
+  req.ip                 <span class="comment">// client IP:       "41.189.xxx.xxx"</span>
+
+  <span class="comment">// Properties set by middleware (you'll add these):</span>
+  req.user               <span class="comment">// set by auth middleware</span>
+  req.tenant             <span class="comment">// set by tenant middleware</span>
+})</pre>
+
+    <h3>The Response (res)</h3>
+    <pre><span class="comment">// res is how you send the response back</span>
+
+res.json({ ok: <span class="kw">true</span> })              <span class="comment">// send JSON (sets Content-Type automatically)</span>
+res.status(<span class="num">201</span>).json({ member })    <span class="comment">// set status code + send JSON</span>
+res.status(<span class="num">204</span>).send()             <span class="comment">// no body (used for DELETE)</span>
+res.status(<span class="num">400</span>).json({ error: <span class="str">'Email is required'</span> })
+res.setHeader(<span class="str">'X-Request-Id'</span>, uuid) <span class="comment">// set a response header</span>
+res.redirect(<span class="str">'https://example.com'</span>) <span class="comment">// 302 redirect</span></pre>
+  </div>
+
+  <!-- ══════════════════════ INTERMEDIATE -->
+  <div class="level-divider"><span class="ld-label ld-mid">Intermediate</span></div>
+
+  <div class="doc-section" id="middleware">
+    <div class="section-label mid">Intermediate</div>
+    <h2>Middleware</h2>
+    <p class="section-intro">The most powerful concept in Express — functions that run before your route handlers.</p>
+    <p>A <strong style="color:#e5e5e5">middleware</strong> is a function with the signature <code>(req, res, next)</code>. It can read/modify the request, send a response early (to reject), or call <code>next()</code> to pass to the next middleware.</p>
+
+    <h3>The middleware pipeline</h3>
+    <div class="diagram">
+Request →  <span class="d-yellow">[Helmet]</span> → <span class="d-yellow">[CORS]</span> → <span class="d-yellow">[Morgan/Logger]</span> → <span class="d-yellow">[JSON Parser]</span>
+        →  <span class="d-blue">[Rate Limiter]</span> → <span class="d-blue">[Auth MW]</span> → <span class="d-blue">[Tenant MW]</span>
+        →  <span class="d-green">[Route Handler]</span>  ← your business logic lives here
+        →  <span class="d-red">[Error Handler]</span>  ← catches any thrown errors
+        →  Response sent to client
+    </div>
+
+    <h3>Writing your own middleware</h3>
+    <pre><span class="comment">// A middleware logs every request</span>
+<span class="kw">function</span> <span class="fn">requestLogger</span>(req, res, next) {
+  console.log(<span class="str">`${req.method} ${req.path} — ${new Date().toISOString()}`</span>)
+  next()   <span class="comment">// MUST call next() or the request hangs forever</span>
+}
+
+app.use(requestLogger)   <span class="comment">// apply globally</span>
+
+<span class="comment">// Apply to a specific route only</span>
+app.get(<span class="str">'/members'</span>, requestLogger, listMembers)</pre>
+
+    <h3>Middleware that rejects requests (auth guard)</h3>
+    <pre><span class="kw">function</span> <span class="fn">requireAuth</span>(req, res, next) {
+  <span class="kw">const</span> header = req.headers[<span class="str">'authorization'</span>]
+
+  <span class="kw">if</span> (!header?.startsWith(<span class="str">'Bearer '</span>)) {
+    <span class="kw">return</span> res.status(<span class="num">401</span>).json({ error: <span class="str">'No token provided'</span> })
+    <span class="comment">// does NOT call next() — request stops here</span>
+  }
+
+  <span class="kw">const</span> token = header.slice(<span class="num">7</span>)  <span class="comment">// remove "Bearer "</span>
+
+  <span class="kw">try</span> {
+    <span class="kw">const</span> payload = jwt.verify(token, process.env.JWT_SECRET)
+    req.user = payload   <span class="comment">// attach to req so handlers can use it</span>
+    next()               <span class="comment">// token valid — continue</span>
+  } <span class="kw">catch</span> {
+    res.status(<span class="num">401</span>).json({ error: <span class="str">'Invalid or expired token'</span> })
+  }
+}
+
+<span class="comment">// Protect all routes under /api</span>
+app.use(<span class="str">'/api'</span>, requireAuth)</pre>
+
+    <h3>The next(error) pattern</h3>
+    <pre><span class="comment">// Passing an error to next() skips to the error handler</span>
+<span class="kw">async function</span> <span class="fn">listMembers</span>(req, res, next) {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> members = <span class="kw">await</span> db.query(<span class="str">'SELECT * FROM members'</span>)
+    res.json({ members })
+  } <span class="kw">catch</span> (err) {
+    next(err)   <span class="comment">// → goes to errorHandler middleware</span>
+  }
+}</pre>
+  </div>
+
+  <div class="doc-section" id="middleware-types">
+    <div class="section-label mid">Intermediate</div>
+    <h2>Middleware Types</h2>
+    <p class="section-intro">The standard middleware every production Express app uses — and what each one does.</p>
+    <table>
+      <thead><tr><th>Middleware</th><th>What it does</th><th>Package</th></tr></thead>
+      <tbody>
+        <tr><td><code>express.json()</code></td><td>Parses JSON request body into <code>req.body</code></td><td>Built-in</td></tr>
+        <tr><td><code>helmet()</code></td><td>Sets security headers (CSP, HSTS, X-Frame-Options…)</td><td><code>helmet</code></td></tr>
+        <tr><td><code>cors()</code></td><td>Adds CORS headers so browsers allow cross-origin requests</td><td><code>cors</code></td></tr>
+        <tr><td><code>morgan('dev')</code></td><td>Logs every request method, path, status, response time</td><td><code>morgan</code></td></tr>
+        <tr><td>Auth middleware</td><td>Verifies JWT, attaches <code>req.user</code></td><td>Custom</td></tr>
+        <tr><td>Tenant middleware</td><td>Resolves gym slug, attaches <code>req.tenant</code></td><td>Custom</td></tr>
+        <tr><td>Rate limiter</td><td>Limits requests per IP to prevent abuse</td><td><code>@upstash/ratelimit</code></td></tr>
+        <tr><td>Error handler</td><td>Catches all errors thrown in handlers, formats error response</td><td>Custom</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Middleware order matters</h3>
+    <pre><span class="comment">// WRONG order — rate limiter after auth means unauthenticated requests aren't limited</span>
+app.use(requireAuth)
+app.use(rateLimiter)   <span class="err">← too late</span>
+
+<span class="comment">// CORRECT order</span>
+app.use(helmet())         <span class="comment">// 1. Security headers first</span>
+app.use(cors(config))     <span class="comment">// 2. CORS — before any route handling</span>
+app.use(morgan('dev'))    <span class="comment">// 3. Logging — log everything</span>
+app.use(express.json())   <span class="comment">// 4. Body parsing — before handlers read req.body</span>
+app.use(rateLimiter)      <span class="comment">// 5. Rate limit — before auth so bots are stopped early</span>
+app.use(requireAuth)      <span class="comment">// 6. Auth — after body parsing, before routes</span>
+app.use(router)           <span class="comment">// 7. Routes — your business logic</span>
+app.use(errorHandler)     <span class="comment">// 8. Error handler — must be LAST</span></pre>
+  </div>
+
+  <div class="doc-section" id="databases-intro">
+    <div class="section-label mid">Intermediate</div>
+    <h2>Databases — Introduction</h2>
+    <p class="section-intro">Where data actually lives — and why you can't just use a file.</p>
+    <p>A <strong style="color:#e5e5e5">database</strong> is a program that stores and retrieves data reliably. It handles concurrent access (100 users writing at once), data integrity (no partial writes), and fast queries.</p>
+    <h3>SQL vs NoSQL</h3>
+    <table>
+      <thead><tr><th></th><th>SQL (Relational)</th><th>NoSQL (Document)</th></tr></thead>
+      <tbody>
+        <tr><td><strong style="color:#e5e5e5">Examples</strong></td><td>PostgreSQL, MySQL, SQLite</td><td>MongoDB, DynamoDB, Firestore</td></tr>
+        <tr><td><strong style="color:#e5e5e5">Data format</strong></td><td>Tables with rows and columns — like a spreadsheet</td><td>Documents (JSON objects) — flexible schema</td></tr>
+        <tr><td><strong style="color:#e5e5e5">Relationships</strong></td><td>Foreign keys — strict, enforced by DB</td><td>Embed or reference — no enforcement</td></tr>
+        <tr><td><strong style="color:#e5e5e5">ACID</strong></td><td>Full ACID transactions</td><td>Varies — most support limited transactions</td></tr>
+        <tr><td><strong style="color:#e5e5e5">Best for</strong></td><td>Financial data, user accounts, anything relational</td><td>Flexible schemas, logs, analytics, caches</td></tr>
+        <tr><td><strong style="color:#e5e5e5">This app</strong></td><td>PostgreSQL (Neon) — primary data store</td><td>Redis — cache and job queue only</td></tr>
+      </tbody>
+    </table>
+
+    <h3>ACID — why it matters for payments</h3>
+    <table>
+      <thead><tr><th>Property</th><th>Guarantee</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><strong style="color:#e5e5e5">Atomic</strong></td><td>All-or-nothing: either every step succeeds or none do</td><td>Deduct wallet balance AND create payment — not one without the other</td></tr>
+        <tr><td><strong style="color:#e5e5e5">Consistent</strong></td><td>Data always moves from one valid state to another</td><td>Balance can never go below 0</td></tr>
+        <tr><td><strong style="color:#e5e5e5">Isolated</strong></td><td>Concurrent transactions don't interfere with each other</td><td>Two renewal requests don't double-activate the same subscription</td></tr>
+        <tr><td><strong style="color:#e5e5e5">Durable</strong></td><td>Committed data survives crashes and restarts</td><td>Payment confirmed even if server restarts immediately after</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="doc-section" id="sql-basics">
+    <div class="section-label mid">Intermediate</div>
+    <h2>SQL Basics</h2>
+    <p class="section-intro">The language you use to talk to a relational database — know it, it never goes away.</p>
+    <h3>The four fundamental operations (CRUD)</h3>
+    <pre><span class="comment">── CREATE (INSERT) ──────────────────────────────────────────</span>
+INSERT INTO members (id, name, email, status, created_at)
+VALUES ('b8160866-...', 'Alice Mbah', 'alice@example.cm', 'active', NOW());
+
+<span class="comment">── READ (SELECT) ────────────────────────────────────────────</span>
+<span class="comment">-- All members</span>
+SELECT * FROM members;
+
+<span class="comment">-- Specific columns, with filter</span>
+SELECT id, name, email FROM members WHERE status = 'active';
+
+<span class="comment">-- With sorting and limit</span>
+SELECT * FROM members ORDER BY created_at DESC LIMIT 20 OFFSET 0;
+
+<span class="comment">-- Search (case-insensitive)</span>
+SELECT * FROM members WHERE name ILIKE '%alice%';
+
+<span class="comment">── UPDATE ───────────────────────────────────────────────────</span>
+UPDATE members
+SET    status = 'expired', updated_at = NOW()
+WHERE  id = 'b8160866-...';
+
+<span class="comment">── DELETE ───────────────────────────────────────────────────</span>
+DELETE FROM members WHERE id = 'b8160866-...';</pre>
+
+    <h3>JOINs — combining tables</h3>
+    <pre><span class="comment">-- Get each member with their current subscription plan name</span>
+SELECT
+  m.name,
+  m.email,
+  p.name  AS plan_name,
+  s.expires_at
+FROM members m
+INNER JOIN subscriptions s ON s.member_id = m.id AND s.status = 'active'
+INNER JOIN plans        p ON p.id = s.plan_id
+WHERE m.status = 'active'
+ORDER BY s.expires_at ASC;</pre>
+
+    <h3>Aggregations</h3>
+    <pre><span class="comment">-- Revenue by payment method for September 2026</span>
+SELECT
+  method,
+  COUNT(*)      AS payment_count,
+  SUM(amount)   AS total_revenue
+FROM payments
+WHERE status     = 'completed'
+  AND paid_at   >= '2026-09-01'
+  AND paid_at    < '2026-10-01'
+GROUP BY method
+ORDER BY total_revenue DESC;</pre>
+
+    <h3>Table design example</h3>
+    <pre><span class="comment">-- Members table</span>
+CREATE TABLE members (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT        NOT NULL,
+  email       TEXT        NOT NULL UNIQUE,
+  phone       TEXT,
+  status      TEXT        NOT NULL DEFAULT 'pending',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+<span class="comment">-- Subscriptions linked to members</span>
+CREATE TABLE subscriptions (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id   UUID        NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  plan_id     UUID        NOT NULL REFERENCES plans(id),
+  status      TEXT        NOT NULL DEFAULT 'pending',
+  starts_at   TIMESTAMPTZ NOT NULL,
+  expires_at  TIMESTAMPTZ NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+<span class="comment">-- Index for fast lookup by member</span>
+CREATE INDEX idx_subscriptions_member_id ON subscriptions(member_id);
+CREATE INDEX idx_members_email           ON members(email);</pre>
+  </div>
+
+  <div class="doc-section" id="express-db">
+    <div class="section-label mid">Intermediate</div>
+    <h2>Connecting Express to PostgreSQL</h2>
+    <p class="section-intro">Using the pg library to query your database from a Node.js server.</p>
+    <pre>npm install pg
+npm install @types/pg   <span class="comment"># if using TypeScript</span></pre>
+
+    <h3>Creating a connection pool</h3>
+    <pre><span class="comment">// db/client.ts</span>
+<span class="kw">import</span> { Pool } <span class="kw">from</span> <span class="str">'pg'</span>
+
+<span class="comment">// A pool keeps multiple connections open, reuses them across requests</span>
+<span class="kw">export const</span> pool = <span class="kw">new</span> Pool({
+  connectionString: process.env.DATABASE_URL,
+  max:              10,   <span class="comment">// max 10 simultaneous connections</span>
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+})
+
+<span class="comment">// Helper for parameterised queries</span>
+<span class="kw">export async function</span> <span class="fn">query</span>&lt;T = <span class="ty">Record</span>&lt;<span class="ty">string</span>, <span class="ty">unknown</span>&gt;&gt;(
+  sql: <span class="ty">string</span>,
+  params?: <span class="ty">unknown</span>[]
+) {
+  <span class="kw">const</span> { rows } = <span class="kw">await</span> pool.query&lt;T&gt;(sql, params)
+  <span class="kw">return</span> rows
+}</pre>
+
+    <h3>Using it in a route handler</h3>
+    <pre><span class="comment">// routes/members.ts</span>
+<span class="kw">import</span> { query } <span class="kw">from</span> <span class="str">'../db/client.js'</span>
+
+<span class="kw">export async function</span> <span class="fn">listMembers</span>(req, res, next) {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> { status, search, page = 1, limit = 20 } = req.query
+    <span class="kw">const</span> offset = (page - <span class="num">1</span>) * limit
+
+    <span class="kw">const</span> rows = <span class="kw">await</span> query(
+      <span class="str">`SELECT id, name, email, status, created_at
+         FROM members
+        WHERE ($1::text IS NULL OR status = $1)
+          AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%')
+        ORDER BY created_at DESC
+        LIMIT $3 OFFSET $4`</span>,
+      [status ?? null, search ?? null, limit, offset]
+    )
+
+    <span class="kw">const</span> [{ total }] = <span class="kw">await</span> query(<span class="str">'SELECT COUNT(*) AS total FROM members'</span>)
+
+    res.json({ members: rows, total: Number(total.total), page, limit })
+  } <span class="kw">catch</span> (err) {
+    next(err)
+  }
+}
+
+<span class="kw">export async function</span> <span class="fn">createMember</span>(req, res, next) {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> { name, email } = req.body
+
+    <span class="comment">// $1, $2 = parameterised — NEVER string-concatenate user input into SQL</span>
+    <span class="kw">const</span> [member] = <span class="kw">await</span> query(
+      <span class="str">`INSERT INTO members (name, email)
+       VALUES ($1, $2)
+       RETURNING id, name, email, status, created_at`</span>,
+      [name, email]
+    )
+
+    res.status(<span class="num">201</span>).json({ member })
+  } <span class="kw">catch</span> (err) {
+    <span class="kw">if</span> (err.code === <span class="str">'23505'</span>) {  <span class="comment">// unique violation</span>
+      <span class="kw">return</span> res.status(<span class="num">409</span>).json({ error: <span class="str">'Email already registered'</span> })
+    }
+    next(err)
+  }
+}</pre>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">🔴</div>
+      <div class="callout-body">
+        <strong>Always use parameterised queries — never string concatenation</strong>
+        <p>SQL injection is the #1 database attack. <code>query(`SELECT * FROM members WHERE email = '${email}'`)</code> lets an attacker set email to <code>' OR '1'='1</code> and dump your entire database. The <code>$1, $2</code> parameter syntax prevents this completely.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-section" id="rest-design">
+    <div class="section-label mid">Intermediate</div>
+    <h2>REST API Design</h2>
+    <p class="section-intro">The conventions that make your API predictable and easy to use.</p>
+    <p>REST (Representational State Transfer) is a set of conventions for designing HTTP APIs. A well-designed REST API feels obvious — developers know what to expect.</p>
+    <h3>Resource naming rules</h3>
+    <table>
+      <thead><tr><th>Rule</th><th>Wrong</th><th>Correct</th></tr></thead>
+      <tbody>
+        <tr><td>Use nouns, not verbs</td><td><code>/getMembers</code>, <code>/createMember</code></td><td><code>/members</code></td></tr>
+        <tr><td>Use plural nouns</td><td><code>/member</code></td><td><code>/members</code></td></tr>
+        <tr><td>Use lowercase with hyphens</td><td><code>/DayPass</code>, <code>/day_pass</code></td><td><code>/day-passes</code></td></tr>
+        <tr><td>Nested resources for relationships</td><td><code>/getMemberSubscriptions?id=123</code></td><td><code>/members/123/subscriptions</code></td></tr>
+        <tr><td>Use HTTP method for the action</td><td><code>POST /deleteMembers</code></td><td><code>DELETE /members/123</code></td></tr>
+      </tbody>
+    </table>
+    <h3>Standard CRUD mapping</h3>
+    <pre><span class="comment">// The 5 standard REST operations for a resource</span>
+GET    /members           <span class="comment">→ list (paginated)</span>
+POST   /members           <span class="comment">→ create one</span>
+GET    /members/:id       <span class="comment">→ get one</span>
+PATCH  /members/:id       <span class="comment">→ update one (partial)</span>
+DELETE /members/:id       <span class="comment">→ delete one</span>
+
+<span class="comment">// Actions that don't fit CRUD — use POST to a sub-resource</span>
+POST   /members/:id/confirm-payment  <span class="comment">→ trigger an action</span>
+POST   /members/:id/resend-welcome   <span class="comment">→ trigger an action</span>
+POST   /auth/logout                  <span class="comment">→ trigger an action</span></pre>
+
+    <h3>Response consistency</h3>
+    <pre><span class="comment">// Always wrap in a named key — not a bare array</span>
+{ "members": [...], "total": 87 }   <span class="ok">✓ good</span>
+[...]                               <span class="err">✗ bad — can't add metadata later</span>
+
+<span class="comment">// Error responses always have "error" key</span>
+{ "error": "Email already registered." }
+
+<span class="comment">// Created resources return the full object</span>
+{ "member": { "id": "...", "name": "...", "status": "pending" } }</pre>
+  </div>
+
+  <div class="doc-section" id="validation">
+    <div class="section-label mid">Intermediate</div>
+    <h2>Validation with Zod</h2>
+    <p class="section-intro">Never trust user input — always validate before touching the database.</p>
+    <p>Zod is a TypeScript-first schema library. You define what valid data looks like, and Zod checks incoming requests against it.</p>
+    <pre>npm install zod</pre>
+    <pre><span class="kw">import</span> { z } <span class="kw">from</span> <span class="str">'zod'</span>
+
+<span class="comment">// 1. Define the schema</span>
+<span class="kw">const</span> createMemberSchema = z.object({
+  name:           z.string().min(<span class="num">2</span>).max(<span class="num">100</span>),
+  email:          z.string().email(),
+  phone:          z.string().optional(),
+  gender:         z.enum([<span class="str">'male'</span>, <span class="str">'female'</span>, <span class="str">'other'</span>]).optional(),
+  plan_id:        z.string().uuid().optional(),
+  payment_method: z.enum([<span class="str">'cash'</span>, <span class="str">'mobile_money'</span>, <span class="str">'wallet'</span>]).optional(),
+})
+
+<span class="comment">// 2. Use in route handler</span>
+<span class="kw">export async function</span> <span class="fn">createMember</span>(req, res, next) {
+  <span class="kw">const</span> result = createMemberSchema.safeParse(req.body)
+
+  <span class="kw">if</span> (!result.success) {
+    <span class="kw">return</span> res.status(<span class="num">400</span>).json({
+      error:  <span class="str">'Validation failed'</span>,
+      issues: result.error.flatten().fieldErrors,
+    })
+    <span class="comment">// e.g. { "issues": { "email": ["Invalid email"] } }</span>
+  }
+
+  <span class="kw">const</span> { name, email, phone } = result.data  <span class="comment">// type-safe, guaranteed valid</span>
+  <span class="comment">// ... proceed with DB insert</span>
+}
+
+<span class="comment">// 3. Reusable validation middleware</span>
+<span class="kw">function</span> <span class="fn">validate</span>(schema) {
+  <span class="kw">return</span> (req, res, next) => {
+    <span class="kw">const</span> result = schema.safeParse(req.body)
+    <span class="kw">if</span> (!result.success) {
+      <span class="kw">return</span> res.status(<span class="num">400</span>).json({ error: result.error.flatten().fieldErrors })
+    }
+    req.body = result.data   <span class="comment">// replace with cleaned/coerced data</span>
+    next()
+  }
+}
+
+router.post(<span class="str">'/members'</span>, validate(createMemberSchema), createMember)</pre>
+  </div>
+
+  <div class="doc-section" id="authentication">
+    <div class="section-label mid">Intermediate</div>
+    <h2>Authentication (JWT)</h2>
+    <p class="section-intro">How to prove who a user is — and keep them logged in across requests.</p>
+    <p>HTTP is <strong style="color:#e5e5e5">stateless</strong> — the server doesn't remember who sent the last request. JWTs (JSON Web Tokens) solve this: after login, the server gives the client a signed token; the client sends it with every request.</p>
+    <h3>JWT anatomy</h3>
+    <pre><span class="comment">// A JWT has 3 base64-encoded parts separated by dots:</span>
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9   <span class="comment">← header (algorithm)</span>
+.eyJ1c2VySWQiOiJiODE2MDg2Ni4uLiIsInJvbGUiOiJvd25lciIsImlhdCI6MTcyNTI2NDAwMH0=   <span class="comment">← payload (your data)</span>
+.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c   <span class="comment">← signature (proves it's unmodified)</span>
+
+<span class="comment">// Decoded payload:</span>
+{
+  "userId": "b8160866-985c-4e78-8fda-d1b979a4ed3e",
+  "role":   "owner",
+  "tenantId": "tenant-uuid",
+  "iat":    1725264000,   <span class="comment">// issued at (Unix timestamp)</span>
+  "exp":    1725350400    <span class="comment">// expires at (24 hours later)</span>
+}</pre>
+
+    <h3>Login flow — generate a JWT</h3>
+    <pre>npm install jsonwebtoken bcrypt</pre>
+    <pre><span class="kw">import</span> jwt    <span class="kw">from</span> <span class="str">'jsonwebtoken'</span>
+<span class="kw">import</span> bcrypt <span class="kw">from</span> <span class="str">'bcrypt'</span>
+
+<span class="kw">export async function</span> <span class="fn">login</span>(req, res, next) {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> { email, password } = req.body
+
+    <span class="comment">// 1. Find user</span>
+    <span class="kw">const</span> [user] = <span class="kw">await</span> query(
+      <span class="str">'SELECT id, email, password_hash, role, tenant_id FROM owners WHERE email = $1'</span>,
+      [email.toLowerCase()]
+    )
+    <span class="kw">if</span> (!user) <span class="kw">return</span> res.status(<span class="num">401</span>).json({ error: <span class="str">'Invalid credentials'</span> })
+
+    <span class="comment">// 2. Compare password</span>
+    <span class="kw">const</span> valid = <span class="kw">await</span> bcrypt.compare(password, user.password_hash)
+    <span class="kw">if</span> (!valid) <span class="kw">return</span> res.status(<span class="num">401</span>).json({ error: <span class="str">'Invalid credentials'</span> })
+
+    <span class="comment">// 3. Sign token — never put sensitive data in payload (it's base64, readable)</span>
+    <span class="kw">const</span> token = jwt.sign(
+      { userId: user.id, role: user.role, tenantId: user.tenant_id },
+      process.env.JWT_SECRET,
+      { expiresIn: <span class="str">'24h'</span> }
+    )
+
+    res.json({ token, user: { email: user.email, role: user.role } })
+  } <span class="kw">catch</span> (err) { next(err) }
+}
+
+<span class="comment">// Auth middleware — verify on every protected request</span>
+<span class="kw">export function</span> <span class="fn">requireAuth</span>(req, res, next) {
+  <span class="kw">const</span> header = req.headers.authorization
+  <span class="kw">if</span> (!header?.startsWith(<span class="str">'Bearer '</span>))
+    <span class="kw">return</span> res.status(<span class="num">401</span>).json({ error: <span class="str">'No token'</span> })
+
+  <span class="kw">try</span> {
+    req.user = jwt.verify(header.slice(<span class="num">7</span>), process.env.JWT_SECRET)
+    next()
+  } <span class="kw">catch</span> {
+    res.status(<span class="num">401</span>).json({ error: <span class="str">'Invalid or expired token'</span> })
+  }
+}</pre>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>JWT_SECRET must be long and random</strong>
+        <p>Generate with: <code>node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"</code>. Store only in environment variables — never in code or git.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-section" id="password-hashing">
+    <div class="section-label mid">Intermediate</div>
+    <h2>Password Hashing</h2>
+    <p class="section-intro">You must never store passwords in plain text — ever.</p>
+    <p><strong style="color:#e5e5e5">Hashing</strong> is a one-way transformation. You hash the password when storing, and hash the login attempt and compare — never reversing it.</p>
+    <pre><span class="kw">import</span> bcrypt <span class="kw">from</span> <span class="str">'bcrypt'</span>
+
+<span class="comment">// On registration — hash before INSERT</span>
+<span class="kw">const</span> ROUNDS = <span class="num">12</span>  <span class="comment">// higher = slower = harder to brute-force. 10-12 is good</span>
+<span class="kw">const</span> hash = <span class="kw">await</span> bcrypt.hash(password, ROUNDS)
+<span class="comment">// hash looks like: $2b$12$eUDT.YM1w...</span>
+
+<span class="comment">// INSERT INTO owners (email, password_hash) VALUES ($1, $2)</span>
+<span class="kw">await</span> query(<span class="str">'INSERT INTO owners (email, password_hash) VALUES ($1, $2)'</span>, [email, hash])
+
+<span class="comment">// On login — compare, never decrypt</span>
+<span class="kw">const</span> valid = <span class="kw">await</span> bcrypt.compare(plainTextPassword, storedHash)
+<span class="comment">// returns true or false</span></pre>
+
+    <table>
+      <thead><tr><th>Approach</th><th>Safe?</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Store plain text: <code>"password123"</code></td><td><span class="badge badge-r">Never</span></td><td>DB leak = all accounts compromised</td></tr>
+        <tr><td>MD5/SHA1 hash</td><td><span class="badge badge-r">No</span></td><td>Rainbow tables crack in seconds</td></tr>
+        <tr><td>bcrypt / argon2</td><td><span class="badge badge-g">Yes</span></td><td>Slow by design, salted, designed for passwords</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="doc-section" id="error-handling">
+    <div class="section-label mid">Intermediate</div>
+    <h2>Error Handling</h2>
+    <p class="section-intro">A global error handler prevents crashes from leaking stack traces to users.</p>
+    <pre><span class="comment">// middleware/error.ts</span>
+<span class="kw">export function</span> <span class="fn">errorHandler</span>(err, req, res, next) {
+  <span class="comment">// Log internally — full details for debugging</span>
+  console.error(<span class="str">`[ERROR] ${req.method} ${req.path}`</span>, err)
+
+  <span class="comment">// Known operational errors — user-safe messages</span>
+  <span class="kw">if</span> (err.code === <span class="str">'23505'</span>)   <span class="comment">// PostgreSQL unique violation</span>
+    <span class="kw">return</span> res.status(<span class="num">409</span>).json({ error: <span class="str">'Already exists.'</span> })
+
+  <span class="kw">if</span> (err.code === <span class="str">'23503'</span>)   <span class="comment">// Foreign key violation</span>
+    <span class="kw">return</span> res.status(<span class="num">400</span>).json({ error: <span class="str">'Referenced record not found.'</span> })
+
+  <span class="kw">if</span> (err.name === <span class="str">'ZodError'</span>)
+    <span class="kw">return</span> res.status(<span class="num">400</span>).json({ error: err.flatten().fieldErrors })
+
+  <span class="comment">// Unknown errors — don't expose internals</span>
+  res.status(<span class="num">500</span>).json({ error: <span class="str">'Internal server error.'</span> })
+}
+
+<span class="comment">// MUST be registered last, after all routes:</span>
+app.use(errorHandler)
+
+<span class="comment">// In route handlers — always wrap async code:</span>
+<span class="kw">async function</span> <span class="fn">myHandler</span>(req, res, next) {
+  <span class="kw">try</span> {
+    <span class="comment">// ... code ...</span>
+  } <span class="kw">catch</span> (err) {
+    next(err)  <span class="comment">// → error handler picks it up</span>
+  }
+}
+
+<span class="comment">// Or wrap handlers automatically:</span>
+<span class="kw">const</span> <span class="fn">wrap</span> = fn => (req, res, next) => fn(req, res, next).catch(next)
+
+router.get(<span class="str">'/members'</span>, wrap(listMembers))</pre>
+  </div>
+
+  <div class="doc-section" id="env-config">
+    <div class="section-label mid">Intermediate</div>
+    <h2>Environment Configuration</h2>
+    <p class="section-intro">Keep secrets out of code — use environment variables for everything that changes between environments.</p>
+    <pre><span class="comment"># .env — never commit this file to git</span>
+DATABASE_URL=postgres://user:pass@neon-host/dbname
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=your-256-bit-random-secret
+TRANZAK_APP_ID=tz-app-xxx
+TRANZAK_APP_KEY=tz-key-xxx
+TRANZAK_WEBHOOK_SECRET=webhook-secret
+PORT=4000
+NODE_ENV=development
+APP_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3000</pre>
+
+    <pre><span class="comment">// lib/env.ts — validate on startup so you fail fast</span>
+<span class="kw">import</span> { z } <span class="kw">from</span> <span class="str">'zod'</span>
+
+<span class="kw">const</span> envSchema = z.object({
+  DATABASE_URL:          z.string().url(),
+  JWT_SECRET:            z.string().min(<span class="num">32</span>),
+  TRANZAK_APP_ID:        z.string().min(<span class="num">1</span>),
+  TRANZAK_APP_KEY:       z.string().min(<span class="num">1</span>),
+  PORT:                  z.coerce.number().default(<span class="num">4000</span>),
+  NODE_ENV:              z.enum([<span class="str">'development'</span>, <span class="str">'production'</span>, <span class="str">'test'</span>]),
+})
+
+<span class="kw">export function</span> <span class="fn">validateEnv</span>() {
+  <span class="kw">const</span> result = envSchema.safeParse(process.env)
+  <span class="kw">if</span> (!result.success) {
+    console.error(<span class="str">'Missing or invalid env vars:'</span>, result.error.flatten())
+    process.exit(<span class="num">1</span>)   <span class="comment">// crash immediately — better than cryptic errors later</span>
+  }
+}
+
+<span class="comment">// Call at top of index.ts, before anything else</span>
+validateEnv()</pre>
+  </div>
+
+  <!-- ══════════════════════ PRO -->
+  <div class="level-divider"><span class="ld-label ld-pro">Advanced / Pro</span></div>
+
+  <div class="doc-section" id="drizzle-orm">
+    <div class="section-label pro">Pro</div>
+    <h2>ORM — Drizzle</h2>
+    <p class="section-intro">Write type-safe database queries in TypeScript instead of raw SQL strings.</p>
+    <p>An <strong style="color:#e5e5e5">ORM (Object-Relational Mapper)</strong> lets you define your database schema in code and query it using TypeScript — with full autocomplete and compile-time errors for wrong column names.</p>
+    <pre>npm install drizzle-orm @neondatabase/serverless
+npm install -D drizzle-kit</pre>
+
+    <h3>Define schema</h3>
+    <pre><span class="comment">// db/schema.ts</span>
+<span class="kw">import</span> { pgTable, text, uuid, timestamp } <span class="kw">from</span> <span class="str">'drizzle-orm/pg-core'</span>
+
+<span class="kw">export const</span> members = pgTable(<span class="str">'members'</span>, {
+  id:         uuid(<span class="str">'id'</span>).primaryKey().defaultRandom(),
+  name:       text(<span class="str">'name'</span>).notNull(),
+  email:      text(<span class="str">'email'</span>).notNull().unique(),
+  phone:      text(<span class="str">'phone'</span>),
+  status:     text(<span class="str">'status'</span>).notNull().default(<span class="str">'pending'</span>),
+  createdAt:  timestamp(<span class="str">'created_at'</span>, { withTimezone: <span class="kw">true</span> }).defaultNow(),
+})
+
+<span class="kw">export const</span> subscriptions = pgTable(<span class="str">'subscriptions'</span>, {
+  id:        uuid(<span class="str">'id'</span>).primaryKey().defaultRandom(),
+  memberId:  uuid(<span class="str">'member_id'</span>).notNull().references(() => members.id),
+  status:    text(<span class="str">'status'</span>).notNull().default(<span class="str">'pending'</span>),
+  expiresAt: timestamp(<span class="str">'expires_at'</span>, { withTimezone: <span class="kw">true</span> }).notNull(),
+})</pre>
+
+    <h3>Query with Drizzle</h3>
+    <pre><span class="kw">import</span> { db }     <span class="kw">from</span> <span class="str">'./db/client.js'</span>
+<span class="kw">import</span> { members } <span class="kw">from</span> <span class="str">'./db/schema.js'</span>
+<span class="kw">import</span> { eq, ilike, and } <span class="kw">from</span> <span class="str">'drizzle-orm'</span>
+
+<span class="comment">// SELECT — fully typed results</span>
+<span class="kw">const</span> rows = <span class="kw">await</span> db
+  .select()
+  .from(members)
+  .where(and(
+    eq(members.status, <span class="str">'active'</span>),
+    ilike(members.name, <span class="str">'%alice%'</span>)
+  ))
+  .limit(<span class="num">20</span>)
+  .offset(<span class="num">0</span>)
+
+<span class="comment">// INSERT — returns inserted row</span>
+<span class="kw">const</span> [member] = <span class="kw">await</span> db
+  .insert(members)
+  .values({ name: <span class="str">'Alice'</span>, email: <span class="str">'alice@example.cm'</span> })
+  .returning()
+
+<span class="comment">// UPDATE</span>
+<span class="kw">await</span> db
+  .update(members)
+  .set({ status: <span class="str">'active'</span> })
+  .where(eq(members.id, memberId))
+
+<span class="comment">// DELETE</span>
+<span class="kw">await</span> db.delete(members).where(eq(members.id, memberId))</pre>
+
+    <h3>Migrations — keeping DB schema in sync</h3>
+    <pre><span class="comment"># Generate migration file from schema changes</span>
+pnpm drizzle-kit generate
+
+<span class="comment"># Apply migrations to DB</span>
+pnpm drizzle-kit migrate
+
+<span class="comment"># Or apply programmatically on startup:</span>
+<span class="kw">import</span> { migrate } <span class="kw">from</span> <span class="str">'drizzle-orm/neon-http/migrator'</span>
+<span class="kw">await</span> migrate(db, { migrationsFolder: <span class="str">'./drizzle'</span> })</pre>
+  </div>
+
+  <div class="doc-section" id="db-patterns">
+    <div class="section-label pro">Pro</div>
+    <h2>Database Patterns</h2>
+    <p class="section-intro">Transactions, connection pooling, and query optimisation for production databases.</p>
+
+    <h3>Transactions — multiple queries as one atomic unit</h3>
+    <pre><span class="comment">// WRONG — if the second query fails, the first already ran (inconsistent state)</span>
+<span class="kw">await</span> query(<span class="str">'UPDATE wallets SET balance = balance - $1 WHERE member_id = $2'</span>, [amount, memberId])
+<span class="kw">await</span> query(<span class="str">'INSERT INTO wallet_transactions (...) VALUES (...)'</span>, [...])
+
+<span class="comment">// CORRECT — transaction wraps both: either both run, or neither does</span>
+<span class="kw">const</span> client = <span class="kw">await</span> pool.connect()
+<span class="kw">try</span> {
+  <span class="kw">await</span> client.query(<span class="str">'BEGIN'</span>)
+
+  <span class="kw">await</span> client.query(
+    <span class="str">'UPDATE wallets SET balance = balance - $1 WHERE member_id = $2 AND balance >= $1'</span>,
+    [amount, memberId]
+  )
+  <span class="comment">// If this fails (not enough balance), the UPDATE above is rolled back</span>
+
+  <span class="kw">await</span> client.query(
+    <span class="str">'INSERT INTO wallet_transactions (member_id, amount, type) VALUES ($1, $2, $3)'</span>,
+    [memberId, -amount, <span class="str">'debit'</span>]
+  )
+
+  <span class="kw">await</span> client.query(<span class="str">'COMMIT'</span>)
+} <span class="kw">catch</span> (err) {
+  <span class="kw">await</span> client.query(<span class="str">'ROLLBACK'</span>)
+  <span class="kw">throw</span> err
+} <span class="kw">finally</span> {
+  client.release()   <span class="comment">// always return connection to pool</span>
+}</pre>
+
+    <h3>Indexes — make queries fast</h3>
+    <pre><span class="comment">-- Without index: full table scan = reads every row</span>
+SELECT * FROM members WHERE email = 'alice@example.cm';   <span class="comment">← O(n) — slow at scale</span>
+
+<span class="comment">-- Add an index: PostgreSQL jumps directly to the row</span>
+CREATE INDEX idx_members_email ON members(email);         <span class="comment">← O(log n) — fast</span>
+
+<span class="comment">-- Index every column you filter on frequently:</span>
+CREATE INDEX idx_members_status        ON members(status);
+CREATE INDEX idx_subscriptions_member  ON subscriptions(member_id);
+CREATE INDEX idx_payments_created_at   ON payments(created_at DESC);</pre>
+
+    <h3>N+1 query problem — the most common performance bug</h3>
+    <pre><span class="comment">// BAD — N+1: 1 query to get members + 1 per member = 101 queries for 100 members</span>
+<span class="kw">const</span> members = <span class="kw">await</span> query(<span class="str">'SELECT * FROM members'</span>)
+<span class="kw">for</span> (<span class="kw">const</span> member <span class="kw">of</span> members) {
+  member.subscription = <span class="kw">await</span> query(   <span class="comment">// ← query inside loop</span>
+    <span class="str">'SELECT * FROM subscriptions WHERE member_id = $1'</span>, [member.id]
+  )
+}
+
+<span class="comment">// GOOD — 1 JOIN query gets everything</span>
+<span class="kw">const</span> rows = <span class="kw">await</span> query(<span class="str">`
+  SELECT m.*, s.status AS sub_status, s.expires_at
+  FROM members m
+  LEFT JOIN subscriptions s
+    ON s.member_id = m.id AND s.status IN ('active','pending','grace_period')
+`</span>)</pre>
+  </div>
+
+  <div class="doc-section" id="rate-limiting">
+    <div class="section-label pro">Pro</div>
+    <h2>Rate Limiting</h2>
+    <p class="section-intro">Preventing abuse by limiting how many requests a client can make in a time window.</p>
+    <p>Without rate limiting, anyone can flood your API with millions of requests, crash your server, or brute-force passwords.</p>
+    <pre>npm install @upstash/ratelimit @upstash/redis</pre>
+    <pre><span class="comment">// middleware/rate-limit.ts</span>
+<span class="kw">import</span> { Ratelimit }   <span class="kw">from</span> <span class="str">'@upstash/ratelimit'</span>
+<span class="kw">import</span> { Redis }       <span class="kw">from</span> <span class="str">'@upstash/redis'</span>
+
+<span class="kw">const</span> redis     = Redis.fromEnv()
+<span class="kw">const</span> ratelimit = <span class="kw">new</span> Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(<span class="num">100</span>, <span class="str">'1 m'</span>),  <span class="comment">// 100 requests per minute per IP</span>
+})
+
+<span class="kw">export async function</span> <span class="fn">rateLimitApi</span>(req, res, next) {
+  <span class="kw">const</span> ip       = req.ip ?? <span class="str">'unknown'</span>
+  <span class="kw">const</span> { success, remaining, reset } = <span class="kw">await</span> ratelimit.limit(ip)
+
+  res.setHeader(<span class="str">'X-RateLimit-Remaining'</span>, remaining)
+  res.setHeader(<span class="str">'X-RateLimit-Reset'</span>, reset)
+
+  <span class="kw">if</span> (!success) {
+    <span class="kw">return</span> res.status(<span class="num">429</span>).json({ error: <span class="str">'Too many requests. Try again in a minute.'</span> })
+  }
+  next()
+}
+
+<span class="comment">// Stricter limit for auth endpoints (prevent brute-force)</span>
+<span class="kw">const</span> authLimiter = <span class="kw">new</span> Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(<span class="num">5</span>, <span class="str">'1 m'</span>),   <span class="comment">// only 5 logins per minute</span>
+})
+
+<span class="comment">// Apply rate limits:</span>
+app.use(<span class="str">'/api'</span>,        rateLimitApi)
+app.post(<span class="str">'/auth/login'</span>, authRateLimiter, loginHandler)</pre>
+  </div>
+
+  <div class="doc-section" id="cors-helmet">
+    <div class="section-label pro">Pro</div>
+    <h2>CORS &amp; Helmet</h2>
+    <p class="section-intro">Browser security headers that prevent entire classes of attacks.</p>
+
+    <h3>CORS — Cross-Origin Resource Sharing</h3>
+    <p>Browsers block JavaScript from calling APIs on a different domain unless the server explicitly allows it. CORS headers tell the browser which origins are allowed.</p>
+    <pre><span class="kw">import</span> cors <span class="kw">from</span> <span class="str">'cors'</span>
+
+app.use(cors({
+  origin:         process.env.CORS_ORIGIN ?? <span class="str">'http://localhost:3000'</span>,
+  methods:        [<span class="str">'GET'</span>, <span class="str">'POST'</span>, <span class="str">'PATCH'</span>, <span class="str">'PUT'</span>, <span class="str">'DELETE'</span>, <span class="str">'OPTIONS'</span>],
+  allowedHeaders: [<span class="str">'Content-Type'</span>, <span class="str">'Authorization'</span>, <span class="str">'X-Tenant-Slug'</span>],
+  credentials:    <span class="kw">true</span>,   <span class="comment">// allow cookies to be sent cross-origin</span>
+  maxAge:         86400,  <span class="comment">// browsers cache preflight for 24h</span>
+}))
+
+<span class="comment">// CORS_ORIGIN in production = "https://app.myfiti.fit"</span>
+<span class="comment">// NEVER use '*' with credentials: true</span></pre>
+
+    <h3>Helmet — security response headers</h3>
+    <pre><span class="kw">import</span> helmet <span class="kw">from</span> <span class="str">'helmet'</span>
+
+app.use(helmet())
+<span class="comment">// Sets these headers automatically:</span>
+<span class="comment">//   Content-Security-Policy    — prevents XSS by restricting script sources</span>
+<span class="comment">//   X-Frame-Options: DENY      — prevents clickjacking (page in an iframe)</span>
+<span class="comment">//   X-Content-Type-Options     — prevents MIME sniffing</span>
+<span class="comment">//   Strict-Transport-Security  — forces HTTPS</span>
+<span class="comment">//   Referrer-Policy            — controls what URL is sent in Referer header</span>
+
+<span class="comment">// Relax CSP for a specific route (e.g. API docs that load CDN scripts):</span>
+app.use(<span class="str">'/api/docs'</span>, (_req, res, next) => {
+  res.setHeader(<span class="str">'Content-Security-Policy'</span>,
+    <span class="str">"default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;"</span>)
+  next()
+})</pre>
+  </div>
+
+  <div class="doc-section" id="background-jobs">
+    <div class="section-label pro">Pro</div>
+    <h2>Background Jobs — BullMQ</h2>
+    <p class="section-intro">Running tasks asynchronously so your API responds instantly while heavy work happens in the background.</p>
+    <p>Some operations are too slow for a request/response cycle: sending emails, generating PDFs, processing webhooks, running daily crons. Background jobs put these on a queue and process them asynchronously.</p>
+    <pre>npm install bullmq ioredis</pre>
+
+    <h3>Queue + Worker pattern</h3>
+    <pre><span class="comment">// jobs/email.queue.ts — the queue (adds jobs)</span>
+<span class="kw">import</span> { Queue } <span class="kw">from</span> <span class="str">'bullmq'</span>
+<span class="kw">import</span> IORedis   <span class="kw">from</span> <span class="str">'ioredis'</span>
+
+<span class="kw">const</span> connection  = <span class="kw">new</span> IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null })
+<span class="kw">export const</span> emailQueue = <span class="kw">new</span> Queue(<span class="str">'emails'</span>, { connection })
+
+<span class="comment">// Add a job — returns immediately</span>
+<span class="kw">await</span> emailQueue.add(<span class="str">'welcome-email'</span>, {
+  to:     <span class="str">'alice@example.cm'</span>,
+  name:   <span class="str">'Alice Mbah'</span>,
+  gymName: <span class="str">'Kora Fit'</span>,
+}, {
+  attempts: <span class="num">3</span>,       <span class="comment">// retry up to 3 times on failure</span>
+  backoff: { type: <span class="str">'exponential'</span>, delay: <span class="num">5000</span> }  <span class="comment">// wait 5s, 10s, 20s between retries</span>
+})</pre>
+
+    <pre><span class="comment">// jobs/email.worker.ts — the worker (processes jobs)</span>
+<span class="kw">import</span> { Worker } <span class="kw">from</span> <span class="str">'bullmq'</span>
+
+<span class="kw">const</span> worker = <span class="kw">new</span> Worker(<span class="str">'emails'</span>, <span class="kw">async</span> (job) => {
+  <span class="kw">if</span> (job.name === <span class="str">'welcome-email'</span>) {
+    <span class="kw">await</span> <span class="fn">sendWelcomeEmail</span>(job.data)
+    console.log(<span class="str">`Sent welcome email to ${job.data.to}`</span>)
+  }
+}, { connection })
+
+worker.on(<span class="str">'failed'</span>, (job, err) => {
+  console.error(<span class="str">`Job ${job.id} failed:`, err.message)
+})
+
+<span class="comment">// Workers run in a separate process or in the same server</span>
+<span class="comment">// They process jobs one at a time (or concurrently with { concurrency: 5 })</span></pre>
+
+    <h3>Scheduled cron jobs with BullMQ</h3>
+    <pre><span class="comment">// Run subscription expiry check every day at midnight</span>
+<span class="kw">await</span> emailQueue.add(
+  <span class="str">'check-expiring-subscriptions'</span>,
+  {},
+  {
+    repeat: { cron: <span class="str">'0 0 * * *'</span> },  <span class="comment">// cron syntax: min hour day month weekday</span>
+    jobId: <span class="str">'subscription-cron'</span>,      <span class="comment">// stable ID prevents duplicate crons on restart</span>
+  }
+)</pre>
+  </div>
+
+  <div class="doc-section" id="caching">
+    <div class="section-label pro">Pro</div>
+    <h2>Caching — Redis</h2>
+    <p class="section-intro">Store expensive computation results in memory so you don't repeat them.</p>
+    <p>Redis is an in-memory key-value store. Reading from Redis takes ~1ms; reading from PostgreSQL over a network can take 10–100ms. For data that doesn't change often, cache it.</p>
+    <pre>npm install ioredis</pre>
+    <pre><span class="kw">import</span> IORedis <span class="kw">from</span> <span class="str">'ioredis'</span>
+<span class="kw">const</span> redis = <span class="kw">new</span> IORedis(process.env.REDIS_URL)
+
+<span class="comment">// Cache-aside pattern: check cache first, fall back to DB, store result</span>
+<span class="kw">async function</span> <span class="fn">getGymInfo</span>(slug: <span class="ty">string</span>) {
+  <span class="kw">const</span> cacheKey = <span class="str">`gym:${slug}`</span>
+
+  <span class="comment">// 1. Check cache</span>
+  <span class="kw">const</span> cached = <span class="kw">await</span> redis.get(cacheKey)
+  <span class="kw">if</span> (cached) <span class="kw">return</span> JSON.parse(cached)
+
+  <span class="comment">// 2. Cache miss — query DB</span>
+  <span class="kw">const</span> [gym] = <span class="kw">await</span> query(<span class="str">'SELECT * FROM tenants WHERE slug = $1'</span>, [slug])
+  <span class="kw">if</span> (!gym) <span class="kw">return null</span>
+
+  <span class="comment">// 3. Store in cache for 5 minutes</span>
+  <span class="kw">await</span> redis.setex(cacheKey, <span class="num">300</span>, JSON.stringify(gym))
+
+  <span class="kw">return</span> gym
+}
+
+<span class="comment">// Invalidate cache when gym settings change</span>
+<span class="kw">async function</span> <span class="fn">updateGymSettings</span>(slug: <span class="ty">string</span>, data: <span class="ty">object</span>) {
+  <span class="kw">await</span> query(<span class="str">'UPDATE tenants SET ... WHERE slug = $1'</span>, [slug])
+  <span class="kw">await</span> redis.del(<span class="str">`gym:${slug}`</span>)   <span class="comment">// bust the cache</span>
+}</pre>
+
+    <h3>What to cache vs what not to</h3>
+    <table>
+      <thead><tr><th>Cache this</th><th>Don't cache this</th></tr></thead>
+      <tbody>
+        <tr><td>Gym settings / branding (changes rarely)</td><td>Member data (changes on every payment/checkin)</td></tr>
+        <tr><td>Plan list (rarely changes)</td><td>Payment status (must be real-time)</td></tr>
+        <tr><td>Expensive analytics queries (run once, cache result for 1h)</td><td>User-specific data (different per user, hard to invalidate)</td></tr>
+        <tr><td>Static public data (gym info page)</td><td>Anything security-sensitive</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="doc-section" id="security-depth">
+    <div class="section-label pro">Pro</div>
+    <h2>Security In Depth</h2>
+    <p class="section-intro">The OWASP Top 10 — the most common attack vectors and how to prevent them.</p>
+    <table>
+      <thead><tr><th>Attack</th><th>How it works</th><th>Prevention</th></tr></thead>
+      <tbody>
+        <tr><td><strong style="color:#e5e5e5">SQL Injection</strong></td><td>User input breaks out of SQL string: <code>'; DROP TABLE members;--</code></td><td>Always use parameterised queries (<code>$1, $2</code>). Never concatenate user input.</td></tr>
+        <tr><td><strong style="color:#e5e5e5">XSS</strong></td><td>Inject <code>&lt;script&gt;</code> into DB, served to other users</td><td>Escape output in frontend, CSP headers (Helmet), never use <code>innerHTML</code></td></tr>
+        <tr><td><strong style="color:#e5e5e5">Broken Auth</strong></td><td>Weak tokens, no expiry, secrets in code</td><td>JWT with expiry, strong secrets from env, bcrypt for passwords</td></tr>
+        <tr><td><strong style="color:#e5e5e5">IDOR</strong></td><td>Access <code>/members/OTHER_USER_ID</code> by guessing IDs</td><td>Authorisation checks: verify <code>req.user.tenantId === member.tenantId</code></td></tr>
+        <tr><td><strong style="color:#e5e5e5">Mass Assignment</strong></td><td>User sends <code>{ "role": "admin" }</code> and it gets saved</td><td>Use Zod schema — only allow specific fields, strip everything else</td></tr>
+        <tr><td><strong style="color:#e5e5e5">DoS</strong></td><td>Flood server with requests until it crashes</td><td>Rate limiting, payload size limits (<code>express.json({ limit: '2mb' })</code>)</td></tr>
+        <tr><td><strong style="color:#e5e5e5">Secrets Exposure</strong></td><td>JWT_SECRET or DB password committed to git</td><td>Environment variables only, <code>.gitignore</code> for <code>.env</code>, git-secrets scanner</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Authorisation — don't confuse with authentication</h3>
+    <pre><span class="comment">// Authentication = who are you? (JWT verification)</span>
+<span class="comment">// Authorisation  = what are you allowed to do?</span>
+
+<span class="comment">// Role-based guard middleware</span>
+<span class="kw">function</span> <span class="fn">requireRole</span>(...roles: <span class="ty">string</span>[]) {
+  <span class="kw">return</span> (req, res, next) => {
+    <span class="kw">if</span> (!roles.includes(req.user?.role)) {
+      <span class="kw">return</span> res.status(<span class="num">403</span>).json({ error: <span class="str">'Forbidden — insufficient role'</span> })
+    }
+    next()
+  }
+}
+
+<span class="comment">// Only owners can delete members</span>
+router.delete(<span class="str">'/members/:id'</span>, requireAuth, requireRole(<span class="str">'owner'</span>), deleteMember)
+
+<span class="comment">// Resource-level check — even authenticated users must own the resource</span>
+<span class="kw">async function</span> <span class="fn">getMember</span>(req, res) {
+  <span class="kw">const</span> [member] = <span class="kw">await</span> query(
+    <span class="str">'SELECT * FROM members WHERE id = $1'</span>, [req.params.id]
+  )
+  <span class="comment">// Check the member belongs to the caller's tenant</span>
+  <span class="kw">if</span> (member.tenant_id !== req.user.tenantId) {
+    <span class="kw">return</span> res.status(<span class="num">404</span>).json({ error: <span class="str">'Not found'</span> })
+    <span class="comment">// Return 404, not 403 — don't leak that the record exists</span>
+  }
+  res.json({ member })
+}</pre>
+  </div>
+
+  <div class="doc-section" id="testing">
+    <div class="section-label pro">Pro</div>
+    <h2>Testing</h2>
+    <p class="section-intro">Automated tests catch regressions before they reach production.</p>
+    <h3>Three levels of testing</h3>
+    <table>
+      <thead><tr><th>Level</th><th>Tests</th><th>Speed</th><th>What it catches</th></tr></thead>
+      <tbody>
+        <tr><td><strong style="color:#e5e5e5">Unit</strong></td><td>Individual functions in isolation</td><td>Very fast (&lt;1ms each)</td><td>Logic bugs in pure functions (validation, transforms)</td></tr>
+        <tr><td><strong style="color:#e5e5e5">Integration</strong></td><td>Endpoint + real DB (test DB)</td><td>Moderate (~100ms each)</td><td>Route logic, middleware, DB queries together</td></tr>
+        <tr><td><strong style="color:#e5e5e5">E2E</strong></td><td>Full user flow through live API</td><td>Slow (~seconds each)</td><td>Full flows work end-to-end</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Unit test example (Vitest)</h3>
+    <pre>npm install -D vitest</pre>
+    <pre><span class="comment">// lib/reference.ts</span>
+<span class="kw">export function</span> <span class="fn">generateRef</span>(prefix: <span class="ty">string</span>, id: <span class="ty">string</span>): <span class="ty">string</span> {
+  <span class="kw">return</span> <span class="str">`${prefix}-${id}-${Math.floor(Date.now() / 1000)}`</span>
+}
+
+<span class="comment">// lib/reference.test.ts</span>
+<span class="kw">import</span> { describe, it, expect } <span class="kw">from</span> <span class="str">'vitest'</span>
+<span class="kw">import</span> { generateRef }          <span class="kw">from</span> <span class="str">'./reference.js'</span>
+
+describe(<span class="str">'generateRef'</span>, () => {
+  it(<span class="str">'includes prefix and id'</span>, () => {
+    <span class="kw">const</span> ref = generateRef(<span class="str">'RENEW'</span>, <span class="str">'b8160866'</span>)
+    expect(ref).toMatch(<span class="str">/^RENEW-b8160866-\d+$/</span>)
+  })
+
+  it(<span class="str">'different timestamps produce different refs'</span>, () => {
+    <span class="kw">const</span> a = generateRef(<span class="str">'X'</span>, <span class="str">'id'</span>)
+    <span class="kw">const</span> b = generateRef(<span class="str">'X'</span>, <span class="str">'id'</span>)
+    <span class="comment">// may be same if called in same second — good enough</span>
+    expect(<span class="kw">typeof</span> a).toBe(<span class="str">'string'</span>)
+  })
+})</pre>
+
+    <h3>Integration test — full request lifecycle</h3>
+    <pre><span class="kw">import</span> { describe, it, expect, beforeAll } <span class="kw">from</span> <span class="str">'vitest'</span>
+<span class="kw">import</span> request <span class="kw">from</span> <span class="str">'supertest'</span>   <span class="comment">// npm install -D supertest</span>
+<span class="kw">import</span> app     <span class="kw">from</span> <span class="str">'../src/index.js'</span>
+
+describe(<span class="str">'POST /auth/login'</span>, () => {
+  it(<span class="str">'returns 401 for wrong password'</span>, <span class="kw">async</span> () => {
+    <span class="kw">const</span> res = <span class="kw">await</span> request(app)
+      .post(<span class="str">'/api/auth/login'</span>)
+      .send({ email: <span class="str">'owner@korafit.cm'</span>, password: <span class="str">'wrongpassword'</span> })
+    expect(res.status).toBe(<span class="num">401</span>)
+    expect(res.body.error).toBeDefined()
+  })
+
+  it(<span class="str">'returns token for correct credentials'</span>, <span class="kw">async</span> () => {
+    <span class="kw">const</span> res = <span class="kw">await</span> request(app)
+      .post(<span class="str">'/api/auth/login'</span>)
+      .send({ email: <span class="str">'owner@korafit.cm'</span>, password: process.env.TEST_OWNER_PASSWORD })
+    expect(res.status).toBe(<span class="num">200</span>)
+    expect(res.body.token).toBeDefined()
+  })
+})</pre>
+  </div>
+
+  <div class="doc-section" id="deployment">
+    <div class="section-label pro">Pro</div>
+    <h2>Deployment</h2>
+    <p class="section-intro">Getting your API from your machine to a server that runs 24/7.</p>
+    <h3>Build pipeline</h3>
+    <pre><span class="comment"># 1. TypeScript → JavaScript</span>
+pnpm tsc   <span class="comment">→ outputs to dist/</span>
+
+<span class="comment"># 2. Install production dependencies only</span>
+pnpm install --prod
+
+<span class="comment"># 3. Start with PM2 (process manager)</span>
+pm2 start dist/apps/api/src/index.js --name api
+
+<span class="comment"># 4. Caddy (reverse proxy) sits in front:</span>
+<span class="comment">#    api.myfiti.fit:443 → localhost:4000</span></pre>
+
+    <h3>PM2 — keeping Node.js alive</h3>
+    <pre><span class="comment"># Start</span>
+pm2 start ecosystem.config.cjs
+
+<span class="comment"># Reload without downtime (zero-downtime restart)</span>
+pm2 reload api
+
+<span class="comment"># View status</span>
+pm2 status
+
+<span class="comment"># View live logs</span>
+pm2 logs api
+
+<span class="comment"># Auto-start on server reboot</span>
+pm2 startup &amp;&amp; pm2 save</pre>
+
+    <pre><span class="comment">// ecosystem.config.cjs</span>
+module.exports = {
+  apps: [
+    {
+      name:         <span class="str">'api'</span>,
+      script:       <span class="str">'dist/apps/api/src/index.js'</span>,
+      instances:    <span class="num">1</span>,
+      autorestart:  <span class="kw">true</span>,
+      env: {
+        NODE_ENV: <span class="str">'production'</span>,
+        PORT:     <span class="str">'4000'</span>,
+      }
+    }
+  ]
+}</pre>
+
+    <h3>Caddy — automatic HTTPS reverse proxy</h3>
+    <pre><span class="comment"># /etc/caddy/Caddyfile</span>
+api.myfiti.fit {
+  reverse_proxy localhost:4000
+  <span class="comment"># Caddy automatically gets and renews TLS certificates from Let's Encrypt</span>
+}
+
+app.myfiti.fit {
+  reverse_proxy localhost:3000
+}</pre>
+
+    <h3>Deploy script</h3>
+    <pre><span class="comment"># On the VPS — pull, build, restart</span>
+cd /srv/myfiti
+git pull
+cd apps/api &amp;&amp; pnpm build
+pm2 reload api --update-env</pre>
+  </div>
+
+  <div class="doc-section" id="architecture">
+    <div class="section-label pro">Pro</div>
+    <h2>Architecture Patterns</h2>
+    <p class="section-intro">How to structure a backend as it grows — from monolith to services.</p>
+
+    <h3>Layered architecture (what this project uses)</h3>
+    <div class="diagram">
+<span class="d-purple">Routes layer</span>       <span class="comment">— HTTP: parse req, validate, call service, send res</span>
+      ↓
+<span class="d-blue">Service layer</span>      <span class="comment">— Business logic: orchestrate DB calls, external APIs</span>
+      ↓
+<span class="d-green">Data layer</span>         <span class="comment">— DB queries, no business logic here</span>
+      ↓
+<span class="d-yellow">Database</span>           <span class="comment">— PostgreSQL: single source of truth</span>
+    </div>
+    <pre><span class="comment">// routes/members.ts — only HTTP concerns</span>
+router.post(<span class="str">'/members'</span>, validate(schema), <span class="kw">async</span> (req, res, next) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> member = <span class="kw">await</span> memberService.create(req.body, req.tenant.id)
+    res.status(<span class="num">201</span>).json({ member })
+  } <span class="kw">catch</span> (err) { next(err) }
+})
+
+<span class="comment">// services/member.service.ts — business logic</span>
+<span class="kw">export const</span> memberService = {
+  <span class="kw">async</span> create(data, tenantId) {
+    <span class="kw">const</span> existing = <span class="kw">await</span> memberRepo.findByEmail(data.email, tenantId)
+    <span class="kw">if</span> (existing) <span class="kw">throw new</span> ConflictError(<span class="str">'Email already registered'</span>)
+    <span class="kw">const</span> member = <span class="kw">await</span> memberRepo.create(data, tenantId)
+    <span class="kw">await</span> emailQueue.add(<span class="str">'welcome'</span>, { to: member.email, name: member.name })
+    <span class="kw">return</span> member
+  }
+}
+
+<span class="comment">// repositories/member.repo.ts — data access only</span>
+<span class="kw">export const</span> memberRepo = {
+  findByEmail: (email, tenantId) =>
+    query(<span class="str">'SELECT * FROM members WHERE email=$1 AND tenant_id=$2'</span>, [email, tenantId]),
+  create: (data, tenantId) =>
+    query(<span class="str">'INSERT INTO members (name, email, tenant_id) VALUES ($1,$2,$3) RETURNING *'</span>,
+          [data.name, data.email, tenantId])
+}</pre>
+
+    <h3>Multi-tenant architecture (how Myfiti works)</h3>
+    <div class="diagram">
+<span class="d-yellow">Single API server</span>  handles ALL gyms
+
+Each gym has its own <span class="d-blue">PostgreSQL schema</span>:
+  tenant_korafit.members
+  tenant_korafit.subscriptions
+  tenant_gymx.members
+  tenant_gymx.subscriptions
+
+<span class="d-purple">Global schema</span>  holds cross-tenant data:
+  public.tenants    (gym name, slug, settings)
+  public.owners     (login credentials)
+
+<span class="d-green">Tenant middleware</span>  reads X-Tenant-Slug header
+  → looks up tenant in public.tenants
+  → sets search_path to tenant_korafit
+  → all queries now hit that gym's data only
+    </div>
+
+    <h3>File structure — what works at scale</h3>
+    <pre>apps/api/src/
+├── index.ts              <span class="comment">← server setup, middleware, startup</span>
+├── openapi.ts            <span class="comment">← API documentation spec</span>
+├── lib/
+│   ├── env.ts            <span class="comment">← env validation</span>
+│   ├── tranzak.ts        <span class="comment">← external service client</span>
+│   └── email.ts          <span class="comment">← email service</span>
+├── db/
+│   ├── client.ts         <span class="comment">← DB connection pool</span>
+│   ├── schema.ts         <span class="comment">← Drizzle schema definitions</span>
+│   └── provision.ts      <span class="comment">← migrations on startup</span>
+├── middleware/
+│   ├── auth.ts           <span class="comment">← JWT verification</span>
+│   ├── tenant.ts         <span class="comment">← multi-tenant resolution</span>
+│   ├── error.ts          <span class="comment">← global error handler</span>
+│   └── rate-limit.ts     <span class="comment">← rate limiting</span>
+├── routes/
+│   ├── index.ts          <span class="comment">← mount all routers</span>
+│   ├── auth.ts
+│   ├── members.ts
+│   ├── subscriptions.ts
+│   ├── payments.ts
+│   └── public.ts
+└── jobs/
+    ├── index.ts          <span class="comment">← start workers</span>
+    ├── email.worker.ts
+    └── subscription-cron.ts</pre>
+
+    <div class="callout callout-tip">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <strong>Start simple, grow deliberately</strong>
+        <p>You don't need services, repositories, and workers on day one. Start with routes calling the DB directly. Extract layers only when the file gets unreadable or you need to reuse logic. The right architecture is the simplest one that handles your current requirements.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+  <p style="font-size: 13px; color: #2a2a2a; text-align: center;">Myfiti / GymFlow · Backend Engineering Course · September 2026</p>
+</div>
+</div>
+</div>
+
+<script>
+  const sections = document.querySelectorAll('.doc-section')
+  const links    = document.querySelectorAll('nav a')
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'))
+        const a = document.querySelector(`nav a[href="#${entry.target.id}"]`)
+        if (a) a.classList.add('active')
+      }
+    })
+  }, { rootMargin: '-20% 0px -75% 0px' })
+  sections.forEach(s => observer.observe(s))
+</script>
+</body>
+</html>
