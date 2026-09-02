@@ -331,6 +331,8 @@
 
     <div class="nav-section">Beginner</div>
     <a href="#what-is-api">What is an API?</a>
+    <a href="#uuids">Understanding IDs (UUIDs)</a>
+    <a href="#request-anatomy">Anatomy of a Request</a>
     <a href="#what-is-scalar">What is Scalar?</a>
     <a href="#open-docs">Opening the Docs</a>
     <a href="#first-request">Your First Request</a>
@@ -342,13 +344,24 @@
     <a href="#headers">Required Headers</a>
     <a href="#request-bodies">Request Bodies</a>
     <a href="#query-params">Query Params & Filters</a>
+    <a href="#pagination">Pagination</a>
     <a href="#flows">Common Flows</a>
+    <a href="#member-login">Member Login (OTP)</a>
+    <a href="#subscription-plans">Subscription Plans</a>
+    <a href="#checkin-flow">Check-in Flow</a>
+    <a href="#classes">Classes & Bookings</a>
+    <a href="#day-passes">Day Passes</a>
+    <a href="#analytics">Analytics & Reports</a>
     <a href="#errors">Handling Errors</a>
 
     <div class="nav-section">Advanced / Pro</div>
+    <a href="#data-model">Data Model</a>
     <a href="#chaining">Chaining Requests</a>
     <a href="#payment-testing">Payment Testing</a>
+    <a href="#curl-reference">curl Reference</a>
+    <a href="#js-fetch">JavaScript Fetch</a>
     <a href="#webhooks">Webhook Testing</a>
+    <a href="#server-logs">Debugging Logs</a>
     <a href="#postman">Postman / Insomnia</a>
     <a href="#roles">Role Matrix</a>
     <a href="#endpoints-ref">Full Endpoint Reference</a>
@@ -658,6 +671,154 @@ https://api.myfiti.fit
       </div>
     </div>
 
+    <!-- UUIDs -->
+    <div class="doc-section" id="uuids">
+      <div class="section-label beginner">Beginner</div>
+      <h2>Understanding IDs (UUIDs)</h2>
+      <p class="section-intro">Every record in the system has a unique ID — here's what they are and how to use them.</p>
+
+      <p>
+        Almost every response from the API includes an <strong style="color:#e5e5e5">id</strong> field — a long string that looks like this:
+      </p>
+      <pre><span class="str">"b8160866-985c-4e78-8fda-d1b979a4ed3e"</span></pre>
+
+      <p>
+        This is called a <strong style="color:#e5e5e5">UUID</strong> (Universally Unique Identifier). It's a 36-character string made of
+        letters and numbers separated by hyphens. Every member, plan, subscription, and payment has its own UUID.
+        No two records ever share the same ID.
+      </p>
+
+      <h3>Why UUIDs instead of 1, 2, 3?</h3>
+      <table>
+        <thead><tr><th>Simple numbers</th><th>UUIDs</th></tr></thead>
+        <tbody>
+          <tr><td>Sequential — attacker can guess <code>/members/2</code>, <code>/members/3</code></td><td>Random — impossible to guess</td></tr>
+          <tr><td>Clash when merging data from two databases</td><td>Globally unique — safe to merge</td></tr>
+          <tr><td>Can leak how many records exist</td><td>No information leaked</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Where you'll use UUIDs</h3>
+      <p>UUIDs appear in two places: as path parameters and in request bodies.</p>
+      <pre><span class="comment">── In the URL path (path parameter) ─────────────────────────</span>
+<span class="method">GET</span> <span class="url">/api/members/b8160866-985c-4e78-8fda-d1b979a4ed3e</span>
+                  <span class="comment">↑ the member's UUID replaces :id</span>
+
+<span class="comment">── In a request body ────────────────────────────────────────</span>
+{
+  <span class="key">"member_id"</span>: <span class="str">"b8160866-985c-4e78-8fda-d1b979a4ed3e"</span>,
+  <span class="key">"plan_id"</span>:   <span class="str">"7f3d9c12-0a4e-4b81-a22f-d5e8f1234abc"</span>
+}</pre>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <strong>Copy-paste workflow</strong>
+          <p>Never type a UUID by hand. Always make a GET request first, copy the <code>id</code> from the response, then paste it into your next request. Keep a notepad tab open to store the IDs you collect.</p>
+        </div>
+      </div>
+
+      <h3>IDs you'll collect most often</h3>
+      <table>
+        <thead><tr><th>Field name</th><th>Where it comes from</th><th>Used in</th></tr></thead>
+        <tbody>
+          <tr><td><code>member_id</code></td><td><code>GET /members</code> or <code>GET /public/gym/{slug}/member</code></td><td>Payments, subscriptions, check-ins, renewals</td></tr>
+          <tr><td><code>plan_id</code></td><td><code>GET /public/gym/{slug}/plans</code></td><td>Subscriptions, renewals, registration</td></tr>
+          <tr><td><code>subscription_id</code></td><td><code>GET /subscriptions</code></td><td>Extending, updating, cancelling</td></tr>
+          <tr><td><code>payment_id</code></td><td>Response of <code>POST /payments</code></td><td>Refunds, receipt resend, polling status</td></tr>
+          <tr><td><code>class_id</code></td><td><code>GET /classes</code></td><td>Bookings, attendance</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Anatomy of a Request -->
+    <div class="doc-section" id="request-anatomy">
+      <div class="section-label beginner">Beginner</div>
+      <h2>Anatomy of a Request</h2>
+      <p class="section-intro">Every API call has four possible parts — understanding all four eliminates most beginner confusion.</p>
+
+      <p>When you call an API endpoint, you're sending an <strong style="color:#e5e5e5">HTTP request</strong>. A request has up to four distinct parts. Different endpoints use different combinations of these parts.</p>
+
+      <table>
+        <thead><tr><th>Part</th><th>Where it lives</th><th>What it is</th></tr></thead>
+        <tbody>
+          <tr><td><strong style="color:#e5e5e5">Method + URL</strong></td><td>The request line</td><td>What action (<code>GET</code>, <code>POST</code>...) on which resource</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Path parameters</strong></td><td>Inside the URL</td><td>Specific record IDs embedded in the path</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Query parameters</strong></td><td>After <code>?</code> in the URL</td><td>Filters and options (optional)</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Headers</strong></td><td>Sent alongside the request</td><td>Auth token, tenant slug, content type</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Body</strong></td><td>Inside the request envelope</td><td>JSON data for POST/PATCH — the thing you're creating/updating</td></tr>
+        </tbody>
+      </table>
+
+      <h3>A fully annotated request</h3>
+      <pre><span class="comment">── Method + URL ──────────────────────────────────────────────</span>
+<span class="method">PATCH</span> <span class="url">https://api.myfiti.fit/api/members/b8160866-985c-4e78-8fda-d1b979a4ed3e?notify=true</span>
+                                         <span class="comment">↑──────────────────────────────────────────┘         └──────────</span>
+                              <span class="comment">path parameter (member UUID)            query param</span>
+
+<span class="comment">── Headers (sent alongside, not visible in URL) ──────────────</span>
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+X-Tenant-Slug: korafit
+Content-Type:  application/json
+
+<span class="comment">── Body (JSON payload) ───────────────────────────────────────</span>
+{
+  <span class="key">"phone"</span>:  <span class="str">"237655000001"</span>,
+  <span class="key">"gender"</span>: <span class="str">"female"</span>
+}</pre>
+
+      <h3>Which parts does each method use?</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Path params</th><th>Query params</th><th>Headers</th><th>Body</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method-badge get">GET</span></td><td>Sometimes</td><td>Often (filters)</td><td>Always (auth)</td><td>Never</td></tr>
+          <tr><td><span class="method-badge post">POST</span></td><td>Rarely</td><td>Rarely</td><td>Always (auth)</td><td>Always</td></tr>
+          <tr><td><span class="method-badge patch">PATCH</span></td><td>Always (:id)</td><td>Sometimes</td><td>Always (auth)</td><td>Always</td></tr>
+          <tr><td><span class="method-badge delete">DELETE</span></td><td>Always (:id)</td><td>Never</td><td>Always (auth)</td><td>Never</td></tr>
+        </tbody>
+      </table>
+
+      <h3>In Scalar — where each part lives</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Path parameters</h4>
+            <p>Shown at the top of the right panel under <strong style="color:#e5e5e5">Path</strong>. These are fields in the URL itself — like <code>id</code> or <code>slug</code>. Fill them in before clicking Send.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Query parameters</h4>
+            <p>Shown under <strong style="color:#e5e5e5">Query</strong> in the right panel. All optional — leave them empty to use defaults, or fill in to filter results.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Headers</h4>
+            <p>Shown under <strong style="color:#e5e5e5">Headers</strong>. <code>Authorization</code> is auto-filled when you authenticate. Add <code>X-Tenant-Slug</code> manually once per session.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Body</h4>
+            <p>Shown under <strong style="color:#e5e5e5">Body</strong> for POST and PATCH. Either fill in the form fields, or switch to the <em>Raw</em> tab to type JSON directly.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <strong>GET requests never have a body</strong>
+          <p>You cannot send data in the body of a GET request. All filtering for GET endpoints is done via query parameters (<code>?status=active</code>). If you want to filter, look for the <strong>Query</strong> section in Scalar, not the Body section.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- ══════════════════════════════════════════════════ INTERMEDIATE -->
     <div class="level-divider"><span class="ld-label ld-mid">Intermediate</span></div>
 
@@ -914,8 +1075,525 @@ https://api.myfiti.fit
       </div>
     </div>
 
+    <!-- Pagination -->
+    <div class="doc-section" id="pagination">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Pagination</h2>
+      <p class="section-intro">How to page through large lists of members, payments, and check-ins.</p>
+
+      <p>
+        When a list endpoint returns many records, the API returns them in <strong style="color:#e5e5e5">pages</strong> — a fixed number per response.
+        This prevents loading thousands of records at once. The default page size is <strong style="color:#e5e5e5">20</strong>.
+      </p>
+
+      <h3>Making a paginated request</h3>
+      <pre><span class="comment">// Page 1 (default)</span>
+<span class="method">GET</span> <span class="url">/api/members</span>
+
+<span class="comment">// Page 2, 20 per page</span>
+<span class="method">GET</span> <span class="url">/api/members?page=2&amp;limit=20</span>
+
+<span class="comment">// Page 1, 50 per page</span>
+<span class="method">GET</span> <span class="url">/api/members?limit=50</span></pre>
+
+      <h3>Reading the pagination metadata</h3>
+      <p>Every list response includes a <code>total</code> count and (on some endpoints) page metadata:</p>
+      <pre>{
+  <span class="key">"members"</span>: [ <span class="comment">/* 20 members */</span> ],
+  <span class="key">"total"</span>:   <span class="num">87</span>,
+  <span class="key">"page"</span>:    <span class="num">1</span>,
+  <span class="key">"limit"</span>:   <span class="num">20</span>
+}</pre>
+
+      <p>To know how many pages exist: <code>Math.ceil(total / limit)</code> → <code>Math.ceil(87 / 20) = 5 pages</code>.</p>
+
+      <h3>Combine with filters</h3>
+      <pre><span class="comment">// Page 2 of active members named "John"</span>
+<span class="method">GET</span> <span class="url">/api/members?status=active&amp;search=john&amp;page=2&amp;limit=20</span>
+
+<span class="comment">// All payments in September 2026, page 1</span>
+<span class="method">GET</span> <span class="url">/api/payments?from=2026-09-01&amp;to=2026-09-30&amp;page=1&amp;limit=50</span></pre>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <strong>Export instead of paginating</strong>
+          <p>If you need all records at once (e.g. to run analysis), use <code>GET /members/export</code> — it returns a full CSV download with no pagination limit.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Member Login Flow -->
+    <div class="doc-section" id="member-login">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Member Login Flow (OTP)</h2>
+      <p class="section-intro">How gym members authenticate — passwordless, OTP-based.</p>
+
+      <p>
+        Members don't use passwords. Instead they log in with a <strong style="color:#e5e5e5">one-time code (OTP)</strong>
+        sent to their email. This is the same flow used by the mobile app.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Request an OTP</h4>
+            <p>Endpoint: <span class="method-badge post">POST</span><code>/auth/member/request-otp</code></p>
+            <pre>{
+  <span class="key">"email"</span>: <span class="str">"btb@shibmats.cm"</span>,
+  <span class="key">"slug"</span>:  <span class="str">"korafit"</span>
+}
+
+<span class="comment">// Response</span>
+{ <span class="key">"ok"</span>: <span class="num">true</span>, <span class="key">"sent_to"</span>: <span class="str">"bt****@shibmats.cm"</span> }</pre>
+            <p>The member receives a 6-digit code in their email inbox. It expires in 10 minutes.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Verify the OTP → receive a token</h4>
+            <p>Endpoint: <span class="method-badge post">POST</span><code>/auth/member/verify-otp</code></p>
+            <pre>{
+  <span class="key">"email"</span>: <span class="str">"btb@shibmats.cm"</span>,
+  <span class="key">"slug"</span>:  <span class="str">"korafit"</span>,
+  <span class="key">"code"</span>:  <span class="str">"482931"</span>
+}
+
+<span class="comment">// Response — this is the member's JWT</span>
+{
+  <span class="key">"token"</span>:  <span class="str">"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."</span>,
+  <span class="key">"member"</span>: {
+    <span class="key">"id"</span>:     <span class="str">"b8160866-985c-4e78-8fda-d1b979a4ed3e"</span>,
+    <span class="key">"name"</span>:   <span class="str">"BEJUMEH BLAISE"</span>,
+    <span class="key">"status"</span>: <span class="str">"active"</span>
+  }
+}</pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Set this token in Scalar</h4>
+            <p>Paste the token into Scalar's BearerAuth field. Now you can call <code>/member/me/*</code> endpoints as that member.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Access member profile</h4>
+            <p>Endpoint: <span class="method-badge get">GET</span><code>/member/me</code></p>
+            <pre><span class="comment">// No headers needed except Authorization</span>
+{
+  <span class="key">"member"</span>: {
+    <span class="key">"id"</span>:             <span class="str">"b8160866-..."</span>,
+    <span class="key">"name"</span>:           <span class="str">"BEJUMEH BLAISE"</span>,
+    <span class="key">"wallet_balance"</span>: <span class="num">5000</span>,
+    <span class="key">"subscription"</span>: {
+      <span class="key">"status"</span>:     <span class="str">"active"</span>,
+      <span class="key">"expires_at"</span>: <span class="str">"2026-10-30T00:00:00Z"</span>,
+      <span class="key">"plan_name"</span>:  <span class="str">"Monthly Gold"</span>
+    }
+  }
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <strong>Member token vs admin token</strong>
+          <p>A member token can ONLY access <code>/member/me/*</code> routes. It cannot list other members, view payments, or access admin routes. If you try, you'll get <code>403 Forbidden</code>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscription Plans -->
+    <div class="doc-section" id="subscription-plans">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Subscription Plans</h2>
+      <p class="section-intro">Create, manage, and assign the membership tiers your gym offers.</p>
+
+      <p>
+        Plans define the <strong style="color:#e5e5e5">tiers</strong> of membership (Monthly, Quarterly, VIP...). Members are assigned to a plan
+        which determines their price and subscription duration.
+      </p>
+
+      <h3>List all plans</h3>
+      <pre><span class="method">GET</span> <span class="url">/api/subscriptions/plans</span>
+<span class="comment">// Headers: Authorization + X-Tenant-Slug</span>
+
+{
+  <span class="key">"plans"</span>: [
+    {
+      <span class="key">"id"</span>:           <span class="str">"7f3d9c12-0a4e-4b81-a22f-d5e8f1234abc"</span>,
+      <span class="key">"name"</span>:         <span class="str">"Monthly Gold"</span>,
+      <span class="key">"price"</span>:        <span class="num">10000</span>,
+      <span class="key">"currency"</span>:     <span class="str">"XAF"</span>,
+      <span class="key">"duration_days"</span>: <span class="num">30</span>,
+      <span class="key">"active"</span>:       <span class="num">true</span>
+    },
+    {
+      <span class="key">"id"</span>:           <span class="str">"a1b2c3d4-..."</span>,
+      <span class="key">"name"</span>:         <span class="str">"Quarterly"</span>,
+      <span class="key">"price"</span>:        <span class="num">25000</span>,
+      <span class="key">"currency"</span>:     <span class="str">"XAF"</span>,
+      <span class="key">"duration_days"</span>: <span class="num">90</span>,
+      <span class="key">"active"</span>:       <span class="num">true</span>
+    }
+  ]
+}</pre>
+
+      <h3>Create a plan</h3>
+      <pre><span class="method">POST</span> <span class="url">/api/subscriptions/plans</span>
+{
+  <span class="key">"name"</span>:          <span class="str">"Annual VIP"</span>,
+  <span class="key">"price"</span>:         <span class="num">80000</span>,
+  <span class="key">"duration_days"</span>: <span class="num">365</span>,
+  <span class="key">"description"</span>:  <span class="str">"Full year access including all classes"</span>
+}
+
+<span class="comment">// Response</span>
+{ <span class="key">"plan"</span>: { <span class="key">"id"</span>: <span class="str">"new-plan-uuid"</span>, <span class="key">"name"</span>: <span class="str">"Annual VIP"</span>, ... } }</pre>
+
+      <h3>Update a plan</h3>
+      <pre><span class="method">PATCH</span> <span class="url">/api/subscriptions/plans/new-plan-uuid</span>
+{
+  <span class="key">"price"</span>: <span class="num">75000</span>
+}
+<span class="comment">// Only send the fields you want to change</span></pre>
+
+      <h3>Assign a subscription to a member</h3>
+      <pre><span class="method">POST</span> <span class="url">/api/subscriptions</span>
+{
+  <span class="key">"member_id"</span>:  <span class="str">"b8160866-..."</span>,
+  <span class="key">"plan_id"</span>:    <span class="str">"7f3d9c12-..."</span>,
+  <span class="key">"start_date"</span>: <span class="str">"2026-09-01"</span>
+}
+
+<span class="comment">// Response — subscription created, member is now active</span>
+{
+  <span class="key">"subscription"</span>: {
+    <span class="key">"id"</span>:         <span class="str">"sub-uuid"</span>,
+    <span class="key">"status"</span>:     <span class="str">"active"</span>,
+    <span class="key">"starts_at"</span>:  <span class="str">"2026-09-01"</span>,
+    <span class="key">"expires_at"</span>: <span class="str">"2026-10-01"</span>
+  }
+}</pre>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <strong>Plans vs Subscriptions</strong>
+          <p>A <strong>plan</strong> is the template (price, duration, name). A <strong>subscription</strong> is the actual assignment of a plan to a specific member with real dates. One plan can have many subscriptions.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Check-in Flow -->
+    <div class="doc-section" id="checkin-flow">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Check-in Flow</h2>
+      <p class="section-intro">Recording gym visits — the most common daily operation.</p>
+
+      <p>
+        A check-in records that a member entered the gym. It also validates their membership —
+        if a member is expired, check-in will return an error and the kiosk will deny entry.
+      </p>
+
+      <h3>Check in a member by QR code (kiosk)</h3>
+      <p>The kiosk scans the QR code, which encodes the <code>member_id</code>. The kiosk calls:</p>
+      <pre><span class="method">POST</span> <span class="url">/api/checkins</span>
+<span class="comment">// Headers: Authorization (staff/kiosk token) + X-Tenant-Slug</span>
+{
+  <span class="key">"member_id"</span>: <span class="str">"b8160866-985c-4e78-8fda-d1b979a4ed3e"</span>
+}
+
+<span class="comment">// Success — member is active</span>
+{
+  <span class="key">"ok"</span>:      <span class="num">true</span>,
+  <span class="key">"member"</span>: { <span class="key">"name"</span>: <span class="str">"BEJUMEH BLAISE"</span>, <span class="key">"status"</span>: <span class="str">"active"</span> },
+  <span class="key">"checkin"</span>: { <span class="key">"id"</span>: <span class="str">"ci-uuid"</span>, <span class="key">"checked_in_at"</span>: <span class="str">"2026-09-02T08:45:00Z"</span> }
+}
+
+<span class="comment">// Failure — membership expired</span>
+{
+  <span class="key">"error"</span>: <span class="str">"Membership expired. Cannot check in."</span>
+}</pre>
+
+      <h3>View check-in history for a member</h3>
+      <pre><span class="method">GET</span> <span class="url">/api/members/b8160866-.../checkins?from=2026-09-01&amp;to=2026-09-30</span>
+
+{
+  <span class="key">"checkins"</span>: [
+    { <span class="key">"id"</span>: <span class="str">"ci-1"</span>, <span class="key">"checked_in_at"</span>: <span class="str">"2026-09-02T08:45:00Z"</span>, <span class="key">"method"</span>: <span class="str">"qr"</span> },
+    { <span class="key">"id"</span>: <span class="str">"ci-2"</span>, <span class="key">"checked_in_at"</span>: <span class="str">"2026-09-01T09:10:00Z"</span>, <span class="key">"method"</span>: <span class="str">"qr"</span> }
+  ],
+  <span class="key">"total"</span>: <span class="num">2</span>
+}</pre>
+
+      <h3>Member self check-in (mobile app)</h3>
+      <p>When the member is inside the gym and taps "Check In" on their phone:</p>
+      <pre><span class="method">POST</span> <span class="url">/api/member/me/checkin</span>
+<span class="comment">// No body needed — the member's identity comes from their JWT token</span>
+
+{ <span class="key">"ok"</span>: <span class="num">true</span>, <span class="key">"checkin"</span>: { <span class="key">"id"</span>: <span class="str">"ci-uuid"</span>, <span class="key">"checked_in_at"</span>: <span class="str">"2026-09-02T..."</span> } }</pre>
+
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <strong>Grace period allows entry</strong>
+          <p>Members in <code>grace_period</code> status can still check in. Only <code>expired</code> members are blocked. Grace period is configured in the gym's settings (typically 3–7 days after expiry).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Classes -->
+    <div class="doc-section" id="classes">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Classes &amp; Bookings</h2>
+      <p class="section-intro">Create fitness classes, set capacity limits, and book members in.</p>
+
+      <h3>List upcoming classes</h3>
+      <pre><span class="method">GET</span> <span class="url">/api/classes?from=2026-09-01&amp;to=2026-09-30</span>
+<span class="comment">// Headers: Authorization + X-Tenant-Slug</span>
+
+{
+  <span class="key">"classes"</span>: [
+    {
+      <span class="key">"id"</span>:          <span class="str">"cls-uuid"</span>,
+      <span class="key">"name"</span>:        <span class="str">"Morning Yoga"</span>,
+      <span class="key">"trainer"</span>:     <span class="str">"Trainer A"</span>,
+      <span class="key">"starts_at"</span>:   <span class="str">"2026-09-05T07:00:00Z"</span>,
+      <span class="key">"duration_min"</span>: <span class="num">60</span>,
+      <span class="key">"capacity"</span>:    <span class="num">20</span>,
+      <span class="key">"booked"</span>:      <span class="num">14</span>
+    }
+  ]
+}</pre>
+
+      <h3>Create a class</h3>
+      <pre><span class="method">POST</span> <span class="url">/api/classes</span>
+{
+  <span class="key">"name"</span>:         <span class="str">"HIIT Blast"</span>,
+  <span class="key">"trainer_id"</span>:   <span class="str">"staff-uuid"</span>,
+  <span class="key">"starts_at"</span>:    <span class="str">"2026-09-10T18:00:00Z"</span>,
+  <span class="key">"duration_min"</span>: <span class="num">45</span>,
+  <span class="key">"capacity"</span>:     <span class="num">15</span>
+}
+
+<span class="comment">// Response</span>
+{ <span class="key">"class"</span>: { <span class="key">"id"</span>: <span class="str">"new-cls-uuid"</span>, <span class="key">"name"</span>: <span class="str">"HIIT Blast"</span>, ... } }</pre>
+
+      <h3>Book a member into a class</h3>
+      <pre><span class="method">POST</span> <span class="url">/api/classes/new-cls-uuid/bookings</span>
+{ <span class="key">"member_id"</span>: <span class="str">"b8160866-..."</span> }
+
+<span class="comment">// Success</span>
+{ <span class="key">"ok"</span>: <span class="num">true</span>, <span class="key">"booking"</span>: { <span class="key">"id"</span>: <span class="str">"bk-uuid"</span>, <span class="key">"seat"</span>: <span class="num">15</span> } }
+
+<span class="comment">// Failure — class is full</span>
+{ <span class="key">"error"</span>: <span class="str">"Class is at full capacity."</span> }</pre>
+
+      <h3>Mark attendance</h3>
+      <pre><span class="comment">// After the class: mark who actually showed up</span>
+<span class="method">POST</span> <span class="url">/api/classes/new-cls-uuid/bookings/bk-uuid/attend</span>
+<span class="comment">// No body needed</span>
+
+{ <span class="key">"ok"</span>: <span class="num">true</span>, <span class="key">"attended"</span>: <span class="num">true</span> }</pre>
+    </div>
+
+    <!-- Day Passes -->
+    <div class="doc-section" id="day-passes">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Day Passes</h2>
+      <p class="section-intro">Issue single-visit passes to walk-in guests without creating a full member account.</p>
+
+      <p>Day passes let non-members pay for a single gym visit. No subscription, no account — just a pass for today.</p>
+
+      <h3>Check the day pass price</h3>
+      <pre><span class="method">GET</span> <span class="url">/api/settings/day-pass</span>
+<span class="comment">// Headers: Authorization + X-Tenant-Slug</span>
+
+{
+  <span class="key">"day_pass"</span>: {
+    <span class="key">"enabled"</span>: <span class="num">true</span>,
+    <span class="key">"price"</span>:   <span class="num">1500</span>,
+    <span class="key">"currency"</span>: <span class="str">"XAF"</span>
+  }
+}</pre>
+
+      <h3>Issue a day pass</h3>
+      <pre><span class="method">POST</span> <span class="url">/api/day-passes</span>
+{
+  <span class="key">"guest_name"</span>:   <span class="str">"John Walk-in"</span>,
+  <span class="key">"guest_phone"</span>:  <span class="str">"237655999888"</span>,
+  <span class="key">"payment_method"</span>: <span class="str">"cash"</span>
+}
+
+<span class="comment">// Response — pass is valid for today only</span>
+{
+  <span class="key">"day_pass"</span>: {
+    <span class="key">"id"</span>:          <span class="str">"dp-uuid"</span>,
+    <span class="key">"guest_name"</span>:  <span class="str">"John Walk-in"</span>,
+    <span class="key">"valid_date"</span>:  <span class="str">"2026-09-02"</span>,
+    <span class="key">"amount_paid"</span>: <span class="num">1500</span>,
+    <span class="key">"issued_at"</span>:   <span class="str">"2026-09-02T10:30:00Z"</span>
+  }
+}</pre>
+
+      <h3>List today's day passes</h3>
+      <pre><span class="method">GET</span> <span class="url">/api/day-passes?date=2026-09-02</span>
+
+{
+  <span class="key">"day_passes"</span>: [ <span class="comment">/* all passes issued today */</span> ],
+  <span class="key">"total"</span>:      <span class="num">5</span>,
+  <span class="key">"revenue"</span>:    <span class="num">7500</span>
+}</pre>
+    </div>
+
+    <!-- Analytics -->
+    <div class="doc-section" id="analytics">
+      <div class="section-label mid">Intermediate</div>
+      <h2>Analytics &amp; Reports</h2>
+      <p class="section-intro">Revenue, member stats, and check-in trends — all available via API.</p>
+
+      <p>
+        Analytics endpoints give you <strong style="color:#e5e5e5">aggregated data</strong> — totals, counts, and trends over time.
+        All analytics require an owner or admin token.
+      </p>
+
+      <h3>Revenue report</h3>
+      <pre><span class="method">GET</span> <span class="url">/api/analytics/revenue?from=2026-09-01&amp;to=2026-09-30</span>
+<span class="comment">// Headers: Authorization + X-Tenant-Slug</span>
+
+{
+  <span class="key">"revenue"</span>: {
+    <span class="key">"total"</span>:          <span class="num">450000</span>,
+    <span class="key">"currency"</span>:       <span class="str">"XAF"</span>,
+    <span class="key">"by_method"</span>: {
+      <span class="key">"cash"</span>:          <span class="num">200000</span>,
+      <span class="key">"mobile_money"</span>:  <span class="num">180000</span>,
+      <span class="key">"wallet"</span>:        <span class="num">70000</span>
+    },
+    <span class="key">"by_plan"</span>: [
+      { <span class="key">"plan"</span>: <span class="str">"Monthly Gold"</span>, <span class="key">"total"</span>: <span class="num">300000</span> },
+      { <span class="key">"plan"</span>: <span class="str">"Quarterly"</span>,     <span class="key">"total"</span>: <span class="num">150000</span> }
+    ]
+  }
+}</pre>
+
+      <h3>Member counts</h3>
+      <pre><span class="method">GET</span> <span class="url">/api/analytics/members</span>
+
+{
+  <span class="key">"members"</span>: {
+    <span class="key">"total"</span>:          <span class="num">247</span>,
+    <span class="key">"active"</span>:         <span class="num">189</span>,
+    <span class="key">"expiring_soon"</span>:  <span class="num">12</span>,
+    <span class="key">"expired"</span>:        <span class="num">46</span>,
+    <span class="key">"new_this_month"</span>: <span class="num">23</span>
+  }
+}</pre>
+
+      <h3>Check-in trends</h3>
+      <pre><span class="method">GET</span> <span class="url">/api/analytics/checkins?from=2026-09-01&amp;to=2026-09-30&amp;group=day</span>
+
+{
+  <span class="key">"checkins"</span>: [
+    { <span class="key">"date"</span>: <span class="str">"2026-09-01"</span>, <span class="key">"count"</span>: <span class="num">34</span> },
+    { <span class="key">"date"</span>: <span class="str">"2026-09-02"</span>, <span class="key">"count"</span>: <span class="num">41</span> }
+  ],
+  <span class="key">"total"</span>: <span class="num">75</span>
+}</pre>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <strong>group parameter</strong>
+          <p>Check-in trends support <code>group=day</code>, <code>group=week</code>, or <code>group=month</code> to control how results are bucketed. Use <code>month</code> for a year-over-year view.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- ══════════════════════════════════════════════════════════ PRO -->
     <div class="level-divider"><span class="ld-label ld-pro">Advanced / Pro</span></div>
+
+    <!-- Data Model -->
+    <div class="doc-section" id="data-model">
+      <div class="section-label pro">Pro</div>
+      <h2>Data Model — How Everything Connects</h2>
+      <p class="section-intro">Understanding the relationships between entities prevents 90% of bugs when chaining requests.</p>
+
+      <p>
+        The Myfiti API is built around a clear hierarchy of entities. Understanding who owns what
+        tells you which IDs you need and in what order to collect them.
+      </p>
+
+      <pre><span class="comment">Tenant (gym)
+└── Member
+    ├── Subscription  ←── Plan (shared template)
+    │   └── Payment (linked to the subscription that was paid for)
+    ├── Wallet
+    │   └── WalletTransaction (topup, debit, transfer)
+    ├── CheckIn[]
+    ├── ClassBooking[]
+    └── DayPass[]       (guests — no full member account)
+
+Staff (belongs to tenant, not a Member)
+Class (belongs to tenant, has trainer=Staff, has BookedMembers[])
+Voucher (belongs to tenant, redeemed by Member)</span></pre>
+
+      <h3>Key relationships</h3>
+      <table>
+        <thead><tr><th>Entity</th><th>Belongs to</th><th>Key foreign keys</th></tr></thead>
+        <tbody>
+          <tr><td>Member</td><td>Tenant</td><td>—</td></tr>
+          <tr><td>Subscription</td><td>Member</td><td><code>member_id</code>, <code>plan_id</code></td></tr>
+          <tr><td>Payment</td><td>Member</td><td><code>member_id</code>, <code>subscription_id</code> (optional)</td></tr>
+          <tr><td>CheckIn</td><td>Member</td><td><code>member_id</code>, <code>staff_id</code> (who checked them in)</td></tr>
+          <tr><td>ClassBooking</td><td>Member + Class</td><td><code>member_id</code>, <code>class_id</code></td></tr>
+          <tr><td>WalletTransaction</td><td>Member</td><td><code>member_id</code>, <code>payment_id</code> (optional)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Subscription status lifecycle</h3>
+      <pre><span class="comment">Registration / Admin creation
+        ↓
+    [pending]  ← awaiting payment confirmation
+        ↓  (payment confirmed)
+    [active]   ← member can check in
+        ↓  (7 days before expiry)
+[expiring_soon] ← member gets reminder email
+        ↓  (expires_at reached)
+ [grace_period] ← can still check in (3–7 day buffer)
+        ↓  (grace period ends)
+    [expired]  ← check-in denied
+
+Payment renewed at any stage → back to [active]</span></pre>
+
+      <h3>Payment vs Subscription</h3>
+      <p>These are two separate records that often go together:</p>
+      <table>
+        <thead><tr><th></th><th>Payment</th><th>Subscription</th></tr></thead>
+        <tbody>
+          <tr><td><strong style="color:#e5e5e5">What it records</strong></td><td>Money received</td><td>Access period</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Has dates</strong></td><td>paid_at</td><td>starts_at, expires_at</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Has amount</strong></td><td>Yes</td><td>No (lives on the plan)</td></tr>
+          <tr><td><strong style="color:#e5e5e5">Can exist alone</strong></td><td>Yes (e.g. a donation)</td><td>No (needs a plan)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <strong>Always start from the member</strong>
+          <p>When debugging a member issue: GET the member first. The response includes their current subscription and wallet balance inline. Most problems are visible immediately without any other calls.</p>
+        </div>
+      </div>
+    </div>
 
     <!-- Chaining Requests -->
     <div class="doc-section" id="chaining">
@@ -1029,6 +1707,256 @@ Body: { "payment_method": "cash" }
 <span class="comment">// Poll until status = completed</span>
 <span class="method">GET</span>  <span class="url">/member/me/payment/pay-uuid...</span>
 <span class="comment">→ { "status": "completed" }  — subscription now active</span></pre>
+    </div>
+
+    <!-- curl Reference -->
+    <div class="doc-section" id="curl-reference">
+      <div class="section-label pro">Pro</div>
+      <h2>curl Reference</h2>
+      <p class="section-intro">Run any API call from the terminal — no browser required.</p>
+
+      <p>
+        <strong style="color:#e5e5e5">curl</strong> is a command-line tool for making HTTP requests. Every Scalar request shows the equivalent curl command — you can copy it directly. But here are the most useful calls written out in full.
+      </p>
+
+      <h3>Variables (set these once)</h3>
+      <pre><span class="comment">// In your terminal — paste these before running any curl command</span>
+BASE="https://api.myfiti.fit/api"
+SLUG="korafit"
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."   <span class="comment"># owner token</span>
+MID="b8160866-985c-4e78-8fda-d1b979a4ed3e"          <span class="comment"># member UUID</span>
+PID="7f3d9c12-0a4e-4b81-a22f-d5e8f1234abc"          <span class="comment"># plan UUID</span></pre>
+
+      <h3>Public — no auth needed</h3>
+      <pre><span class="comment"># Get gym info</span>
+curl "$BASE/public/gym/$SLUG"
+
+<span class="comment"># Get plans</span>
+curl "$BASE/public/gym/$SLUG/plans"
+
+<span class="comment"># Look up member by email</span>
+curl "$BASE/public/gym/$SLUG/member?email=btb%40shibmats.cm"</pre>
+
+      <h3>Auth — login and get token</h3>
+      <pre><span class="comment"># Owner login — prints the full response including the token</span>
+curl -s -X POST "$BASE/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"owner@korafit.cm","password":"yourpassword"}' | python3 -m json.tool</pre>
+
+      <h3>Members</h3>
+      <pre><span class="comment"># List all members</span>
+curl "$BASE/members" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-Slug: $SLUG"
+
+<span class="comment"># Search active members</span>
+curl "$BASE/members?status=active&amp;search=alice" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-Slug: $SLUG"
+
+<span class="comment"># Get one member</span>
+curl "$BASE/members/$MID" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-Slug: $SLUG"
+
+<span class="comment"># Create a member</span>
+curl -X POST "$BASE/members" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-Slug: $SLUG" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test User","email":"test@example.cm","plan_id":"'"$PID"'"}'
+
+<span class="comment"># Confirm payment (activate pending member)</span>
+curl -X POST "$BASE/members/$MID/confirm-payment" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-Slug: $SLUG" \
+  -H "Content-Type: application/json" \
+  -d '{"payment_method":"cash"}'</pre>
+
+      <h3>Subscriptions &amp; Renewals</h3>
+      <pre><span class="comment"># Cash renewal (public — no auth)</span>
+curl -X POST "$BASE/public/gym/$SLUG/renew" \
+  -H "Content-Type: application/json" \
+  -d "{\"member_id\":\"$MID\",\"plan_id\":\"$PID\",\"payment_method\":\"cash\"}"
+
+<span class="comment"># Revenue report</span>
+curl "$BASE/analytics/revenue?from=2026-09-01&amp;to=2026-09-30" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-Slug: $SLUG"</pre>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">📋</div>
+        <div class="callout-body">
+          <strong>Copy curl from Scalar</strong>
+          <p>After filling in a request in Scalar, look for the <strong>curl</strong> button near the Send button. It gives you a ready-to-paste curl command with all your current values already filled in.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript Fetch -->
+    <div class="doc-section" id="js-fetch">
+      <div class="section-label pro">Pro</div>
+      <h2>JavaScript Fetch Examples</h2>
+      <p class="section-intro">Call the API programmatically — useful for scripts, admin tools, or building integrations.</p>
+
+      <h3>Setup — a reusable fetch helper</h3>
+      <pre><span class="comment">// api.js — paste this once, use everywhere</span>
+const BASE  = 'https://api.myfiti.fit/api'
+const TOKEN = localStorage.getItem('myfiti_token') <span class="comment">// or hardcode for scripts</span>
+const SLUG  = 'korafit'
+
+async function apiCall(method, path, body) {
+  const res = await fetch(BASE + path, {
+    method,
+    headers: {
+      'Authorization':  `Bearer ${TOKEN}`,
+      'X-Tenant-Slug':  SLUG,
+      'Content-Type':   'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    throw new Error(data.error ?? `HTTP ${res.status}`)
+  }
+
+  return data
+}
+
+<span class="comment">// Convenience wrappers</span>
+const api = {
+  get:    (path)        => apiCall('GET',    path),
+  post:   (path, body)  => apiCall('POST',   path, body),
+  patch:  (path, body)  => apiCall('PATCH',  path, body),
+  delete: (path)        => apiCall('DELETE', path),
+}</pre>
+
+      <h3>Usage examples</h3>
+      <pre><span class="comment">// Get all active members</span>
+const { members } = await api.get('/members?status=active')
+console.log(`${members.length} active members`)
+
+<span class="comment">// Create a member</span>
+const { member } = await api.post('/members', {
+  name:    'Alice Mbah',
+  email:   'alice@example.cm',
+  plan_id: '7f3d9c12-0a4e-4b81-a22f-d5e8f1234abc',
+})
+console.log('Created:', member.id)
+
+<span class="comment">// Confirm their payment</span>
+await api.post(`/members/${member.id}/confirm-payment`, {
+  payment_method: 'cash',
+})
+console.log('Member activated')
+
+<span class="comment">// Revenue report</span>
+const { revenue } = await api.get('/analytics/revenue?from=2026-09-01&amp;to=2026-09-30')
+console.log('Total revenue:', revenue.total, revenue.currency)</pre>
+
+      <h3>Handling errors gracefully</h3>
+      <pre><span class="comment">// Wrap in try/catch — always</span>
+try {
+  const { member } = await api.get(`/members/${memberId}`)
+  console.log(member.name)
+} catch (err) {
+  if (err.message.includes('404')) {
+    console.error('Member not found — check the UUID')
+  } else if (err.message.includes('401')) {
+    console.error('Token expired — log in again')
+  } else {
+    console.error('Unexpected error:', err.message)
+  }
+}</pre>
+
+      <h3>Polling a payment status until it completes</h3>
+      <pre><span class="comment">// Poll every 3 seconds, stop after 2 minutes</span>
+async function pollPayment(paymentId, memberId, maxAttempts = 40) {
+  for (let i = 0; i &lt; maxAttempts; i++) {
+    const result = await api.get(
+      `/public/gym/korafit/payment-status?pid=${paymentId}&amp;mid=${memberId}`
+    )
+
+    if (result.status === 'successful') {
+      console.log('Payment complete! Expires:', result.expires_at)
+      return result
+    }
+
+    if (result.status === 'failed') {
+      throw new Error('Payment failed')
+    }
+
+    <span class="comment">// Wait 3 seconds before next poll</span>
+    await new Promise(r => setTimeout(r, 3000))
+  }
+
+  throw new Error('Timed out waiting for payment')
+}</pre>
+    </div>
+
+    <!-- Server Logs -->
+    <div class="doc-section" id="server-logs">
+      <div class="section-label pro">Pro</div>
+      <h2>Debugging with Server Logs</h2>
+      <p class="section-intro">When Scalar shows an error and the response doesn't explain it — look at the server logs.</p>
+
+      <p>
+        Every request and its status code is logged on the VPS. If you get a cryptic <code>500</code> or <code>502</code>,
+        the server log will show the exact error thrown inside the API.
+      </p>
+
+      <h3>SSH into the VPS</h3>
+      <pre><span class="comment"># Connect to the server</span>
+ssh root@72.62.235.134</pre>
+
+      <h3>View live logs</h3>
+      <pre><span class="comment"># Stream live API logs — press Ctrl+C to stop</span>
+pm2 logs api
+
+<span class="comment"># View last 100 lines and stop (no streaming)</span>
+pm2 logs api --lines 100 --nostream
+
+<span class="comment"># View web app logs</span>
+pm2 logs web --lines 50 --nostream</pre>
+
+      <h3>What you'll see</h3>
+      <pre><span class="comment"># Normal request — method, path, status, response time</span>
+POST /api/public/gym/korafit/renew 200 142ms
+
+<span class="comment"># A 500 error will show the full stack trace below it</span>
+POST /api/members 500 8ms
+TypeError: Cannot read properties of undefined (reading 'links')
+    at /srv/myfiti/apps/api/src/routes/public.js:234:34
+
+<span class="comment"># Webhook received from Tranzak</span>
+POST /api/webhooks/tranzak?ctx=public-renew&amp;tenant=korafit&amp;id=sub-uuid 200 88ms</pre>
+
+      <h3>Filter logs for a specific endpoint</h3>
+      <pre><span class="comment"># Show only the last 200 lines and grep for /renew</span>
+pm2 logs api --lines 200 --nostream | grep renew
+
+<span class="comment"># Find all 500 errors in the last 500 lines</span>
+pm2 logs api --lines 500 --nostream | grep " 5[0-9][0-9] "</pre>
+
+      <h3>Check process health</h3>
+      <pre><span class="comment"># See if the API is running, uptime, memory usage</span>
+pm2 status
+
+<span class="comment"># Restart the API (e.g. after code change)</span>
+pm2 restart api
+
+<span class="comment"># Reload without downtime (graceful restart)</span>
+pm2 reload api</pre>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">🔍</div>
+        <div class="callout-body">
+          <strong>Reproduce the request, then check logs</strong>
+          <p>The fastest debugging workflow: make the failing request in Scalar, immediately SSH and run <code>pm2 logs api --lines 20 --nostream</code>. The error from your request will be at the bottom.</p>
+        </div>
+      </div>
     </div>
 
     <!-- Webhook Testing -->
