@@ -271,16 +271,15 @@ publicRouter.post('/gym/:slug/renew', rateLimitApi, async (req, res) => {
           amount: plan.price,
           currencyCode: gym.currency ?? 'XAF',
           description: `${gym.name} membership renewal: ${plan.name}`,
-          merchantTransactionId,
+          mchTransactionRef: merchantTransactionId,
           returnUrl: `${APP_URL}/member/renew?gym=${slug}&mid=${member_id}&payment=verify`,
           callbackUrl,
-          customData: { member_id, plan_id, gym_slug: slug },
         }),
       })
       if (!paymentRes.ok) throw new Error(`Tranzak error: ${await paymentRes.text()}`)
 
-      const paymentData = await paymentRes.json() as { data?: { paymentUrl: string; requestId: string } }
-      const paymentUrl      = paymentData?.data?.paymentUrl ?? ''
+      const paymentData = await paymentRes.json() as { data?: { links?: { paymentAuthUrl: string }; requestId: string } }
+      const paymentUrl      = paymentData?.data?.links?.paymentAuthUrl ?? ''
       const tranzakRequestId = paymentData?.data?.requestId ?? ''
 
       if (!paymentUrl) {
