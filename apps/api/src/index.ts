@@ -40,7 +40,11 @@ app.use(cors({
 app.use(morgan('dev'))
 
 // ─── API Docs (Scalar) — before tenant middleware so no tenant required ───────
-app.use('/api/docs', apiReference({ spec: { content: openApiSpec }, pageTitle: 'Myfiti API' }))
+// Relax CSP for the docs page (Scalar loads from CDN and uses inline scripts)
+app.use('/api/docs', (_req, res, next) => {
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:;")
+  next()
+}, apiReference({ spec: { content: openApiSpec }, pageTitle: 'Myfiti API' }))
 app.get('/api/openapi.json', (_req, res) => res.json(openApiSpec))
 
 // ─── Raw body for webhook signature verification ─────────────────────────────
