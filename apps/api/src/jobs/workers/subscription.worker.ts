@@ -9,7 +9,7 @@ import { buildConnection } from '../index.js'
 
 const connection = buildConnection()!
 
-const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
 
 interface MemberRow {
   id: string

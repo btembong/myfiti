@@ -333,7 +333,7 @@
   <div class="meta">
     <div class="meta-item">
       <div class="label">Platform</div>
-      <div class="value">myfiti.app</div>
+      <div class="value">app.myfiti.fit</div>
     </div>
     <div class="meta-item">
       <div class="label">Audience</div>
@@ -341,11 +341,11 @@
     </div>
     <div class="meta-item">
       <div class="label">Version</div>
-      <div class="value">August 2026</div>
+      <div class="value">September 2026</div>
     </div>
     <div class="meta-item">
       <div class="label">Support</div>
-      <div class="value">support@myfiti.app</div>
+      <div class="value">support@myfiti.fit</div>
     </div>
   </div>
 </div>
@@ -373,7 +373,7 @@
       <ul>
         <li><a href="#members"><span class="num">03</span> Member Management</a></li>
         <li><a href="#plans"><span class="num">04</span> Membership Plans</a></li>
-        <li><a href="#subscriptions"><span class="num">05</span> Subscriptions &amp; Lifecycle</a></li>
+        <li><a href="#subscriptions"><span class="num">05</span> Subscriptions &amp; Renewal</a></li>
       </ul>
     </div>
 
@@ -435,7 +435,7 @@
           <div class="step-num">1</div>
           <div class="step-content">
             <h4>Create your account</h4>
-            <p>Visit <code>app.myfiti.app/register</code>. Enter your name, business email, gym name, and a password. A confirmation email is sent immediately.</p>
+            <p>Visit <code>app.myfiti.fit/register</code>. Enter your name, business email, gym name, and a password. A confirmation email is sent immediately.</p>
           </div>
         </div>
         <div class="step">
@@ -561,10 +561,24 @@
         <div class="step">
           <div class="step-num">2</div>
           <div class="step-content">
-            <h4>Plan &amp; payment (optional)</h4>
-            <p>Assign a membership plan immediately. Choose the payment method: Cash, Card, Bank transfer, or Mobile Money (Tranzak S2S USSD push). You can also skip this and assign a plan later from the member's profile.</p>
+            <h4>Plan &amp; payment</h4>
+            <p>Select a membership plan and choose a payment method: <strong>Cash</strong>, Card, Bank transfer, or <strong>Mobile Money</strong> (Tranzak S2S USSD push). The member is created as <em>inactive</em> until the payment is confirmed — this prevents accidental free access. You can also skip payment and assign it later from the member's profile.</p>
           </div>
         </div>
+      </div>
+
+      <div class="callout tip">
+        <span class="callout-icon">✓</span>
+        <div><strong>Payment-first flow.</strong> Members are only activated after payment is confirmed — no accidental free membership. A welcome email with their QR code and membership card is sent automatically on activation.</div>
+      </div>
+
+      <h3>Member Self-Registration (Public)</h3>
+      <p>Members can also sign up themselves via the public registration page at <code>app.myfiti.fit/join/[your-gym-slug]</code>. The flow:</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-content"><h4>Select a plan</h4><p>Member picks from your active plans. Price and duration shown on each card.</p></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content"><h4>Choose payment method</h4><p>Mobile Money (Tranzak redirect) or cash (reference code to bring to the gym).</p></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content"><h4>Enter details &amp; pay</h4><p>Name, email, phone. Payment is completed before the account is created.</p></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-content"><h4>Welcome email sent</h4><p>QR code and membership card delivered by email immediately on activation.</p></div></div>
       </div>
 
       <h3>Member Profile</h3>
@@ -652,11 +666,12 @@
     <!-- ══════════ 05. SUBSCRIPTIONS ══════════ -->
     <section class="section" id="subscriptions">
       <div class="section-label">05 — Subscriptions</div>
-      <h2 class="section-title">Subscriptions &amp; Lifecycle</h2>
+      <h2 class="section-title">Subscriptions &amp; Renewal</h2>
       <p class="section-intro">
         Every member's relationship with a plan is tracked as a subscription. The system
-        automatically manages status transitions, sends reminder emails, and handles
-        grace periods — all without any manual work.
+        automatically manages status transitions, sends reminder emails with renewal links,
+        and handles grace periods — all without manual work. Members can also renew themselves
+        from the web or the mobile app.
       </p>
 
       <h3>Lifecycle — How It Works</h3>
@@ -686,6 +701,22 @@
         <li>If <strong>active or expiring</strong>: the new expiry is calculated from the current expiry date (no lost days).</li>
         <li>If <strong>expired or suspended</strong>: the new expiry is calculated from today.</li>
       </ul>
+
+      <h3>Member Self-Renewal (Web Page)</h3>
+      <p>Members can renew their own membership without contacting the gym. Every automated renewal reminder email includes a <strong>Renew now</strong> button that links directly to the renewal page — pre-filled with the member's ID so they don't need to enter anything.</p>
+      <p>Renewal page URL: <code>app.myfiti.fit/member/renew?gym=[slug]&amp;mid=[member-id]</code></p>
+
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-content"><h4>Identify</h4><p>If accessing via email link: auto-loaded. Otherwise the member types their email to look up their account.</p></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content"><h4>Select plan</h4><p>Current subscription status is shown (active, expiring, grace period). Member picks a plan.</p></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content"><h4>Choose payment method</h4><p><strong>Wallet</strong> (if sufficient balance — OTP email required to confirm), <strong>Mobile Money</strong> (Tranzak hosted page), or <strong>Pay at Gym</strong> (reference code).</p></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-content"><h4>Complete &amp; confirm</h4><p>Wallet: immediate activation after OTP verified. Mobile Money: redirect to Tranzak, return is polled and verified (not trusted blindly). Cash: reference code displayed — admin confirms at the desk.</p></div></div>
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">ℹ</span>
+        <div><strong>Have the app?</strong> The renewal page also shows an "Open in App" banner — tapping it deep-links directly into the in-app renewal flow.</div>
+      </div>
 
       <h3>Grace Period</h3>
       <p>The grace period gives members extra time to renew without losing access. Default is <strong>7 days</strong>. During grace, the kiosk shows an amber warning screen — the member can still enter, but is reminded to renew. Configurable in Settings → Gym settings.</p>
@@ -748,6 +779,14 @@
       </ul>
 
       <p>Staff can also <strong>resend</strong> any receipt from the payment detail view, and send <strong>payment reminders</strong> to members with pending or overdue balances.</p>
+
+      <h3>Cash Renewal Reference Codes</h3>
+      <p>When a member requests a cash renewal (from the web page or mobile app), the system generates a pending subscription and a unique reference code (format: <code>REN-XXXXXXXX</code>). The member brings this code to the gym. Staff locate the pending subscription in the member's profile and confirm payment — the subscription activates immediately at that point.</p>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠</span>
+        <div><strong>Pending until confirmed.</strong> A cash renewal reference code does not grant gym access. The member's subscription remains <em>pending</em> until a staff member confirms the cash payment in the admin panel.</div>
+      </div>
 
       <h3>Refunds</h3>
       <p>Mark any completed payment as refunded from the Payments page. Optionally cancel the linked subscription at the same time. Refund reason is stored in the notes field.</p>
@@ -825,16 +864,21 @@
       </div>
 
       <h3>Flow 2 — Payment Link / QR (Redirect)</h3>
-      <p>Used in the kiosk <strong>SMS link</strong> tile. Generates a Tranzak-hosted payment URL. The kiosk shows a QR code the customer scans, or staff can send the link via SMS. Confirmation is automatic once Tranzak processes the approval.</p>
+      <p>Used in the kiosk <strong>SMS link</strong> tile and the <strong>web self-renewal page</strong>. Generates a Tranzak-hosted payment URL. The customer is redirected to complete payment, then returned to myfiti. Confirmation uses both a server webhook and client-side polling — the first to arrive activates the membership.</p>
 
       <div class="flow">
-        <div class="flow-box">Kiosk generates link</div>
+        <div class="flow-box">Link / QR generated</div>
         <div class="flow-arrow">→</div>
-        <div class="flow-box">Customer scans QR</div>
+        <div class="flow-box">Customer pays in browser</div>
         <div class="flow-arrow">→</div>
-        <div class="flow-box">Approves in browser</div>
+        <div class="flow-box">Return + polling</div>
         <div class="flow-arrow">→</div>
-        <div class="flow-box success">Webhook confirms</div>
+        <div class="flow-box success">Membership activated</div>
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">ℹ</span>
+        <div><strong>Verified, not trusted.</strong> When the customer is returned to the renewal page after paying, the platform polls the Tranzak API directly to confirm payment status — it does not rely on the redirect URL query parameter alone. This prevents fraudulent activation.</div>
       </div>
 
       <h3>Phone Number Format</h3>
@@ -903,6 +947,9 @@
 
       <h3>Wallet Reconciliation</h3>
       <p>A nightly automated job runs at <strong>01:00</strong> to cross-check wallet balances against transaction history and flag any discrepancies.</p>
+
+      <h3>Wallet Security — OTP Confirmation</h3>
+      <p>When a member uses their wallet to pay for a subscription renewal via the <strong>web renewal page</strong>, a 6-digit one-time code is sent to their registered email address before the debit is processed. The member must enter the correct code within 5 minutes to authorise the payment. This prevents unauthorised wallet debits if someone else accesses the renewal link.</p>
 
       <div class="callout tip">
         <span class="callout-icon">&#10003;</span>
@@ -1253,10 +1300,10 @@
       <table>
         <thead><tr><th>Trigger</th><th>Recipient</th><th>Content</th></tr></thead>
         <tbody>
-          <tr><td>Subscription expires in 7 days</td><td>Member</td><td>Renewal reminder with plan details and renewal link.</td></tr>
-          <tr><td>Subscription enters grace period</td><td>Member</td><td>Grace period alert — days remaining, contact gym message.</td></tr>
-          <tr><td>Subscription suspended</td><td>Member</td><td>Suspension notice — gym contact details.</td></tr>
-          <tr><td>Payment completed</td><td>Member</td><td>Receipt with amount, plan, new expiry date, PDF attachment.</td></tr>
+          <tr><td>Subscription expires in 7 days</td><td>Member</td><td>Renewal reminder with plan details and a <strong>Renew now</strong> button — deep-links to the self-renewal page, pre-filled with the member's ID.</td></tr>
+          <tr><td>Subscription enters grace period</td><td>Member</td><td>Grace period alert — days remaining and renew link.</td></tr>
+          <tr><td>Subscription suspended</td><td>Member</td><td>Suspension notice — gym contact details and renew link.</td></tr>
+          <tr><td>Payment completed</td><td>Member</td><td>Receipt with amount, plan, new expiry date, PDF attachment. QR code is hosted on the API (Gmail-compatible — no broken images).</td></tr>
           <tr><td>Payment reminder</td><td>Member</td><td>Sent manually by staff for overdue/pending payments.</td></tr>
           <tr><td>Day pass issued</td><td>Guest (optional)</td><td>SMS receipt with pass details and reference number.</td></tr>
         </tbody>
@@ -1336,24 +1383,39 @@
       </table>
 
       <h3>In-App Renewal Flow</h3>
-      <p>The complete mobile money renewal process is handled inside the app in 4 steps:</p>
+      <p>The renewal screen supports three payment methods — Wallet, Mobile Money, and Cash at Gym — in a streamlined 2-step picker:</p>
       <div class="steps">
         <div class="step">
           <div class="step-num">1</div>
-          <div class="step-content"><h4>Plan picker</h4><p>Member selects a plan from your gym's available plans. Price and duration shown on each card.</p></div>
+          <div class="step-content"><h4>Plan picker</h4><p>Current subscription status displayed at the top (plan name, expiry, status badge). Member selects the desired plan — price and duration shown on each card.</p></div>
         </div>
         <div class="step">
           <div class="step-num">2</div>
-          <div class="step-content"><h4>Phone entry</h4><p>Member enters their MTN or Orange MoMo number. The network (MTN/Orange) is detected from the prefix.</p></div>
+          <div class="step-content"><h4>Payment method</h4><p>Three options: <strong>Wallet</strong> (shows current balance and Sufficient / Insufficient badge — disabled if balance is too low), <strong>Mobile Money</strong> (MTN / Orange), or <strong>Pay at Gym</strong> (cash reference code).</p></div>
         </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-content"><h4>USSD waiting</h4><p>A USSD prompt is sent to their phone. App shows a pulsing animation and instructions while polling every 3 seconds for up to 2 minutes.</p></div>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <div class="step-content"><h4>Result</h4><p>On success: green checkmark, subscription extended, "View Membership" button. On failure: red X with option to retry.</p></div>
-        </div>
+      </div>
+
+      <table>
+        <thead><tr><th>Payment path</th><th>What happens next</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Wallet</strong></td>
+            <td>Balance debited immediately. Subscription activated at once. Result screen shows new expiry date.</td>
+          </tr>
+          <tr>
+            <td><strong>Mobile Money</strong></td>
+            <td>Member enters their phone number. USSD push sent to their handset. App polls every 3 seconds (up to 2 minutes). On approval: subscription extended. On failure: retry option shown.</td>
+          </tr>
+          <tr>
+            <td><strong>Pay at Gym (Cash)</strong></td>
+            <td>Reference code generated (e.g. <code>REN-A3F2B1C8</code>). Member shows this code at the front desk. Gym staff confirm the payment in the admin panel — subscription activates at that point.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">ℹ</span>
+        <div>Deep link: if a member taps the <strong>Renew now</strong> button in a reminder email on their phone, the app opens automatically and pre-fills the gym and member context — no manual search needed.</div>
       </div>
 
       <h3>Security</h3>
@@ -1400,7 +1462,7 @@
       </table>
 
       <h3>Managing Staff</h3>
-      <p>Go to <strong>Settings → Staff</strong> to add or remove team members. When you add a staff member, they receive a welcome email with login instructions. Staff log in at <code>app.myfiti.app/login</code> using their email and password.</p>
+      <p>Go to <strong>Settings → Staff</strong> to add or remove team members. When you add a staff member, they receive a welcome email with login instructions. Staff log in at <code>app.myfiti.fit/login</code> using their email and password.</p>
 
       <h3>Staff PIN (Kiosk)</h3>
       <p>Each staff member has a separate PIN for unlocking staff mode on the kiosk. This PIN is different from their admin login password. Set or reset it from their staff profile.</p>
@@ -1509,8 +1571,11 @@
       <h3>Wallet Reconciliation Cron — Daily at 01:00</h3>
       <p>Runs every night across all tenants and cross-checks each member's stored wallet balance against the sum of their transaction ledger. Any mismatch is flagged in the server log for review. Normal operation logs <strong>"0 discrepancies"</strong>.</p>
 
+      <h3>Renewal Reminder Deep Links</h3>
+      <p>Every expiry and grace period email contains a <strong>Renew now</strong> button. The link encodes the gym slug and member ID — when the member clicks it, the self-renewal web page opens with their account pre-loaded. If they have the myfiti app installed, a banner offers to open the renewal screen directly in the app instead.</p>
+
       <h3>Queue System (BullMQ)</h3>
-      <p>Email and push notifications are queued through <strong>BullMQ with Redis (Upstash)</strong>. If the queue is temporarily unavailable, status transitions in the database still happen — only the notification is delayed. It will be retried automatically.</p>
+      <p>Email and push notifications are queued through <strong>BullMQ with Redis (Upstash)</strong>. If the queue is temporarily unavailable, status transitions in the database still happen — only the notification is delayed. It will be retried automatically. Up to 50 emails per minute are sent with a concurrency of 5 workers.</p>
     </section>
 
     <hr class="divider" />
@@ -1557,7 +1622,7 @@
           Questions? We're here to help.
         </p>
         <p style="color:var(--brand);font-size:0.9rem;font-weight:600;">
-          support@myfiti.app
+          support@myfiti.fit
         </p>
       </div>
     </section>

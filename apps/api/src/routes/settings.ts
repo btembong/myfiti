@@ -118,7 +118,7 @@ settingsRouter.post('/billing/initiate-payment', async (req, res) => {
     }
     const mchTransactionRef = `ten-${tenantId}-${Date.now()}`
     const BASE_URL = process.env.TRANZAK_ENV === 'live' ? 'https://dsapi.tranzak.me' : 'https://sandbox.dsapi.tranzak.me'
-    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
 
     // Auth
     const authRes = await fetch(`${BASE_URL}/auth/token`, {
@@ -236,7 +236,7 @@ settingsRouter.post('/staff/:id/resend-invite', async (req, res) => {
     const member = rows[0]
     if (!member) return res.status(404).json({ error: 'Staff member not found.' })
 
-    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
     await sendStaffInviteEmail(
       { email: member.email, name: member.name },
       req.tenant.name,

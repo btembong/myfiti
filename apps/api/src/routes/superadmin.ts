@@ -1273,7 +1273,7 @@ superadminRouter.get('/invoices/:id/pdf', async (req, res) => {
         unitPrice:   inv.amount_xaf,
         total:       inv.amount_xaf,
       }],
-      qrContent: `${process.env.APP_URL ?? 'https://app.myfiti.app'}/invoices/${inv.invoice_number}`,
+      qrContent: `${process.env.APP_URL ?? 'https://app.myfiti.fit'}/invoices/${inv.invoice_number}`,
       ...(inv.paid_at ? { paidAt: new Date(inv.paid_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) } : {}),
     }
 

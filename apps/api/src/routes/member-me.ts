@@ -904,21 +904,26 @@ memberMeRouter.post('/renew', async (req, res) => {
       return res.status(503).json({ error: 'Mobile payments not available. Contact your gym.' })
     }
 
-    const { rows: subRows } = await tenantQuery<{ id: string }>(
-      tenantSlug,
-      `SELECT id FROM subscriptions WHERE member_id = $1 ORDER BY created_at DESC LIMIT 1`,
-      [memberId],
+    const newExpiry = new Date()
+    newExpiry.setDate(newExpiry.getDate() + plan.duration_days)
+
+    // Create a pending subscription that the webhook will activate on payment success
+    const subId = uuid()
+    await tenantQuery(tenantSlug,
+      `INSERT INTO subscriptions (id, member_id, plan_id, status, started_at, expires_at, created_at, updated_at)
+       VALUES ($1, $2, $3, 'pending', NOW(), $4, NOW(), NOW())`,
+      [subId, memberId, plan_id, newExpiry.toISOString()],
     )
 
     const paymentId = uuid()
     const reference = `mem-${paymentId}`
-    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
 
     await tenantQuery(
       tenantSlug,
       `INSERT INTO payments (id, member_id, subscription_id, amount, currency, provider, tranzak_ref, status, payment_type, created_at)
        VALUES ($1, $2, $3, $4, $5, 'tranzak', $6, 'pending', 'subscription', NOW())`,
-      [paymentId, memberId, subRows[0]?.id ?? null, plan.price, plan.currency, reference],
+      [paymentId, memberId, subId, plan.price, plan.currency, reference],
     )
 
     const { chargeMobileWallet } = await import('../lib/tranzak.js')
@@ -965,6 +970,17 @@ memberMeRouter.get('/payment/:paymentId', async (req, res) => {
         if (v.status === 'successful') {
           await tenantQuery(tenantSlug,
             `UPDATE payments SET status = 'completed', paid_at = NOW() WHERE id = $1`, [paymentId])
+          // Activate linked subscription (idempotent — only if still pending)
+          const { rows: paySubRows } = await tenantQuery<{ subscription_id: string | null }>(
+            tenantSlug, `SELECT subscription_id FROM payments WHERE id = $1 LIMIT 1`, [paymentId])
+          const subId = paySubRows[0]?.subscription_id
+          if (subId) {
+            await tenantQuery(tenantSlug,
+              `UPDATE subscriptions SET status = 'active', updated_at = NOW() WHERE id = $1 AND status = 'pending'`,
+              [subId])
+            await tenantQuery(tenantSlug,
+              `UPDATE members SET status = 'active', updated_at = NOW() WHERE id = $1`, [memberId])
+          }
           return res.json({ status: 'completed', amount: payment.amount, currency: payment.currency })
         }
         if (v.status === 'failed') {

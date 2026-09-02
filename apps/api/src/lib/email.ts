@@ -328,7 +328,7 @@ export async function sendPaymentReceiptEmail(opts: {
 // 6. Welcome email (after onboarding complete)
 export async function sendWelcomeEmail(to: { email: string; name: string }, gymName: string) {
   const first      = to.name.split(' ')[0]
-  const dashUrl    = `${process.env.APP_URL ?? 'https://app.myfiti.app'}/dashboard`
+  const dashUrl    = `${process.env.APP_URL ?? 'https://app.myfiti.fit'}/dashboard`
 
   const html = shell(`
     <tr><td style="padding:32px 32px 0;">
@@ -369,7 +369,7 @@ export async function sendWelcomeEmail(to: { email: string; name: string }, gymN
 // 7. Password reset
 export async function sendPasswordResetEmail(to: { email: string; name: string }, resetToken: string) {
   const first    = to.name.split(' ')[0]
-  const resetUrl = `${process.env.APP_URL ?? 'https://app.myfiti.app'}/reset-password?token=${resetToken}`
+  const resetUrl = `${process.env.APP_URL ?? 'https://app.myfiti.fit'}/reset-password?token=${resetToken}`
 
   const html = shell(`
     <tr><td style="padding:32px 32px 0;">
@@ -407,7 +407,7 @@ export async function sendPlanChangeEmail(
   const first      = to.name.split(' ')[0]
   const amtStr     = newAmountXaf > 0 ? `XAF ${newAmountXaf.toLocaleString('fr-CM')}/month` : 'Free'
   const renewDate  = renewalAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-  const billingUrl = `${process.env.APP_URL ?? 'https://app.myfiti.app'}/settings/billing`
+  const billingUrl = `${process.env.APP_URL ?? 'https://app.myfiti.fit'}/settings/billing`
 
   const html = shell(`
     <tr><td style="padding:32px 32px 0;">
@@ -448,7 +448,7 @@ export async function sendTrialEndingEmail(
 ) {
   const first      = to.name.split(' ')[0]
   const endsDate   = new Date(trialEndsAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-  const upgradeUrl = `${process.env.APP_URL ?? 'https://app.myfiti.app'}/settings/billing`
+  const upgradeUrl = `${process.env.APP_URL ?? 'https://app.myfiti.fit'}/settings/billing`
 
   const html = shell(`
     <tr><td style="padding:32px 32px 0;">
@@ -483,7 +483,7 @@ export async function sendTrialExpiredEmail(
   gymSlug: string,
 ) {
   const first      = to.name.split(' ')[0]
-  const upgradeUrl = `${process.env.APP_URL ?? 'https://app.myfiti.app'}/settings/billing`
+  const upgradeUrl = `${process.env.APP_URL ?? 'https://app.myfiti.fit'}/settings/billing`
 
   const html = shell(`
     <tr><td style="padding:32px 32px 0;">
@@ -521,7 +521,7 @@ export async function sendRenewalReminderEmail(
   const first      = to.name.split(' ')[0]
   const renewDate  = new Date(renewalAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const amtStr     = `XAF ${amountXaf.toLocaleString('fr-CM')}`
-  const billingUrl = `${process.env.APP_URL ?? 'https://app.myfiti.app'}/settings/billing`
+  const billingUrl = `${process.env.APP_URL ?? 'https://app.myfiti.fit'}/settings/billing`
 
   const html = shell(`
     <tr><td style="padding:32px 32px 0;">
@@ -572,7 +572,7 @@ export async function sendInvoiceNotificationEmail(opts: {
   const periodStr  = `${fmtDate(periodStart)} – ${fmtDate(periodEnd)}`
   const dueDateStr = fmtDate(dueDate)
   const fileName   = `${invoiceNumber}.pdf`
-  const payUrl     = `${process.env.APP_URL ?? 'https://app.myfiti.app'}/billing/pay/${invoiceId}`
+  const payUrl     = `${process.env.APP_URL ?? 'https://app.myfiti.fit'}/billing/pay/${invoiceId}`
 
   const html = shell(`
     <tr><td style="padding:32px 32px 0;">

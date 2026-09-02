@@ -198,7 +198,7 @@ dayPassesRouter.post('/initiate-payment', async (req, res) => {
       return res.status(503).json({ error: 'Payment provider not configured. Please contact support.' })
     }
     const TZBASE = process.env.TRANZAK_ENV === 'live' ? 'https://dsapi.tranzak.me' : 'https://sandbox.dsapi.tranzak.me'
-    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
 
     // Authenticate — response: { data: { token, expiresIn }, success: true }
     const authRes = await fetch(`${TZBASE}/auth/token`, {
@@ -296,7 +296,7 @@ dayPassesRouter.post('/charge', async (req, res) => {
     )
 
     const reference  = `dp-${dayPassId}`
-    const APP_URL    = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL    = process.env.APP_URL ?? 'https://app.myfiti.fit'
     const callbackUrl = `${APP_URL}/api/webhooks/tranzak?ctx=daypass&tenant=${req.tenant.slug}&id=${dayPassId}`
 
     // S2S USSD push — no redirect needed

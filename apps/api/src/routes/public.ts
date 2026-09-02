@@ -6,6 +6,10 @@ import { sendMemberWelcomeEmail } from '../lib/email.js'
 
 export const publicRouter = Router()
 
+// ─── In-memory OTP store (5-minute TTL) ─────────────────────────────────────
+const otpStore = new Map<string, { code: string; expiresAt: number }>()
+function genOtp() { return String(Math.floor(100000 + Math.random() * 900000)) }
+
 // Slug format: lowercase alphanumeric + hyphens, 2-63 chars
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/
 
@@ -255,7 +259,11 @@ publicRouter.post('/gym/:slug/renew', rateLimitApi, async (req, res) => {
       const token = authBody.data?.token ?? authBody.token ?? ''
       if (!token) throw new Error('Tranzak auth: no token in response')
 
+      const subId = uuid()
       const merchantTransactionId = `ren-${member_id}-${Date.now()}`
+      const API_URL = process.env.API_URL ?? 'https://api.myfiti.fit'
+      const callbackUrl = `${API_URL}/api/webhooks/tranzak?ctx=public-renew&tenant=${slug}&id=${subId}`
+
       const paymentRes = await fetch(`${BASE_URL}/xp021/v1/request/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -264,24 +272,29 @@ publicRouter.post('/gym/:slug/renew', rateLimitApi, async (req, res) => {
           currencyCode: gym.currency ?? 'XAF',
           description: `${gym.name} membership renewal: ${plan.name}`,
           merchantTransactionId,
-          returnUrl: `${APP_URL}/member/renew?gym=${slug}&mid=${member_id}&payment=success`,
+          returnUrl: `${APP_URL}/member/renew?gym=${slug}&mid=${member_id}&payment=verify`,
+          callbackUrl,
           customData: { member_id, plan_id, gym_slug: slug },
         }),
       })
       if (!paymentRes.ok) throw new Error(`Tranzak error: ${await paymentRes.text()}`)
 
       const paymentData = await paymentRes.json() as { data?: { paymentUrl: string; requestId: string } }
-      const paymentUrl  = paymentData?.data?.paymentUrl ?? ''
-      const paymentId   = paymentData?.data?.requestId ?? uuid()
+      const paymentUrl      = paymentData?.data?.paymentUrl ?? ''
+      const tranzakRequestId = paymentData?.data?.requestId ?? ''
+
+      if (!paymentUrl) {
+        return res.status(502).json({ error: 'Payment provider did not return a redirect URL. Please try again.' })
+      }
 
       // Create pending subscription
       await tenantQuery(slug,
         `INSERT INTO subscriptions (id, member_id, plan_id, status, started_at, expires_at, created_at, updated_at)
          VALUES ($1, $2, $3, 'pending', NOW(), $4, NOW(), NOW())`,
-        [uuid(), member_id, plan_id, newExpiry.toISOString()],
+        [subId, member_id, plan_id, newExpiry.toISOString()],
       )
 
-      return res.json({ ok: true, method: 'mobile_money', payment_url: paymentUrl, payment_id: paymentId })
+      return res.json({ ok: true, method: 'mobile_money', payment_url: paymentUrl, payment_id: tranzakRequestId })
     }
 
     // ── Cash ──────────────────────────────────────────────────────────────────
@@ -297,6 +310,141 @@ publicRouter.post('/gym/:slug/renew', rateLimitApi, async (req, res) => {
   } catch (err) {
     console.error('[public/gym/:slug/renew]', err)
     return res.status(500).json({ error: 'Renewal failed. Please try again.' })
+  }
+})
+
+// ─── POST /api/public/gym/:slug/send-otp ─────────────────────────────────────
+// Send a 6-digit OTP to the member's email before wallet debit.
+
+publicRouter.post('/gym/:slug/send-otp', rateLimitApi, async (req, res) => {
+  try {
+    const { slug } = req.params
+    if (!SLUG_RE.test(slug)) return res.status(400).json({ error: 'Invalid gym identifier.' })
+
+    const { member_id } = req.body as { member_id?: string }
+    if (!member_id || !UUID_RE.test(member_id)) return res.status(400).json({ error: 'member_id required.' })
+
+    const { tenantQuery } = await import('../db/client.js')
+    const { rows } = await tenantQuery<{ id: string; name: string; email: string }>(
+      slug,
+      `SELECT id, name, email FROM members WHERE id = $1 LIMIT 1`,
+      [member_id],
+    )
+    if (!rows[0]) return res.status(404).json({ error: 'Member not found.' })
+
+    const otp = genOtp()
+    otpStore.set(`${slug}:${member_id}`, { code: otp, expiresAt: Date.now() + 5 * 60 * 1000 })
+
+    const { sendOtpEmail } = await import('../lib/email.js')
+    await sendOtpEmail({ email: rows[0].email, name: rows[0].name }, otp)
+
+    // Return a masked email so the UI can confirm where the code was sent
+    const masked = rows[0].email.replace(/^(.{2})(.*)(@.*)$/, (_, a, _b, c) => `${a}***${c}`)
+    return res.json({ ok: true, sent_to: masked })
+  } catch (err) {
+    console.error('[public/send-otp]', err)
+    return res.status(500).json({ error: 'Failed to send OTP.' })
+  }
+})
+
+// ─── POST /api/public/gym/:slug/verify-otp ───────────────────────────────────
+// Verify the OTP before executing a wallet payment.
+
+publicRouter.post('/gym/:slug/verify-otp', rateLimitApi, async (req, res) => {
+  const { slug } = req.params
+  const { member_id, otp } = req.body as { member_id?: string; otp?: string }
+
+  if (!member_id || !UUID_RE.test(member_id)) return res.status(400).json({ error: 'member_id required.' })
+  if (!otp) return res.status(400).json({ error: 'otp required.' })
+
+  const key   = `${slug}:${member_id}`
+  const entry = otpStore.get(key)
+
+  if (!entry || entry.expiresAt < Date.now()) {
+    otpStore.delete(key)
+    return res.status(401).json({ error: 'Code expired or not found. Request a new one.' })
+  }
+  if (entry.code !== otp.trim()) {
+    return res.status(401).json({ error: 'Incorrect code.' })
+  }
+
+  otpStore.delete(key)
+  return res.json({ ok: true })
+})
+
+// ─── GET /api/public/gym/:slug/payment-status ────────────────────────────────
+// Poll Tranzak for payment status. Activates pending subscription on success.
+// Used by the web renewal page after redirect back from Tranzak.
+
+publicRouter.get('/gym/:slug/payment-status', async (req, res) => {
+  try {
+    const { slug } = req.params
+    const { pid, mid } = req.query as { pid?: string; mid?: string }
+
+    if (!SLUG_RE.test(slug)) return res.status(400).json({ error: 'Invalid gym identifier.' })
+    if (!pid) return res.status(400).json({ error: 'pid required.' })
+    if (!mid || !UUID_RE.test(mid)) return res.status(400).json({ error: 'mid required.' })
+
+    const appId  = process.env.TRANZAK_APP_ID
+    const appKey = process.env.TRANZAK_APP_KEY
+    if (!appId || !appKey) return res.status(503).json({ error: 'Payment provider not configured.' })
+
+    const BASE_URL = process.env.TRANZAK_ENV === 'live' ? 'https://dsapi.tranzak.me' : 'https://sandbox.dsapi.tranzak.me'
+
+    const authRes = await fetch(`${BASE_URL}/auth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appId, appKey }),
+    })
+    if (!authRes.ok) return res.status(502).json({ error: 'Could not reach payment provider.' })
+    const authBody = await authRes.json() as { data?: { token: string }; token?: string }
+    const token = authBody.data?.token ?? authBody.token ?? ''
+    if (!token) return res.status(502).json({ error: 'Payment provider auth failed.' })
+
+    const detailRes = await fetch(`${BASE_URL}/xp021/v1/request/details?requestId=${encodeURIComponent(pid)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!detailRes.ok) return res.status(502).json({ error: 'Could not get payment status.' })
+
+    const detail = await detailRes.json() as {
+      data?: { status: string; amount: number; currencyCode: string; mchTransactionRef: string }
+    }
+    const tzStatus = detail?.data?.status ?? 'PENDING'
+    const mchRef   = detail?.data?.mchTransactionRef ?? ''
+
+    // Security: verify this payment was initiated for this member
+    if (!mchRef.startsWith(`ren-${mid}`)) {
+      return res.status(403).json({ error: 'Payment does not belong to this member.' })
+    }
+
+    if (tzStatus !== 'SUCCESSFUL') {
+      const failed = ['FAILED', 'CANCELLED', 'CANCELLED_BY_PAYER'].includes(tzStatus)
+      return res.json({ status: failed ? 'failed' : 'pending' })
+    }
+
+    // Activate the member's most recent pending subscription (idempotent)
+    const { tenantQuery } = await import('../db/client.js')
+    const { rows } = await tenantQuery<{ expires_at: string }>(
+      slug,
+      `UPDATE subscriptions SET status = 'active', updated_at = NOW()
+       WHERE id = (
+         SELECT id FROM subscriptions
+         WHERE member_id = $1 AND status = 'pending'
+         ORDER BY created_at DESC LIMIT 1
+       )
+       RETURNING expires_at`,
+      [mid],
+    )
+
+    await tenantQuery(slug,
+      `UPDATE members SET status = 'active', updated_at = NOW() WHERE id = $1`,
+      [mid],
+    )
+
+    return res.json({ status: 'successful', expires_at: rows[0]?.expires_at ?? null })
+  } catch (err) {
+    console.error('[public/payment-status]', err)
+    return res.status(500).json({ error: 'Failed to check payment status.' })
   }
 })
 
@@ -396,7 +544,7 @@ publicRouter.post('/invoice/:invoiceId/pay', rateLimitApi, async (req, res) => {
     const token = authBody.data?.token ?? authBody.token ?? ''
     if (!token) throw new Error('Tranzak auth: no token in response')
 
-    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
     const merchantTransactionId = `ten-${inv.tenant_id}`
 
     // Create payment

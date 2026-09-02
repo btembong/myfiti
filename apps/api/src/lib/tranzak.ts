@@ -40,7 +40,7 @@ async function tranzakFetch<T>(path: string, options: RequestInit = {}, creds?: 
 
 export const tranzak: PaymentProviderClient = {
   async initializeTransaction({ amount, currency, reference, callback_url, metadata }) {
-    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
 
     // Build a per-request callbackUrl so the webhook handler gets tenant context
     // even without customData (which is not a Tranzak API field).
@@ -136,7 +136,7 @@ export async function chargeMobileWallet({
   payerNote?: string
   callbackUrl?: string
 }): Promise<{ requestId: string; status: string }> {
-  const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+  const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
 
   const body = await tranzakFetch<{
     data: { requestId: string; status: string }
@@ -180,7 +180,7 @@ export async function disburseMobile({
   description?: string
   callbackUrl?: string
 }): Promise<{ requestId: string; status: string }> {
-  const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+  const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
 
   const body = await tranzakFetch<{
     data: { requestId: string; status: string }

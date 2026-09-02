@@ -177,7 +177,7 @@ walletRouter.post('/topup', rateLimitWallet, async (req, res) => {
     await ensureWallet(tenantSlug, memberId, currency)
 
     const reference = `wlt-${uuid()}`
-    const APP_URL   = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL   = process.env.APP_URL ?? 'https://app.myfiti.fit'
     const callbackUrl = `${APP_URL}/api/webhooks/tranzak?ctx=wallet&tenant=${tenantSlug}&id=${memberId}`
 
     // Create pending wallet transaction first (idempotent webhook)
@@ -640,7 +640,7 @@ walletRouter.post('/cashout', rateLimitWallet, async (req, res) => {
     }
 
     const reference = `csh-${uuid()}`
-    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL = process.env.APP_URL ?? 'https://app.myfiti.fit'
     const callbackUrl = `${APP_URL}/api/webhooks/tranzak?ctx=cashout&tenant=${tenantSlug}&id=${memberId}`
 
     // Record as pending (webhook will mark completed or reverse)

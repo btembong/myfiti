@@ -255,10 +255,11 @@ export default function RenewScreen() {
                 : sub.status === 'grace_period' ? '#fbbf2418' : '#ef444418',
             }]}>
               <Text style={[styles.subStatusText, {
-                color: sub.status === 'active' ? accent
+                color: sub.status === 'active' || sub.status === 'expiring_soon' ? accent
                   : sub.status === 'grace_period' ? '#fbbf24' : '#ef4444',
               }]}>
                 {sub.status === 'active' ? `Expires ${fmtDate(sub.expires_at)}`
+                  : sub.status === 'expiring_soon' ? `Expiring ${fmtDate(sub.expires_at)}`
                   : sub.status === 'grace_period' ? 'Grace period'
                   : 'Expired'}
               </Text>

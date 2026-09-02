@@ -71,8 +71,9 @@ webhooksRouter.post('/tranzak', async (req, res) => {
     : merchantTransactionId.startsWith('ten-') ? 'tenant'
     : merchantTransactionId.startsWith('wlt-') ? 'wallet'
     : merchantTransactionId.startsWith('csh-') ? 'cashout'
+    : merchantTransactionId.startsWith('ren-') ? 'public-renew'
     : 'unknown'
-  )) as 'member' | 'daypass' | 'tenant' | 'wallet' | 'cashout' | 'unknown'
+  )) as 'member' | 'daypass' | 'tenant' | 'wallet' | 'cashout' | 'public-renew' | 'unknown'
 
   if (context === 'unknown') {
     return res.status(200).json({ ok: true, ignored: true })
@@ -168,6 +169,8 @@ webhooksRouter.post('/tranzak', async (req, res) => {
       await handleTenantPayment({ merchantTransactionId, amount, currencyCode, completedAt, contextData, eventId })
     } else if (context === 'wallet') {
       await handleWalletTopup({ merchantTransactionId, amount, currencyCode, completedAt, contextData })
+    } else if (context === 'public-renew') {
+      await handlePublicRenewal({ contextData })
     }
 
     await globalQuery(`UPDATE webhook_events SET status = 'processed', processed_at = NOW() WHERE id = $1`, [eventId])
@@ -718,6 +721,41 @@ async function handleWalletCashout(args: {
 
     console.log(`[webhooks/tranzak] cashout reversed (status=${status}): ref=${merchantTransactionId}`)
   }
+}
+
+// ─── Handler: Public member self-renewal (web page) ──────────────────────────
+
+async function handlePublicRenewal(args: {
+  contextData: { tenantSlug: string; resourceId: string }
+}) {
+  const { tenantSlug, resourceId: subId } = args.contextData
+
+  if (!tenantSlug || !subId) {
+    throw new Error('[public-renew] missing tenantSlug or subId in webhook context')
+  }
+
+  // Activate subscription — UPDATE is idempotent via the AND status = 'pending' guard
+  const { rows } = await tenantQuery<{ member_id: string; expires_at: string }>(
+    tenantSlug,
+    `UPDATE subscriptions SET status = 'active', updated_at = NOW()
+     WHERE id = $1 AND status = 'pending'
+     RETURNING member_id, expires_at`,
+    [subId],
+  )
+
+  if (!rows[0]) {
+    // Already activated (likely by the polling endpoint) — safe to skip
+    console.log(`[webhooks/tranzak] public-renew: sub ${subId} already active or not found`)
+    return
+  }
+
+  const { member_id } = rows[0]
+  await tenantQuery(tenantSlug,
+    `UPDATE members SET status = 'active', updated_at = NOW() WHERE id = $1`,
+    [member_id],
+  )
+
+  console.log(`[webhooks/tranzak] public renewal confirmed: sub=${subId} member=${member_id}`)
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────

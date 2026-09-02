@@ -289,7 +289,7 @@ paymentsRouter.post('/tranzak/initiate', async (req, res) => {
     const slug      = req.tenant.slug
     const curr      = currency ?? 'XAF'
     const reference = `mem-${id}`
-    const APP_URL   = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL   = process.env.APP_URL ?? 'https://app.myfiti.fit'
 
     // Record as pending first so it exists before the webhook fires
     await tenantQuery(
@@ -348,7 +348,7 @@ paymentsRouter.post('/tranzak/charge', async (req, res) => {
     const slug      = req.tenant.slug
     const curr      = currency ?? 'XAF'
     const reference = `mem-${id}`
-    const APP_URL   = process.env.APP_URL ?? 'https://app.myfiti.app'
+    const APP_URL   = process.env.APP_URL ?? 'https://app.myfiti.fit'
 
     // Record as pending before calling Tranzak
     await tenantQuery(
