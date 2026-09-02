@@ -304,8 +304,8 @@ export const memberApi = {
       { method: 'POST', body: JSON.stringify({ code }), tenantSlug },
     ),
 
-  initiateRenewal: (tenantSlug: string, data: { plan_id: string; phone: string }) =>
-    apiRequest<{ ok: boolean; payment_id: string; request_id: string }>(
+  initiateRenewal: (tenantSlug: string, data: { plan_id: string; payment_method: 'mobile_money' | 'cash'; phone?: string }) =>
+    apiRequest<{ ok: boolean; payment_id?: string; request_id?: string; method?: string; reference?: string; plan_name?: string; amount?: number; currency?: string }>(
       '/member/me/renew',
       { method: 'POST', body: JSON.stringify(data), tenantSlug },
     ),

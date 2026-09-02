@@ -860,19 +860,19 @@ memberMeRouter.post('/redeem-voucher', async (req, res) => {
 })
 
 // ─── POST /api/member/me/renew ────────────────────────────────────────────────
-// Initiate a mobile-money S2S charge for a membership plan renewal.
-// No redirect needed — USSD push sent directly to member's phone.
+// Unified renewal endpoint supporting mobile_money, and cash.
+// Wallet payments are handled by POST /api/member/wallet/pay-plan.
 
 memberMeRouter.post('/renew', async (req, res) => {
   try {
     const { sub: memberId, tenant_slug: tenantSlug } = req.auth as unknown as MemberAuth
-    const { plan_id, phone } = req.body as { plan_id: string; phone: string }
-
-    if (!plan_id || !phone) {
-      return res.status(400).json({ error: 'plan_id and phone are required.' })
+    const { plan_id, payment_method, phone } = req.body as {
+      plan_id: string; payment_method: 'mobile_money' | 'cash'; phone?: string
     }
-    if (!process.env.TRANZAK_APP_ID || !process.env.TRANZAK_APP_KEY) {
-      return res.status(503).json({ error: 'Mobile payments not available. Contact your gym.' })
+
+    if (!plan_id) return res.status(400).json({ error: 'plan_id is required.' })
+    if (!['mobile_money', 'cash'].includes(payment_method)) {
+      return res.status(400).json({ error: 'payment_method must be mobile_money or cash.' })
     }
 
     const { rows: planRows } = await tenantQuery<{
@@ -884,6 +884,25 @@ memberMeRouter.post('/renew', async (req, res) => {
     )
     const plan = planRows[0]
     if (!plan) return res.status(404).json({ error: 'Plan not found.' })
+
+    // ── Cash ──────────────────────────────────────────────────────────────────
+    if (payment_method === 'cash') {
+      const newExpiry = new Date()
+      newExpiry.setDate(newExpiry.getDate() + plan.duration_days)
+      await tenantQuery(tenantSlug,
+        `INSERT INTO subscriptions (id, member_id, plan_id, status, started_at, expires_at, created_at, updated_at)
+         VALUES ($1, $2, $3, 'pending', NOW(), $4, NOW(), NOW())`,
+        [uuid(), memberId, plan_id, newExpiry.toISOString()],
+      )
+      const reference = `REN-${memberId.slice(0, 8).toUpperCase()}`
+      return res.json({ ok: true, method: 'cash', reference, plan_name: plan.name, amount: plan.price, currency: plan.currency })
+    }
+
+    // ── Mobile Money (Tranzak) ────────────────────────────────────────────────
+    if (!phone) return res.status(400).json({ error: 'phone is required for mobile_money.' })
+    if (!process.env.TRANZAK_APP_ID || !process.env.TRANZAK_APP_KEY) {
+      return res.status(503).json({ error: 'Mobile payments not available. Contact your gym.' })
+    }
 
     const { rows: subRows } = await tenantQuery<{ id: string }>(
       tenantSlug,
