@@ -61,9 +61,7 @@
         "expo-build-properties",
         {
           "android": {
-            "enableSeparateBuildPerCPUArchitecture": true,
-            "enableShrinkResourcesInReleaseBuilds": true,
-            "enableMinifyInReleaseBuilds": true
+            "enableSeparateBuildPerCPUArchitecture": true
           }
         }
       ],
