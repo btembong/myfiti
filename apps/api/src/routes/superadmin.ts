@@ -398,6 +398,9 @@ superadminRouter.get('/gyms/:id/activity', async (req, res) => {
     type ActivityEvent = { action: string; who: string; time: string; ts: number }
     const events: ActivityEvent[] = []
 
+    const PAGE_SIZE = 10
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+
     try {
       const [checkins, registrations, payments] = await Promise.all([
         tenantQuery<{ name: string; checked_in_at: string }>(
@@ -405,11 +408,11 @@ superadminRouter.get('/gyms/:id/activity', async (req, res) => {
           `SELECT m.name, ci.checked_in_at
            FROM check_ins ci
            JOIN members m ON m.id = ci.member_id
-           ORDER BY ci.checked_in_at DESC LIMIT 8`,
+           ORDER BY ci.checked_in_at DESC LIMIT 100`,
         ),
         tenantQuery<{ name: string; created_at: string }>(
           tenant.slug,
-          `SELECT name, created_at FROM members ORDER BY created_at DESC LIMIT 8`,
+          `SELECT name, created_at FROM members ORDER BY created_at DESC LIMIT 100`,
         ),
         tenantQuery<{ amount: string; paid_at: string; name: string }>(
           tenant.slug,
@@ -417,7 +420,7 @@ superadminRouter.get('/gyms/:id/activity', async (req, res) => {
            FROM payments p
            JOIN members m ON m.id = p.member_id
            WHERE p.status IN ('paid','completed') AND p.paid_at IS NOT NULL
-           ORDER BY p.paid_at DESC LIMIT 8`,
+           ORDER BY p.paid_at DESC LIMIT 100`,
         ),
       ])
 
@@ -450,7 +453,12 @@ superadminRouter.get('/gyms/:id/activity', async (req, res) => {
       console.error(`[superadmin/gyms/:id/activity] ${tenant.slug}:`, err)
     }
 
-    res.json({ activity: events.slice(0, 20) })
+    const total = events.length
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+    const safePage = Math.min(page, totalPages)
+    const slice = events.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+    res.json({ activity: slice, page: safePage, totalPages, total })
   } catch (err) {
     console.error('[superadmin/gyms/:id/activity]', err)
     res.status(500).json({ error: 'Failed to load activity.' })

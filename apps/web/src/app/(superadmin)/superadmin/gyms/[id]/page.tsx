@@ -204,6 +204,8 @@ export default function GymDetailPage() {
   const router = useRouter()
   const [gym, setGym] = useState<GymRow>(EMPTY)
   const [activity, setActivity] = useState<ActivityEvent[]>([])
+  const [actPage, setActPage] = useState(1)
+  const [actTotalPages, setActTotalPages] = useState(1)
   const [overridePlanModal, setOverridePlanModal] = useState(false)
   const [deleteModal, setDeleteModal] = useState(false)
   const [sendMessageModal, setSendMessageModal] = useState(false)
@@ -217,13 +219,20 @@ export default function GymDetailPage() {
     setGym(mapGym(r))
   }
 
+  function fetchActivity(page: number) {
+    if (!id) return
+    superApi.get<{ activity: ActivityEvent[]; page: number; totalPages: number }>(
+      `/api/superadmin/gyms/${id}/activity?page=${page}`
+    ).then(r => {
+      setActivity(r.activity)
+      setActPage(r.page)
+      setActTotalPages(r.totalPages)
+    }).catch(() => {})
+  }
+
   useEffect(() => {
     fetchGym().catch(() => {})
-    if (id) {
-      superApi.get<{ activity: ActivityEvent[] }>(`/api/superadmin/gyms/${id}/activity`)
-        .then(r => setActivity(r.activity))
-        .catch(() => {})
-    }
+    fetchActivity(1)
   }, [id])
 
   async function patchGym(body: Record<string, unknown>) {
@@ -471,6 +480,26 @@ export default function GymDetailPage() {
               </div>
             ))}
           </div>
+
+          {actTotalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+              <button
+                onClick={() => fetchActivity(actPage - 1)}
+                disabled={actPage <= 1}
+                style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'none', border: `1px solid ${T.border}`, color: actPage <= 1 ? T.textMuted : T.textSecondary, cursor: actPage <= 1 ? 'default' : 'pointer', opacity: actPage <= 1 ? 0.4 : 1 }}
+              >
+                ← Prev
+              </button>
+              <span style={{ fontSize: 11, color: T.textMuted }}>Page {actPage} of {actTotalPages}</span>
+              <button
+                onClick={() => fetchActivity(actPage + 1)}
+                disabled={actPage >= actTotalPages}
+                style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'none', border: `1px solid ${T.border}`, color: actPage >= actTotalPages ? T.textMuted : T.textSecondary, cursor: actPage >= actTotalPages ? 'default' : 'pointer', opacity: actPage >= actTotalPages ? 0.4 : 1 }}
+              >
+                Next →
+              </button>
+            </div>
+          )}
 
           <div style={{ height: 1, background: T.border, margin: '16px 0' }} />
 
