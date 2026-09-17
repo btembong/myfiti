@@ -1,12 +1,8 @@
-import { Pool, neonConfig } from '@neondatabase/serverless'
-import { drizzle } from 'drizzle-orm/neon-serverless'
+import { Pool } from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { sql } from 'drizzle-orm'
-import ws from 'ws'
 import * as globalSchema from './schema/global'
 import * as tenantSchema from './schema/tenant'
-
-// Required for WebSocket connections in Node.js (non-edge) environments
-neonConfig.webSocketConstructor = ws
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 
