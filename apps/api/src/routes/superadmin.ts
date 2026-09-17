@@ -389,6 +389,74 @@ superadminRouter.get('/gyms/:id', async (req, res) => {
   }
 })
 
+superadminRouter.get('/gyms/:id/activity', async (req, res) => {
+  try {
+    const [tenant] = await db.select().from(globalSchema.tenants)
+      .where(eq(globalSchema.tenants.id, req.params.id)).limit(1)
+    if (!tenant) return res.status(404).json({ error: 'Gym not found.' })
+
+    type ActivityEvent = { action: string; who: string; time: string; ts: number }
+    const events: ActivityEvent[] = []
+
+    try {
+      const [checkins, registrations, payments] = await Promise.all([
+        tenantQuery<{ name: string; checked_in_at: string }>(
+          tenant.slug,
+          `SELECT m.name, ci.checked_in_at
+           FROM check_ins ci
+           JOIN members m ON m.id = ci.member_id
+           ORDER BY ci.checked_in_at DESC LIMIT 8`,
+        ),
+        tenantQuery<{ name: string; created_at: string }>(
+          tenant.slug,
+          `SELECT name, created_at FROM members ORDER BY created_at DESC LIMIT 8`,
+        ),
+        tenantQuery<{ amount: string; paid_at: string; name: string }>(
+          tenant.slug,
+          `SELECT p.amount, p.paid_at, m.name
+           FROM payments p
+           JOIN members m ON m.id = p.member_id
+           WHERE p.status IN ('paid','completed') AND p.paid_at IS NOT NULL
+           ORDER BY p.paid_at DESC LIMIT 8`,
+        ),
+      ])
+
+      function relTime(iso: string): string {
+        const diff = Date.now() - new Date(iso).getTime()
+        const mins = Math.floor(diff / 60000)
+        if (mins < 1)   return 'Just now'
+        if (mins < 60)  return `${mins}m ago`
+        const hrs = Math.floor(mins / 60)
+        if (hrs < 24)   return `${hrs}h ago`
+        const days = Math.floor(hrs / 24)
+        if (days === 1) return 'Yesterday'
+        if (days < 7)   return `${days}d ago`
+        return new Date(iso).toLocaleDateString('en', { month: 'short', day: 'numeric' })
+      }
+
+      for (const r of checkins.rows) {
+        events.push({ action: 'Member check-in', who: r.name, time: relTime(r.checked_in_at), ts: new Date(r.checked_in_at).getTime() })
+      }
+      for (const r of registrations.rows) {
+        events.push({ action: 'New member registered', who: r.name, time: relTime(r.created_at), ts: new Date(r.created_at).getTime() })
+      }
+      for (const r of payments.rows) {
+        const amt = parseFloat(r.amount)
+        events.push({ action: 'Payment received', who: `₣${amt.toLocaleString('fr-CM')} · ${r.name}`, time: relTime(r.paid_at), ts: new Date(r.paid_at).getTime() })
+      }
+
+      events.sort((a, b) => b.ts - a.ts)
+    } catch (err) {
+      console.error(`[superadmin/gyms/:id/activity] ${tenant.slug}:`, err)
+    }
+
+    res.json({ activity: events.slice(0, 20) })
+  } catch (err) {
+    console.error('[superadmin/gyms/:id/activity]', err)
+    res.status(500).json({ error: 'Failed to load activity.' })
+  }
+})
+
 superadminRouter.patch('/gyms/:id', requireSuperAuth, async (req, res) => {
   try {
     const allowed = ['plan', 'status', 'grace_period_days', 'trial_ends_at']

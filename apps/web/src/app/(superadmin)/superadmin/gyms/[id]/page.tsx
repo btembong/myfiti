@@ -184,14 +184,7 @@ function StatusPill({ label }: { label: string }) {
   )
 }
 
-const GYM_ACTIVITY = [
-  { action: 'Member check-in',       who: 'Amina Nkosi',      time: '5 min ago'  },
-  { action: 'Payment received',      who: '₣15,000',          time: '2h ago'     },
-  { action: 'New member registered', who: 'Kofi Mensah',      time: '3h ago'     },
-  { action: 'Subscription renewed',  who: 'Fatou Diallo',     time: 'Yesterday'  },
-  { action: 'Admin login',           who: 'Owner',            time: 'Yesterday'  },
-  { action: 'Plan upgraded',         who: 'Growth → Growth+', time: '3d ago'     },
-]
+type ActivityEvent = { action: string; who: string; time: string }
 
 const EMPTY: GymRow = {
   id: '', name: '—', owner: '—', email: '', country: '—', city: '—',
@@ -210,6 +203,7 @@ export default function GymDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [gym, setGym] = useState<GymRow>(EMPTY)
+  const [activity, setActivity] = useState<ActivityEvent[]>([])
   const [overridePlanModal, setOverridePlanModal] = useState(false)
   const [deleteModal, setDeleteModal] = useState(false)
   const [sendMessageModal, setSendMessageModal] = useState(false)
@@ -225,6 +219,11 @@ export default function GymDetailPage() {
 
   useEffect(() => {
     fetchGym().catch(() => {})
+    if (id) {
+      superApi.get<{ activity: ActivityEvent[] }>(`/api/superadmin/gyms/${id}/activity`)
+        .then(r => setActivity(r.activity))
+        .catch(() => {})
+    }
   }, [id])
 
   async function patchGym(body: Record<string, unknown>) {
@@ -459,7 +458,9 @@ export default function GymDetailPage() {
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4a7a5a' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {GYM_ACTIVITY.map((ev, i) => (
+            {activity.length === 0 ? (
+              <p style={{ fontSize: 12, color: T.textMuted, margin: 0 }}>No recent activity.</p>
+            ) : activity.map((ev, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                 <div style={{ width: 5, height: 5, borderRadius: '50%', background: T.textMuted, marginTop: 5, flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
