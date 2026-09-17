@@ -345,16 +345,19 @@ superadminRouter.get('/gyms/:id', async (req, res) => {
       .where(eq(globalSchema.tenants.id, req.params.id)).limit(1)
     if (!tenant) return res.status(404).json({ error: 'Gym not found.' })
 
-    let stats = { totalMembers: 0, activeMembers: 0, checkinsToday: 0, revenueXAF: 0 }
+    let stats = { totalMembers: 0, activeMembers: 0, checkinsToday: 0, checkinsAllTime: 0, revenueXAF: 0 }
     try {
       const [memberResult, checkinResult, revResult] = await Promise.all([
         tenantQuery<{ total: string; active: string }>(
           tenant.slug,
           `SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'active') as active FROM members`,
         ),
-        tenantQuery<{ today: string }>(
+        tenantQuery<{ today: string; all_time: string }>(
           tenant.slug,
-          `SELECT COUNT(*) as today FROM check_ins WHERE checked_in_at >= CURRENT_DATE`,
+          `SELECT
+             COUNT(*) FILTER (WHERE checked_in_at >= CURRENT_DATE) as today,
+             COUNT(*) as all_time
+           FROM check_ins`,
         ),
         tenantQuery<{ total: string }>(
           tenant.slug,
@@ -371,11 +374,12 @@ superadminRouter.get('/gyms/:id', async (req, res) => {
         totalMembers: parseInt(m?.total ?? '0'),
         activeMembers: parseInt(m?.active ?? '0'),
         checkinsToday: parseInt(c?.today ?? '0'),
+        checkinsAllTime: parseInt(c?.all_time ?? '0'),
         revenueXAF: parseInt(r?.total ?? '0'),
       }
     } catch (err) {
       console.error(`[superadmin/gyms/:id] Failed to load stats for ${tenant.slug}:`, err)
-      stats = { totalMembers: 0, activeMembers: 0, checkinsToday: 0, revenueXAF: 0 }
+      stats = { totalMembers: 0, activeMembers: 0, checkinsToday: 0, checkinsAllTime: 0, revenueXAF: 0 }
     }
 
     res.json({ ...tenant, ...stats })

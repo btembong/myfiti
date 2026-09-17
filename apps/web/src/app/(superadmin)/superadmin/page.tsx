@@ -47,7 +47,7 @@ export function mapGym(t: Record<string, unknown>): GymRow {
     plan: PLAN_LABEL[plan] ?? plan,
     status: status === 'trialing' ? 'trial' : status,
     members: (t.totalMembers as number) ?? 0,
-    checkins: 0,
+    checkins: (t.checkinsAllTime as number) ?? (t.checkinsMonth as number) ?? 0,
     revenueXAF: (t.revenueXAF as number) ?? 0,
     joinedAt: createdAt ? createdAt.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
     lastSeen: '—',
