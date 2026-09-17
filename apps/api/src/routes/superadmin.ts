@@ -398,7 +398,7 @@ superadminRouter.get('/gyms/:id/activity', async (req, res) => {
     type ActivityEvent = { action: string; who: string; time: string; ts: number }
     const events: ActivityEvent[] = []
 
-    const PAGE_SIZE = 10
+    const PAGE_SIZE = 5
     const page = Math.max(1, parseInt(req.query.page as string) || 1)
 
     try {
