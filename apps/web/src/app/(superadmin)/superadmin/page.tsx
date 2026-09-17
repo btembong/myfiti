@@ -55,9 +55,7 @@ export function mapGym(t: Record<string, unknown>): GymRow {
   }
 }
 
-const ACTIVITY = [
-  { gym: '—', detail: 'No recent activity', time: '—' },
-]
+type RecentEvent = { gym: string; detail: string; time: string }
 
 const fade = {
   hidden: { opacity: 0, y: 10 },
@@ -107,6 +105,8 @@ export default function SuperAdminDashboard() {
     totalGyms: 0, activeGyms: 0, trialGyms: 0, suspendedGyms: 0,
     mrr: 0, arr: 0, planDistribution: { growth_plus: 0, growth: 0, starter: 0 },
   })
+  const [recentActivity, setRecentActivity] = useState<RecentEvent[]>([])
+  const [health, setHealth] = useState<{ name: string; status: string; detail: string }[]>([])
 
   useEffect(() => {
     superApi.get<{ gyms: Record<string, unknown>[] }>('/api/superadmin/gyms')
@@ -114,6 +114,12 @@ export default function SuperAdminDashboard() {
       .catch(() => {})
     superApi.get<Overview>('/api/superadmin/overview')
       .then(r => setOverview(r))
+      .catch(() => {})
+    superApi.get<{ activity: RecentEvent[] }>('/api/superadmin/recent-activity')
+      .then(r => setRecentActivity(r.activity))
+      .catch(() => {})
+    superApi.get<{ services: { name: string; status: string; detail: string }[] }>('/api/superadmin/health')
+      .then(r => setHealth(r.services))
       .catch(() => {})
   }, [])
 
@@ -245,7 +251,9 @@ export default function SuperAdminDashboard() {
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#444' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {ACTIVITY.map((ev, i) => (
+              {recentActivity.length === 0 ? (
+                <p style={{ fontSize: 12, color: T.textMuted, margin: 0 }}>No recent activity.</p>
+              ) : recentActivity.map((ev, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <div style={{ width: 5, height: 5, borderRadius: '50%', background: T.textDim, marginTop: 5, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -268,24 +276,29 @@ export default function SuperAdminDashboard() {
             <SLabel>Platform health</SLabel>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <CheckmarkCircle01Icon size={14} style={{ color: T.textMuted }} />
-              <span style={{ fontSize: 13, color: T.textSecondary }}>All services operational</span>
+              <span style={{ fontSize: 13, color: T.textSecondary }}>
+                {health.length === 0 ? 'Checking…' : health.every(s => s.status === 'operational') ? 'All systems operational' : 'Degraded'}
+              </span>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-            {[
-              { label: 'API',             uptime: 99.98 },
-              { label: 'Check-in QR',     uptime: 100   },
-              { label: 'Email delivery',  uptime: 99.7  },
-              { label: 'Payment gateway', uptime: 99.5  },
-            ].map(s => (
-              <div key={s.label}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, color: T.textSecondary }}>{s.label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 500, color: T.textSecondary }}>{s.uptime}%</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+            {health.map(s => (
+              <div key={s.name}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, color: T.textSecondary }}>{s.name}</span>
+                  <span style={{
+                    fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4,
+                    background: s.status === 'operational' ? '#0a1a0a' : s.status === 'degraded' ? '#1a1200' : '#1a0a0a',
+                    color: s.status === 'operational' ? '#4a7a5a' : s.status === 'degraded' ? '#7a6a20' : '#7a3a3a',
+                    border: `1px solid ${s.status === 'operational' ? '#1a3a1a' : s.status === 'degraded' ? '#3a3010' : '#3a1a1a'}`,
+                  }}>
+                    {s.status}
+                  </span>
                 </div>
                 <div style={{ height: 3, borderRadius: 2, background: '#111', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', borderRadius: 2, background: '#f0f0f0', width: `${s.uptime}%` }} />
+                  <div style={{ height: '100%', borderRadius: 2, background: s.status === 'operational' ? '#4a7a5a' : s.status === 'degraded' ? '#7a6a20' : '#7a3a3a', width: s.status === 'operational' ? '100%' : '40%', transition: 'width 0.4s' }} />
                 </div>
+                <p style={{ fontSize: 10, color: T.textMuted, margin: '4px 0 0' }}>{s.detail}</p>
               </div>
             ))}
           </div>

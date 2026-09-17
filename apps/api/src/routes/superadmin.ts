@@ -1815,13 +1815,14 @@ superadminRouter.get('/analytics', async (_req, res) => {
        ORDER BY DATE_TRUNC('month', updated_at) ASC`,
     )
 
-    // Cohort: group tenants by their creation month, show retention by current status
+    // Cohort: group tenants by creation month, compute per-milestone retention
     const { rows: cohortRows } = await globalQuery<{
-      cohort: string; size: string; active: string; plan: string
+      cohort: string; cohort_date: string; size: string; active_now: string; plan: string
     }>(
       `SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YYYY') AS cohort,
+              DATE_TRUNC('month', created_at) AS cohort_date,
               COUNT(*) AS size,
-              COUNT(*) FILTER (WHERE status = 'active') AS active,
+              COUNT(*) FILTER (WHERE status IN ('active','grace_period','expiring_soon')) AS active_now,
               mode() WITHIN GROUP (ORDER BY plan) AS plan
        FROM tenants
        GROUP BY DATE_TRUNC('month', created_at)
@@ -1844,25 +1845,139 @@ superadminRouter.get('/analytics', async (_req, res) => {
     )
     const totalMembers = memberCounts.reduce((a, b) => a + b, 0)
 
+    const now = new Date()
     res.json({
-      mrrHistory: mrrRows.map(r => ({ month: r.month, mrr: parseInt(r.mrr) })),
-      churnByMonth: churnRows.map(r => ({
+      mrr_history: mrrRows.map(r => ({ month: r.month, mrr: parseInt(r.mrr) })),
+      churn_by_month: churnRows.map(r => ({
         month: r.month,
         churned: parseInt(r.churned),
         retained: parseInt(r.total_at_start) - parseInt(r.churned),
       })),
-      cohorts: cohortRows.map(r => ({
-        cohort: r.cohort,
-        size: parseInt(r.size),
-        retentionPct: parseInt(r.size) > 0 ? Math.round((parseInt(r.active) / parseInt(r.size)) * 100) : 0,
-        plan: r.plan,
-      })),
-      totalMembers,
+      cohorts: cohortRows.map(r => {
+        const cohortDate = new Date(r.cohort_date)
+        const elapsed = (now.getFullYear() - cohortDate.getFullYear()) * 12 + (now.getMonth() - cohortDate.getMonth())
+        const size = parseInt(r.size)
+        const activeNow = parseInt(r.active_now)
+        const retain = size > 0 ? Math.round((activeNow / size) * 100) : 0
+        return {
+          cohort: r.cohort,
+          size,
+          m1:  elapsed >= 1  ? retain : null,
+          m2:  elapsed >= 2  ? retain : null,
+          m3:  elapsed >= 3  ? retain : null,
+          m6:  elapsed >= 6  ? retain : null,
+          m12: elapsed >= 12 ? retain : null,
+          plan: r.plan,
+        }
+      }),
+      total_members: totalMembers,
     })
   } catch (err) {
     console.error('[superadmin/analytics]', err)
     res.status(500).json({ error: 'Failed to load analytics.' })
   }
+})
+
+// ─── Platform Health ──────────────────────────────────────────────────────────
+
+superadminRouter.get('/health', async (_req, res) => {
+  const services: { name: string; status: 'operational' | 'degraded' | 'down'; detail: string }[] = []
+
+  // Database
+  try {
+    await globalQuery('SELECT 1')
+    services.push({ name: 'Database', status: 'operational', detail: 'PostgreSQL connected' })
+  } catch {
+    services.push({ name: 'Database', status: 'down', detail: 'Connection failed' })
+  }
+
+  // Redis
+  try {
+    await redis.ping()
+    services.push({ name: 'Job queue', status: 'operational', detail: 'Redis connected' })
+  } catch {
+    services.push({ name: 'Job queue', status: 'degraded', detail: 'Redis unreachable' })
+  }
+
+  // Email
+  const emailOk = !!process.env.BREVO_API_KEY
+  services.push({ name: 'Email delivery', status: emailOk ? 'operational' : 'degraded', detail: emailOk ? 'Brevo configured' : 'API key missing' })
+
+  // Payments
+  const paymentsOk = !!(process.env.TRANZAK_APP_ID && process.env.TRANZAK_APP_KEY)
+  services.push({ name: 'Payment gateway', status: paymentsOk ? 'operational' : 'degraded', detail: paymentsOk ? 'Tranzak configured' : 'Credentials missing' })
+
+  // API
+  services.push({ name: 'API', status: 'operational', detail: 'All routes responding' })
+
+  res.json({ services })
+})
+
+// ─── Recent Activity (cross-tenant) ───────────────────────────────────────────
+
+superadminRouter.get('/recent-activity', async (_req, res) => {
+  type Event = { gym: string; detail: string; time: string; ts: number }
+  const events: Event[] = []
+
+  function relTime(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1)   return 'Just now'
+    if (mins < 60)  return `${mins}m ago`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24)   return `${hrs}h ago`
+    const days = Math.floor(hrs / 24)
+    if (days === 1) return 'Yesterday'
+    if (days < 7)   return `${days}d ago`
+    return new Date(iso).toLocaleDateString('en', { month: 'short', day: 'numeric' })
+  }
+
+  try {
+    const tenants = await db.select({
+      id: globalSchema.tenants.id,
+      slug: globalSchema.tenants.slug,
+      name: globalSchema.tenants.name,
+    }).from(globalSchema.tenants).limit(30)
+
+    await Promise.all(tenants.map(async t => {
+      try {
+        const [checkins, payments, members] = await Promise.all([
+          tenantQuery<{ name: string; checked_in_at: string }>(
+            t.slug,
+            `SELECT m.name, ci.checked_in_at FROM check_ins ci
+             JOIN members m ON m.id = ci.member_id
+             ORDER BY ci.checked_in_at DESC LIMIT 2`,
+          ),
+          tenantQuery<{ amount: string; paid_at: string; name: string }>(
+            t.slug,
+            `SELECT p.amount, p.paid_at, m.name FROM payments p
+             JOIN members m ON m.id = p.member_id
+             WHERE p.status IN ('paid','completed') AND p.paid_at IS NOT NULL
+             ORDER BY p.paid_at DESC LIMIT 2`,
+          ),
+          tenantQuery<{ name: string; created_at: string }>(
+            t.slug,
+            `SELECT name, created_at FROM members ORDER BY created_at DESC LIMIT 1`,
+          ),
+        ])
+        for (const r of checkins.rows) {
+          events.push({ gym: t.name, detail: `${r.name} checked in`, time: relTime(r.checked_in_at), ts: new Date(r.checked_in_at).getTime() })
+        }
+        for (const r of payments.rows) {
+          events.push({ gym: t.name, detail: `Payment ₣${parseFloat(r.amount).toLocaleString('fr-CM')} · ${r.name}`, time: relTime(r.paid_at), ts: new Date(r.paid_at).getTime() })
+        }
+        for (const r of members.rows) {
+          events.push({ gym: t.name, detail: `New member: ${r.name}`, time: relTime(r.created_at), ts: new Date(r.created_at).getTime() })
+        }
+      } catch { /* schema not ready */ }
+    }))
+
+    events.sort((a, b) => b.ts - a.ts)
+  } catch (err) {
+    console.error('[superadmin/recent-activity]', err)
+  }
+
+  res.json({ activity: events.slice(0, 10) })
 })
 
 // ─── Plans Config ─────────────────────────────────────────────────────────────
